@@ -23,33 +23,36 @@
 #include "ffsb_tg.h"
 #include "ffsb_stats.h"
 
-/* These are the base names for the different file types on a filesystem  */
+/* These are the base names for the different file types on a
+ * filesystem.
+*/
 #define FILES_BASE "data"
 #define META_BASE  "meta"
 #define AGE_BASE   "fill"
 
-struct ffsb_tg ;
+struct ffsb_tg;
 
-/* A filesystem object */
-/* -- */
-/* represents a filesystem on disk, and maintains access to the different */
-/* directories within it.  Currently there are two directories created in */
-/* each filesystem: data and meta */
-/* "data" contains the aging files and the working set files */
-/* "meta" only contains directories for use in the metadata operation */
-
-/* Aging */
-/* This object contains methods for aging the filesystem if needed */
-/* a properly set up threadgroup is supplied by the parser which is run */
-/* until the filesystem reaches the desired utilization */
-
-/* Operations */
-/* The semantics of a ffsb operation are always such that they occur on */
-/* a filesystem, so the filesystem also hold operation specific data as */
-/* an opaque type */
-/* One example of how this is useful is the aging process, where a different */
-/* set of files is operated upon than in the regular benchmark and the */
-/* op_data is pointing to the "fill" set rather than the "files" set */
+/* A filesystem object
+ * --
+ * represents a filesystem on disk, and maintains access to the different
+ * directories within it.  Currently there are two directories created in
+ * each filesystem: data and meta
+ * "data" contains the aging files and the working set files
+ * "meta" only contains directories for use in the metadata operation
+ *
+ * Aging
+ * This object contains methods for aging the filesystem if needed
+ * a properly set up threadgroup is supplied by the parser which is run
+ * until the filesystem reaches the desired utilization
+ *
+ * Operations 
+ * The semantics of a ffsb operation are always such that they occur on
+ * a filesystem, so the filesystem also hold operation specific data as
+ * an opaque type
+ * One example of how this is useful is the aging process, where a different
+ * set of files is operated upon than in the regular benchmark and the
+ * op_data is pointing to the "fill" set rather than the "files" set
+ */
 
 typedef struct ffsb_fs {
 	char * basedir;
@@ -64,33 +67,36 @@ typedef struct ffsb_fs {
 #define FFSB_FS_LIBCIO     (1 << 2)
 #define FFSB_FS_REUSE_FS   (1 << 3)
 
-	/* these pararmeters pertain to files in the files and fill dirs */
-	/* meta dir only contains directories, starting with 0 */
+	/* These pararmeters pertain to files in the files and fill
+	 * dirs.  Meta dir only contains directories, starting with 0.
+	 */
 	uint32_t num_dirs;
 	uint32_t num_start_files;
 	uint64_t minfilesize,maxfilesize;
 
-	/* these two parameters, specify the blocksize to use for writes when creating and */
-	/* aging the fs */
+	/* These two parameters specify the blocksize to use for
+	 * writes when creating and aging the fs.
+	 */
 	uint32_t create_blocksize, age_blocksize;
 #define FFSB_FS_DEFAULT_CREATE_BLOCKSIZE 4096
 #define FFSB_FS_DEFAULT_AGE_BLOCKSIZE    4096
 	
 	double start_fsutil;
 
-	/* aging data/parameters  */
+	/* Aging data/parameters */
 	double desired_fsutil;
-	int age_fs; /* boolean */
+	int age_fs;
 	uint32_t num_age_dirs;
 
-	/* use a ffsb thread group to do the aging work */
+	/* Use an ffsb thread group to do the aging work */
 	struct ffsb_tg * aging_tg;
 
-	/* if a particular operation wants to maintain */
-	/* fs-specific data, it should use this array */
-	/* naturally, the ops must synchonize access to the data*/
-	/* for now, they are all just putting pointers to */
-	/* a particular benchfiles struct here, which is already sync'ed */
+	/* If a particular operation wants to maintain fs-specific
+	 * data, it should use this array.  Naturally, the ops must
+	 * synchonize access to the data for now, they are all just
+	 * putting pointers to a particular benchfiles struct here,
+	 * which is already sync'ed
+	 */
 	void *op_data[FFSB_NUMOPS];
 
 	/* per-fs stats */
@@ -99,74 +105,69 @@ typedef struct ffsb_fs {
 
 } ffsb_fs_t;
 
-/* set up the structure, zeros everything out and dups the basedir string  */
-void init_ffsb_fs( ffsb_fs_t * fs, char * basedir, uint32_t num_data_dirs, uint32_t num_start_files, unsigned flags);
+/* Set up the structure, zeros everything out and dups the basedir
+ * string
+ */
+void init_ffsb_fs (ffsb_fs_t * fs, char * basedir, uint32_t num_data_dirs, 
+		   uint32_t num_start_files, unsigned flags);
 
-/* does not remove files/dirs on disk, only frees up data structures */
-void destroy_ffsb_fs(ffsb_fs_t *fs);
+/* Does not remove files/dirs on disk, only frees up data
+ * structures 
+ */
+void destroy_ffsb_fs (ffsb_fs_t *fs);
 
-/* set up the files and such on the disk including aging if requested  */
-/* should call back into each op, which initialize its op_data[] entry  */
-/* aging is done by starting the aging_tg thread group, and waiting */
-/* until the desired utilization is achieved */
-/* it can (and is ) be used with pthread_create() */
-/* parameter should be a ffsb_fs_t * , and it will return the same type */
-void * construct_ffsb_fs(void * ffsb_fs_ptr);
+/* Set up the files and such on the disk including aging if requested.
+ * Should call back into each op, which initialize its op_data[]
+ * entry.  Aging is done by starting the aging_tg thread group, and
+ * waiting until the desired utilization is achieved.  It can (and is)
+ * be used with pthread_create().  Parameter should be a ffsb_fs_t * ,
+ * and it will return the same type
+ */
+void * construct_ffsb_fs (void * ffsb_fs_ptr);
 
-/* shallow clone, original should simply be discarded (not destroyed)*/
-/* generally should only be used by parser to write into the config object */
-void clone_ffsb_fs(ffsb_fs_t *target, ffsb_fs_t *original);
+/* Shallow clone, original should simply be discarded (not destroyed).
+ * Generally should only be used by parser to write into the config
+ * object
+ */
+void clone_ffsb_fs (ffsb_fs_t *target, ffsb_fs_t *original);
 
+void fs_print_config (ffsb_fs_t *fs);
 
-void fs_print_config(ffsb_fs_t *fs);
+char * fs_get_basedir (ffsb_fs_t *fs);
+int fs_get_directio (ffsb_fs_t *fs);
+void fs_set_directio (ffsb_fs_t *fs, int dio);
+int fs_get_alignio (ffsb_fs_t *fs);
+void fs_set_alignio (ffsb_fs_t *fs, int aio);
+int fs_get_libcio (ffsb_fs_t *fs);
+void fs_set_libcio (ffsb_fs_t *fs, int lio);
+int fs_get_reuse_fs (ffsb_fs_t *fs);
+void fs_set_reuse_fs (ffsb_fs_t *fs, int rfs);
 
-/* getters/setters */
+struct benchfiles * fs_get_datafiles (ffsb_fs_t *fs);
+struct benchfiles * fs_get_metafiles (ffsb_fs_t *fs);
+struct benchfiles * fs_get_agefiles (ffsb_fs_t *fs);
 
-char*              fs_get_basedir(ffsb_fs_t *fs);
+void fs_set_aging_tg (ffsb_fs_t *fs, struct ffsb_tg *, double util);
+struct ffsb_tg * fs_get_aging_tg (ffsb_fs_t *fs);
+int fs_get_agefs (ffsb_fs_t *fs);
 
-int                fs_get_directio(ffsb_fs_t *fs);
-void               fs_set_directio(ffsb_fs_t *fs, int dio);
+void fs_set_opdata (ffsb_fs_t *fs, void *data, unsigned opnum);
+void * fs_get_opdata (ffsb_fs_t *fs, unsigned opnum);
+void fs_set_min_filesize (ffsb_fs_t *fs, uint64_t size);
+void fs_set_max_filesize (ffsb_fs_t *fs, uint64_t size);
+void fs_set_create_blocksize (ffsb_fs_t *fs, uint32_t blocksize);
+void fs_set_age_blocksize (ffsb_fs_t *fs, uint32_t blocksize);
+uint32_t fs_get_create_blocksize (ffsb_fs_t *fs);
+uint32_t fs_get_age_blocksize (ffsb_fs_t *fs);
+uint64_t fs_get_min_filesize (ffsb_fs_t *fs);
+uint64_t fs_get_max_filesize (ffsb_fs_t *fs);
+uint32_t fs_get_numstartfiles (ffsb_fs_t *fs);
+uint32_t fs_get_numdirs (ffsb_fs_t *fs);
 
-int                fs_get_alignio(ffsb_fs_t *fs);
-void               fs_set_alignio(ffsb_fs_t *fs, int aio);
+double fs_get_desired_fsutil(ffsb_fs_t *fs);
 
-int                fs_get_libcio(ffsb_fs_t *fs);
-void               fs_set_libcio(ffsb_fs_t *fs, int lio);
+/* For these two, fs == NULL is OK */
+int fs_needs_stats (ffsb_fs_t *fs, syscall_t s);
+void fs_add_stat (ffsb_fs_t *fs, syscall_t sys, uint32_t val);
 
-int                fs_get_reuse_fs(ffsb_fs_t *fs);
-void               fs_set_reuse_fs(ffsb_fs_t *fs, int rfs);
-
-
-struct benchfiles* fs_get_datafiles(ffsb_fs_t *fs);
-struct benchfiles* fs_get_metafiles(ffsb_fs_t *fs);
-struct benchfiles* fs_get_agefiles(ffsb_fs_t *fs);
-
-void               fs_set_aging_tg(ffsb_fs_t *fs,struct ffsb_tg *, double util);
-struct ffsb_tg *   fs_get_aging_tg(ffsb_fs_t *fs);
-int                fs_get_agefs(ffsb_fs_t *fs);
-/* void               fs_set_num_age_dirs(ffsb_fs_t *fs, uint32_t numdirs); */
-
-void               fs_set_opdata(ffsb_fs_t *fs, void *data, unsigned opnum);
-void *             fs_get_opdata(ffsb_fs_t *fs, unsigned opnum);
-
-void               fs_set_min_filesize(ffsb_fs_t *fs,uint64_t size);
-void               fs_set_max_filesize(ffsb_fs_t *fs,uint64_t size);
-
-void               fs_set_create_blocksize(ffsb_fs_t *fs,uint32_t blocksize);
-void               fs_set_age_blocksize(ffsb_fs_t *fs,uint32_t blocksize);
-
-uint32_t          fs_get_create_blocksize(ffsb_fs_t *fs);
-uint32_t          fs_get_age_blocksize(ffsb_fs_t *fs);
-
-uint64_t          fs_get_min_filesize(ffsb_fs_t *fs);
-uint64_t          fs_get_max_filesize(ffsb_fs_t *fs);
-
-uint32_t          fs_get_numstartfiles(ffsb_fs_t *fs);
-uint32_t          fs_get_numdirs(ffsb_fs_t *fs);
-
-double             fs_get_desired_fsutil(ffsb_fs_t *fs);
-
-/* for these two, fs == NULL is OK */
-int         fs_needs_stats(ffsb_fs_t *fs, syscall_t s);
-void        fs_add_stat(ffsb_fs_t *fs, syscall_t sys, uint32_t val);
-#endif
+#endif /* _FFSB_FS_H_ */
