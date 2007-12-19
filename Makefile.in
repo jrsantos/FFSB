@@ -69,7 +69,8 @@ PACKAGE = @PACKAGE@
 VERSION = @VERSION@
 
 bin_PROGRAMS = ffsb #ffsb_test
-ffsb_SOURCES = fileops.c  rand.c  config.h     fileops.h     ffsb.h  rand.h main.c fh.h fh.c filelist.c filelist.h metaops.c metaops.h rwlock.h rwlock.c cirlist.c cirlist.h rbt.c rbt.h ffsb_tg.h ffsb_tg.c ffsb_fs.h ffsb_fs.c ffsb_thread.c ffsb_thread.h ffsb_op.h ffsb_op.c util.h util.c parser.c parser.h ffsb_fc.c
+ffsb_SOURCES =  	fileops.c 	rand.c 	config.h 	fileops.h 	ffsb.h 	rand.h 	main.c 	fh.h 	fh.c 	filelist.c 	filelist.h 	metaops.c 	metaops.h 	rwlock.h 	rwlock.c 	cirlist.c 	cirlist.h 	rbt.c 	rbt.h 	ffsb_tg.h 	ffsb_tg.c 	ffsb_fs.h 	ffsb_fs.c 	ffsb_thread.c 	ffsb_thread.h 	ffsb_op.h 	ffsb_op.c 	util.h 	util.c 	parser.c 	parser.h 	ffsb_fc.c 	ffsb_stats.c
+
 
 #ffsb_test_SOURCES = config.h     fileops.h     ffsb.h  rand.h   fh.h filelist.h metaops.h rwlock.h cirlist.h rbt.h ffsb_tg.h ffsb_fs.h ffsb_thread.h ffsb_op.h util.h parser.c parser.h ffsb_test.c  
 
@@ -89,7 +90,7 @@ LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 ffsb_OBJECTS =  fileops.o rand.o main.o fh.o filelist.o metaops.o \
 rwlock.o cirlist.o rbt.o ffsb_tg.o ffsb_fs.o ffsb_thread.o ffsb_op.o \
-util.o parser.o ffsb_fc.o
+util.o parser.o ffsb_fc.o ffsb_stats.o
 ffsb_LDADD = $(LDADD)
 ffsb_DEPENDENCIES = 
 ffsb_LDFLAGS = 
@@ -106,9 +107,10 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = tar
 GZIP_ENV = --best
 DEP_FILES =  .deps/cirlist.P .deps/ffsb_fc.P .deps/ffsb_fs.P \
-.deps/ffsb_op.P .deps/ffsb_tg.P .deps/ffsb_thread.P .deps/fh.P \
-.deps/filelist.P .deps/fileops.P .deps/main.P .deps/metaops.P \
-.deps/parser.P .deps/rand.P .deps/rbt.P .deps/rwlock.P .deps/util.P
+.deps/ffsb_op.P .deps/ffsb_stats.P .deps/ffsb_tg.P .deps/ffsb_thread.P \
+.deps/fh.P .deps/filelist.P .deps/fileops.P .deps/main.P \
+.deps/metaops.P .deps/parser.P .deps/rand.P .deps/rbt.P .deps/rwlock.P \
+.deps/util.P
 SOURCES = $(ffsb_SOURCES)
 OBJECTS = $(ffsb_OBJECTS)
 
