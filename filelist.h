@@ -35,7 +35,7 @@ struct ffsb_file {
 
 struct cirlist;
 
-/* Tree of ffsb_file structs and associate state info */
+/* Tree of ffsb_file structs and associated state info */
 /* struct must be locked during use */
 struct benchfiles {
 	/* the base directory in which all subdirs and files are created */
