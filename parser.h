@@ -20,11 +20,8 @@
 
 #include "ffsb.h"
 
-#define OLD_AGE_WRITE_SIZE 4096
-
 #define COMMENT_CHAR '#'
 
-void  ffsb_parse_oldconfig(ffsb_config_t *fc, char *filename);
 void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename);
 
 #endif
