@@ -34,54 +34,47 @@
  *  renamefile
  */
 
-
-
-
-void metaops_metadir(ffsb_fs_t * fs, unsigned opnum)
+void metaops_metadir(ffsb_fs_t *fs, unsigned opnum)
 {
-    fs_set_opdata(fs, fs_get_metafiles(fs),opnum);
+	fs_set_opdata(fs, fs_get_metafiles(fs), opnum);
 }
 
-static
-void createdir(struct benchfiles *dirs, randdata_t *rd)
+static void createdir(struct benchfiles *dirs, randdata_t *rd)
 {
 	struct ffsb_file *newdir;
-	
-	newdir = add_file(dirs,0,rd); 
-	if( mkdir(newdir->name,S_IRWXU) < 0){
+
+	newdir = add_file(dirs, 0, rd); 
+	if (mkdir(newdir->name,S_IRWXU) < 0) {
 		perror("mkdir");
 		exit(1);
 	}	
 	unlock_file_writer(newdir);
 }
 
-static
-void removedir(struct benchfiles *dirs, randdata_t *rd)
+static void removedir(struct benchfiles *dirs, randdata_t *rd)
 {
 	struct ffsb_file *deldir;
-	
-	deldir = choose_file_writer(dirs,rd);
-	remove_file(dirs,deldir);
 
+	deldir = choose_file_writer(dirs, rd);
+	remove_file(dirs, deldir);
 
-	if( rmdir(deldir->name) < 0){
+	if (rmdir(deldir->name) < 0) {
 		perror("rmdir");
 		exit(1);
-	}	
+	}
  	unlock_file_writer(deldir); 
 }
 
-static
-void renamedir(struct benchfiles *dirs, randdata_t *rd)
+static void renamedir(struct benchfiles *dirs, randdata_t *rd)
 {
 	struct ffsb_file * dir;
 	char *oldname;
 
-	dir = choose_file_writer(dirs,rd);
+	dir = choose_file_writer(dirs, rd);
 	oldname = dir->name;
 	rename_file(dir);
-	
-	if( rename(oldname, dir->name) < 0){
+
+	if (rename(oldname, dir->name) < 0) {
 		perror("rename");
 		exit(1);
 	}
@@ -89,11 +82,9 @@ void renamedir(struct benchfiles *dirs, randdata_t *rd)
 	free(oldname);
 }
 
-
-
-void ffsb_metaops(ffsb_thread_t *ft, ffsb_fs_t *fs,unsigned opnum)
+void ffsb_metaops(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 {
-	struct benchfiles *bf = (struct benchfiles *) fs_get_opdata(fs,opnum);
+	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
 	randdata_t *rd = ft_get_randdata(ft);
 
 	createdir(bf,rd);

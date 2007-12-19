@@ -21,10 +21,7 @@
 #include "ffsb.h"
 #include "fileops.h"
 
-void 
-ffsb_metaops(struct ffsb_thread *config, ffsb_fs_t*, unsigned op_num);
+void ffsb_metaops(struct ffsb_thread *, ffsb_fs_t *, unsigned);
+void metaops_metadir(ffsb_fs_t *, unsigned);
 
-void metaops_metadir(ffsb_fs_t * fs, unsigned opnum);
-
-
-#endif
+#endif /* _METAOPS_H_ */
