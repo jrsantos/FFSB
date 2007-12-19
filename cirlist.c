@@ -33,18 +33,18 @@ int cl_empty(struct cirlist *cl)
 	return !(cl->count);
 }
 
-void cl_insert_tail (struct cirlist *cl , cldatatype object)
+void cl_insert_tail(struct cirlist *cl , cldatatype object)
 {
 	struct cnode * new = ffsb_malloc(sizeof(struct cnode));
 	new->obj = object;
-	if( cl->count == 0 ){
+	if (cl->count == 0){
 		assert(cl->head == NULL);
 		cl->head = new;
 		cl->head->next = cl->head;
 		cl->head->prev = cl->head;
 		cl->count = 1;
 	} else {
-		if( cl->count == 1 ) {
+		if (cl->count == 1) {
 			assert(cl->head->next == cl->head);
 			assert(cl->head->prev == cl->head);
 			cl->head->next = new;
@@ -64,24 +64,23 @@ void cl_insert_tail (struct cirlist *cl , cldatatype object)
 	}
 }
 
-
-cldatatype cl_remove_head (struct cirlist *cl )
+cldatatype cl_remove_head(struct cirlist *cl)
 {
 	struct cnode *oldhead = NULL;
 	struct cnode *newhead = NULL;
 	cldatatype ret = NULL;
 
-	if( cl->count == 0) {
+	if (cl->count == 0) {
 		assert(cl->head == NULL);
 		return NULL;
 	}
-	if( cl->count == 1 ) {
+	if (cl->count == 1 ) {
 		assert(cl->head->next == cl->head);
 		assert(cl->head->prev == cl->head);
 		oldhead = cl->head;
 		cl->head = NULL;
 		cl->count = 0;
-	} else if( cl->count == 2) {
+	} else if (cl->count == 2) {
 		oldhead = cl->head;
 		newhead = oldhead->next;
 		newhead->next = newhead;
@@ -97,7 +96,6 @@ cldatatype cl_remove_head (struct cirlist *cl )
 		newhead->prev->next = newhead;
 		cl->head = newhead;
 		cl->count--;
-		
 	}
 	ret = oldhead->obj;
 	oldhead->obj = (void*)(-1);
