@@ -77,6 +77,21 @@ void* ffsb_malloc(size_t size)
 	return ptr; 
 }
 
+void* ffsb_realloc(void *ptr, size_t size) 
+{ 
+	void *tmp ;
+	//printf("ffsb_realloc: ptr = %p  size = %ld\n",ptr,size);
+
+	if ( ptr == NULL ) 
+		return ffsb_malloc(size);
+
+	tmp = realloc(ptr, (size) ); 
+	assert(ptr != NULL); 
+	ptr = tmp;
+	return ptr; 
+}
+
+
 void * ffsb_align_4k(void *ptr)
 {
 	unsigned long mask = ~(0xfff ); /* 12 zeros at the end */

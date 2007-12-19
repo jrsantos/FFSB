@@ -36,6 +36,7 @@
 
 void   ffsb_sleep(unsigned secs);
 void * ffsb_malloc(size_t size); 
+void * ffsb_realloc(void *ptr, size_t size);
 char * ffsb_strdup(const char* str);
 size_t ffsb_strnlen(const char* str, size_t maxlen);
 
