@@ -85,7 +85,8 @@ int main(int argc, char *argv[])
 	memset(&after_children ,0,sizeof(after_children ));
 
 	ffsb_unbuffer_stdout();
-
+	//ffsb_bench_gettimeofday();
+	//ffsb_bench_getpid();
 	if(argc < 2) {
 		fprintf(stderr,"usage: %s <config file> [time]\n",
 			argv[0]);
@@ -205,56 +206,38 @@ int main(int argc, char *argv[])
 	printf("Benchmark took %.2lf sec\n",totaltime);
 	printf("\n");
 
-	if( fc.num_threadgroups > 1 ) {
-		for( i = 0 ; i < fc.num_threadgroups; i++) {
-			struct ffsb_op_results tg_results;
-			init_ffsb_op_results(&tg_results);
-			
-			/* grab the individual tg results */
-			tg_collect_results(&fc.groups[i],&tg_results);
+	for( i = 0 ; i < fc.num_threadgroups; i++) {
+		struct ffsb_op_results tg_results;
+		ffsb_tg_t *tg = fc.groups + i;
+		
+		init_ffsb_op_results(&tg_results);
+		
+		/* grab the individual tg results */
+		tg_collect_results(tg,&tg_results);
+
+		if ( fc.num_threadgroups == 1 ) {
+			printf("Total Results\n");
+		} else { 
 			printf("ThreadGroup %d\n",i);
-			printf("===============\n");
-			print_results(&tg_results,totaltime);
-			printf("\n");
-			
-			/* add the tg results to the total */
-			tg_collect_results( &fc.groups[i], &total_results);
 		}
-	} else { 
-		tg_collect_results( &fc.groups[0], &total_results);
+		printf("===============\n");
+		print_results(&tg_results,totaltime);
+		if( tg_needs_stats(tg) ) {
+			ffsb_statsd_t fsd;
+			tg_collect_stats(tg, &fsd);
+				ffsb_statsd_print(&fsd);
+		}
+		printf("\n");
+		
+		/* add the tg results to the total */
+		tg_collect_results( &fc.groups[i], &total_results);
 	}
 
-	printf("Total Results\n");
-	printf("===============\n");
-	print_results(&total_results,totaltime);
-
-/* 	printf("self\n"); */
-/* 	printf("after usertime    %ld %ld \n" */
-/* 	       "before usertime   %ld %ld \n" */
-/* 	       "after systemtime  %ld %ld \n" */
-/* 	       "before systemtime %ld %ld\n", */
-/* 	       after_self.ru_utime.tv_sec, */
-/* 	       after_self.ru_utime.tv_usec, */
-/* 	       before_self.ru_utime.tv_sec, */
-/* 	       before_self.ru_utime.tv_usec, */
-/* 	       after_self.ru_stime.tv_sec, */
-/* 	       after_self.ru_stime.tv_usec, */
-/* 	       before_self.ru_stime.tv_sec, */
-/* 	       before_self.ru_stime.tv_usec); */
-
-/* 	printf("children\n"); */
-/* 	printf("after usertime    %ld %ld \n" */
-/* 	       "before usertime   %ld %ld \n" */
-/* 	       "after systemtime  %ld %ld \n" */
-/* 	       "before systemtime %ld %ld\n", */
-/* 	       after_children.ru_utime.tv_sec, */
-/* 	       after_children.ru_utime.tv_usec, */
-/* 	       before_children.ru_utime.tv_sec, */
-/* 	       before_children.ru_utime.tv_usec, */
-/* 	       after_children.ru_stime.tv_sec, */
-/* 	       after_children.ru_stime.tv_usec, */
-/* 	       before_children.ru_stime.tv_sec, */
-/* 	       before_children.ru_stime.tv_usec); */
+	if( fc.num_threadgroups > 1 ) {
+		printf("Total Results\n");
+		printf("===============\n");
+		print_results(&total_results,totaltime);
+	}
 
 #define USEC_PER_SEC ((double)(1000000.0f))
 
@@ -284,14 +267,6 @@ int main(int argc, char *argv[])
 	            ((before_children.ru_stime.tv_usec)/USEC_PER_SEC)));
 		     
 
-/* 	printf("usertime is %lf systime is %lf\n", */
-/* 	       usertime,systime); */
-	
-/* 	    tvtodouble( &before.ru_utime ); */
-	
-/* 	systime = tvtodouble( &after.ru_stime ) -  */
-/* 	    tvtodouble( &before.ru_stime ); */
-	
 	printf("\n\n");
 	printf("%.1lf%% User   Time\n", 100 * usertime/totaltime);
 	printf("%.1lf%% System Time\n", 100 * systime/totaltime);

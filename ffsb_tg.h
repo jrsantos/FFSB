@@ -27,6 +27,7 @@
 #include "ffsb_op.h"
 #include "ffsb_thread.h"
 #include "ffsb_fs.h"
+#include "ffsb_stats.h"
 
 #include "util.h" /* for barrier obj */
 
@@ -91,6 +92,10 @@ typedef struct ffsb_tg {
 
 	/* delay between every operation, in milliseconds*/
 	unsigned wait_time;
+
+	/* stats configuration */
+	int need_stats;
+	ffsb_statsc_t fsc;
 } ffsb_tg_t;
 
 /* init should be the very first thing called on the tg */
@@ -127,7 +132,12 @@ void       tg_print_config_aging(ffsb_tg_t *tg, char *fsname);
 /* adds all of this tg's results to res */
 void       tg_collect_results(ffsb_tg_t *tg, ffsb_op_results_t *res);
 
+/* adds up all this tg's stats to totals */
+void       tg_collect_stats(ffsb_tg_t *tg, ffsb_statsd_t *totals);
+
 /* getters/setters, setters should not be called after a run has begun */
+
+void      tg_set_statsc(ffsb_tg_t *tg, ffsb_statsc_t *fsc);
 
 void      tg_set_bindfs(ffsb_tg_t *tg, int fsnum);
 int       tg_get_bindfs(ffsb_tg_t *tg);
@@ -188,5 +198,7 @@ typedef struct tg_op_params {
 /* tg and rd and in parameters, everything in params is out */
 void      tg_get_op(ffsb_tg_t *tg, randdata_t *rd, tg_op_params_t *params);
 
+/* want stats for this tg ? */
+int       tg_needs_stats(ffsb_tg_t *tg);
 
 #endif

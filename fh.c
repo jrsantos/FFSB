@@ -15,6 +15,9 @@
  *   along with this program;  if not, write to the Free Software 
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
+
+#define FILE_OFFSET_BITS 64
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -41,62 +44,148 @@
 /*
   all these functions read the global mainconfig->bufferedio
   variable to determine if they are to do buffered i/o or normal
+
+  ha, well, they're supposed to anyway...!!! TODO -SR 2006/05/14
 */
 
-int fhopenhelper(char *filename,char* bufflags, int flags){
+static
+void do_stats( struct timeval *start, struct timeval *end, 
+	       ffsb_thread_t *ft, ffsb_fs_t *fs, syscall_t sys)
+{
+	struct timeval diff;
+	uint32_t value = 0;
+
+	if ( !ft && !fs )
+		return;
+
+	timersub(end, start, &diff);
+	
+	value = (1000000 * diff.tv_sec) + diff.tv_usec ;
+	
+	if ( ft && ft_needs_stats(ft, sys) ) {
+		ft_add_stat(ft,sys,value);
+	}
+
+	if ( fs && fs_needs_stats(fs, sys) ) {
+		fs_add_stat(fs,sys,value);
+	}
+	
+}
+
+static
+int fhopenhelper(char *filename,char* bufflags, int flags,  
+		 ffsb_thread_t *ft, ffsb_fs_t *fs){
 	int fd = 0;
+	struct timeval start,end;
+	int need_stats = ft_needs_stats(ft, SYS_OPEN) 
+	              || fs_needs_stats(fs, SYS_OPEN) ;
+
+	flags |= O_LARGEFILE;
+
+	if( need_stats )
+		gettimeofday(&start,NULL);
+
 	if ((fd=open64(filename,flags, S_IRWXU)) < 0 ){
 		perror(filename);
 		exit(0);
 	}
+
+	if( need_stats ) {
+		gettimeofday(&end,NULL);
+		do_stats(&start, &end, ft,fs, SYS_OPEN);
+	}
+
 	return fd;
 }
 
-int fhopenread(char *filename, int directio ){
-	if( ! directio  )
-		return fhopenhelper(filename,"r",O_RDONLY);
-	else
-		return fhopenhelper(filename,"r",O_RDONLY|O_DIRECT);
+int fhopenread(char *filename,  ffsb_thread_t *ft, ffsb_fs_t *fs)
+{
+	int flags = O_RDONLY;
+	int directio = fs_get_directio(fs);
+	
+	if( directio )
+		flags |= O_DIRECT;
+
+	return fhopenhelper(filename,"r",flags, ft,fs);
 }
 
-int fhopenappend(char *filename, int directio){
-	if(! directio )
-		return fhopenhelper(filename,"a",O_APPEND|O_WRONLY);
-	else
-		return fhopenhelper(filename,"a",O_DIRECT|O_APPEND|O_WRONLY);
+int fhopenappend(char *filename,  ffsb_thread_t *ft, ffsb_fs_t *fs)
+{
+	int flags = O_APPEND | O_WRONLY;
+	int directio = fs_get_directio(fs);
+
+	if( directio )
+		flags |= O_DIRECT;
+
+	return fhopenhelper(filename,"a",flags,ft,fs);
 }
 
-int fhopenwrite(char *filename, int directio){
-	if(! directio )
-		return fhopenhelper(filename,"w",O_WRONLY);
-	else
-		return fhopenhelper(filename,"w",O_DIRECT|O_WRONLY);
+int fhopenwrite(char *filename,  ffsb_thread_t *ft, ffsb_fs_t *fs)
+{
+	int flags = O_WRONLY;
+	int directio = fs_get_directio(fs);
+	if( directio )
+		flags |= O_DIRECT;
+	
+	return fhopenhelper(filename,"w",flags,ft,fs);
 }
 
 
-int fhopencreate(char *filename, int directio){
-	return fhopenhelper(filename,"rw",O_CREAT | O_RDWR | O_TRUNC);
+int fhopencreate(char *filename,  ffsb_thread_t *ft, ffsb_fs_t *fs)
+{
+	int flags = O_CREAT | O_RDWR | O_TRUNC;
+	int directio = fs_get_directio(fs);
+	if ( directio ) 
+		flags |= O_DIRECT;
+	return fhopenhelper(filename,"rw",flags,ft,fs);
 }
 
-void fhread(int fd,void *buf,uint64_t size ){
+void fhread(int fd,void *buf,uint64_t size,  ffsb_thread_t *ft, ffsb_fs_t *fs )
+{
 	ssize_t realsize;
-
+	struct timeval start,end;
+	int need_stats = ft_needs_stats(ft, SYS_READ) || fs_needs_stats(fs, SYS_READ);
 	assert ( size <= SIZE_MAX);
+
+	if( need_stats ) 
+		gettimeofday(&start ,NULL);
+
 	realsize=read(fd ,buf, size);
 
+	if( need_stats ) {
+		gettimeofday(&end, NULL);
+		do_stats(&start,&end,ft,fs, SYS_READ);
+	}
+
 	if (realsize!=size){
-		printf("Read %d instead of %lld bytes.\n",realsize,size);
+		printf("Read %lld instead of %llu bytes.\n",
+		       (unsigned long long)realsize,
+		       (unsigned long long)size);
 		/* printf("buf of size %lld started at %p \n",size,buf); */
 		perror("read");
 		exit(1);
 	}
+
+
 }
 
-void fhwrite(int fd,void *buf,uint32_t size ){
+void fhwrite(int fd,void *buf,uint32_t size,  ffsb_thread_t *ft, ffsb_fs_t *fs )
+{
 	ssize_t realsize;
+	struct timeval start,end;
+	int need_stats = ft_needs_stats(ft, SYS_WRITE) || fs_needs_stats(fs, SYS_WRITE);
 
-	assert(size <= SIZE_MAX );
+	assert ( size <= SIZE_MAX);
+
+	if( need_stats ) 
+		gettimeofday(&start ,NULL);
+
 	realsize=write(fd ,buf,size);
+
+	if( need_stats ) {
+		gettimeofday(&end, NULL);
+		do_stats(&start,&end,ft,fs, SYS_WRITE);
+	}
 
 	if (realsize!=size){
 		
@@ -106,14 +195,28 @@ void fhwrite(int fd,void *buf,uint32_t size ){
 		perror("write");
 		exit(1);
 	}
+
 }
 
-void fhseek(int fd,uint64_t offset,int whence ){
+void fhseek(int fd,uint64_t offset,int whence, ffsb_thread_t *ft, ffsb_fs_t *fs )
+{
 	uint64_t res;
+	struct timeval start,end;
+	int need_stats = ft_needs_stats(ft, SYS_LSEEK) || fs_needs_stats(fs, SYS_LSEEK);
 
 	if((whence==SEEK_CUR)&&(offset==0))
 		return;
+
+	if( need_stats ) 
+		gettimeofday(&start ,NULL);
+
 	res = lseek64(fd,offset,whence);
+
+
+	if( need_stats ) {
+		gettimeofday(&end, NULL);
+		do_stats(&start,&end,ft,fs,SYS_LSEEK);
+	}
 	if( (whence == SEEK_SET) && (res != offset)) {
 	        perror("seek");
 	}
@@ -127,8 +230,43 @@ void fhseek(int fd,uint64_t offset,int whence ){
 		perror("seek");
 		exit(1);
 	}
+
 }
 
-void fhclose(int fd){
+void fhclose(int fd, ffsb_thread_t *ft, ffsb_fs_t *fs)
+{
+	struct timeval start,end;
+	int need_stats = ft_needs_stats(ft, SYS_CLOSE) || fs_needs_stats(fs, SYS_CLOSE);
+
+	if( need_stats ) 
+		gettimeofday(&start ,NULL);
+
 	close(fd);
+
+	if( need_stats ) {
+		gettimeofday(&end ,NULL);
+		do_stats(&start,&end,ft,fs,SYS_CLOSE);
+	}
+
+}
+
+
+int writefile_helper(int fd, uint64_t size, uint32_t blocksize, char* buf,
+		     struct ffsb_thread *ft, struct ffsb_fs *fs)
+{
+	uint64_t iterations,a;
+	uint64_t last;
+	
+	iterations = size/blocksize;
+	last = size%blocksize;
+	
+	for ( a=0 ; a < iterations ; a++)
+		fhwrite(fd,buf,blocksize,ft,fs);
+
+	if (last) {
+		a++;
+		fhwrite(fd,buf,last,ft,fs);
+
+	}
+	return a;
 }

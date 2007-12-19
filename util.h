@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) International Business Machines Corp., 2001-2004
+ *   Copyright (c) International Business Machines Corp., 2001-2006
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -50,6 +50,8 @@ int    ffsb_system (char *command);
 void   ffsb_milli_sleep(unsigned time);
 void   ffsb_micro_sleep(unsigned time);
 void   ffsb_unbuffer_stdout(void);
+void   ffsb_bench_gettimeofday(void);
+void   ffsb_bench_getpid(void);
 
 uint64_t ffsb_get_filesize(char *name);
 
@@ -67,8 +69,6 @@ double cpu_so_far(void);
 double time_so_far(void);
 double cpu_so_far_children(void);
 float  getfsutil(char *dirname);
-
-int writefile_helper(int fd, uint64_t size, uint32_t blocksize, char* buf);
 
 struct timeval tvsub(struct timeval t1,struct timeval t0);
 struct timeval tvadd(struct timeval t1,struct timeval t0);

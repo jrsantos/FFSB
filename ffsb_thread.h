@@ -24,6 +24,7 @@
 #include "rand.h"
 #include "ffsb_op.h"
 #include "ffsb_tg.h"
+#include "ffsb_stats.h"
 
 #include "util.h" /* for barrier stuff */
 
@@ -48,10 +49,15 @@ typedef struct ffsb_thread {
 	char *mallocbuf;
 
 	struct ffsb_op_results results;
+	
+	/* stats */
+	ffsb_statsd_t fsd;
+
 } ffsb_thread_t ;
 
 /* */
-void        init_ffsb_thread(ffsb_thread_t *ft,struct ffsb_tg *tg, unsigned bufsize, unsigned tg_num, unsigned thread_num); 
+void        init_ffsb_thread(ffsb_thread_t *ft,struct ffsb_tg *tg, unsigned bufsize, 
+			     unsigned tg_num, unsigned thread_num); 
 void        destroy_ffsb_thread(ffsb_thread_t *ft);
 
 /* owning thread group will start thread with this, thread runs */
@@ -88,4 +94,11 @@ uint32_t    ft_get_read_skipsize(ffsb_thread_t *ft);
 
 ffsb_op_results_t *ft_get_results(ffsb_thread_t *ft);
 
+void        ft_set_statsc(ffsb_thread_t *ft, ffsb_statsc_t *fsc);
+
+/* for these two, ft == NULL is OK */
+int         ft_needs_stats(ffsb_thread_t *ft, syscall_t s);
+void        ft_add_stat(ffsb_thread_t *ft, syscall_t sys, uint32_t val);
+
+ffsb_statsd_t * ft_get_stats_data(ffsb_thread_t *ft);
 #endif

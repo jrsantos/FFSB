@@ -17,22 +17,32 @@
  */
 #ifndef _FH_H_
 #define _FH_H_
-#include "ffsb.h"
 
 
+#include <inttypes.h>
 
+struct ffsb_thread;
+struct ffsb_fs;
 
-int fhopenread(char *filename,int directio);
-int fhopenwrite(char *filename,int directio);
-int fhopencreate(char *filename,int directio);
-int fhopenappend(char *filename,int directio);
+int fhopenread(char *filename, struct ffsb_thread *, struct ffsb_fs *);
+int fhopenwrite(char *filenam, struct ffsb_thread *, struct ffsb_fs *);
+int fhopencreate(char *filename, struct ffsb_thread *, struct ffsb_fs *);
+int fhopenappend(char *filename, struct ffsb_thread *, struct ffsb_fs *);
 
-void fhread(int fd,void *buf,uint64_t size );
+void fhread(int fd,void *buf,uint64_t size, 
+	    struct ffsb_thread *, struct ffsb_fs * );
 
 /* can only write up to size_t bytes at a time, so size is a uint32_t */
-void fhwrite(int fd,void *buf,uint32_t size );
-void fhseek(int fd,uint64_t offset,int whence );
-void fhclose(int fd);
+void fhwrite(int fd,void *buf,uint32_t size, 
+	     struct ffsb_thread *, struct ffsb_fs * );
+void fhseek(int fd,uint64_t offset,int whence, 
+	    struct ffsb_thread *, struct ffsb_fs * );
+void fhclose(int fd, 
+	     struct ffsb_thread *, struct ffsb_fs * );
+
+int writefile_helper(int fd, uint64_t size, uint32_t blocksize, char* buf,
+		     struct ffsb_thread *ft, struct ffsb_fs *fs);
+
 
 
 #endif

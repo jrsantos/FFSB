@@ -48,6 +48,8 @@ void    destroy_ffsb_tg(ffsb_tg_t *tg)
 		destroy_ffsb_thread( tg->threads + i );
 	}
 	free(tg->threads);
+	if( tg_needs_stats(tg) ) 
+		ffsb_statsc_destroy(&tg->fsc);
 }
 
 void *     tg_run(void * data )
@@ -350,4 +352,37 @@ unsigned  tg_get_waittime(ffsb_tg_t *tg)
 int tg_get_flagval(ffsb_tg_t *tg)
 {
 	return tg->flagval;
+}
+
+
+void tg_set_statsc(ffsb_tg_t *tg, ffsb_statsc_t *fsc)
+{
+	if (fsc ) {
+		int i;
+
+		tg->need_stats = 1;
+		ffsb_statsc_copy(&tg->fsc, fsc);
+
+		for ( i = 0 ; i < tg->num_threads ; i ++ ) {
+			ft_set_statsc(tg->threads + i, &tg->fsc);
+		}
+	}
+}
+
+void tg_collect_stats(ffsb_tg_t *tg, ffsb_statsd_t *fsd)
+{
+	int i;
+
+	assert(tg->need_stats);
+	
+	ffsb_statsd_init(fsd, &tg->fsc);
+
+	for(i = 0  ; i < tg_get_numthreads(tg) ; i++) {
+		ffsb_statsd_add(fsd, ft_get_stats_data(tg->threads+i));
+	}
+}
+
+int       tg_needs_stats(ffsb_tg_t *tg)
+{
+	return tg->need_stats;
 }

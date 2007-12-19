@@ -39,8 +39,15 @@ void destroy_ffsb_thread(ffsb_thread_t *ft)
 {
 	free(ft->mallocbuf);
 	destroy_random( &ft->rd);
+	if ( ft->fsd.config )
+		ffsb_statsd_destroy( &ft->fsd );
 }
 
+
+void  ft_set_statsc(ffsb_thread_t *ft, ffsb_statsc_t *fsc)
+{
+	ffsb_statsd_init(&ft->fsd,fsc);
+}
 
 void* ft_run( void * data )
 {
@@ -146,4 +153,24 @@ int         ft_get_read_skip(ffsb_thread_t *ft)
 uint32_t    ft_get_read_skipsize(ffsb_thread_t *ft)
 {
 	return tg_get_read_skipsize(ft->tg);
+}
+
+int ft_needs_stats(ffsb_thread_t *ft, syscall_t sys)
+{
+	int ret = 0;
+	if ( ft && ft->fsd.config && !(fsc_ignore_sys(ft->fsd.config, sys)))
+		ret = 1;
+		
+	return ret;
+}
+
+void        ft_add_stat(ffsb_thread_t *ft, syscall_t sys, uint32_t val)
+{
+	if (ft)
+		ffsb_add_data( &ft->fsd, sys, val);
+}
+
+ffsb_statsd_t * ft_get_stats_data(ffsb_thread_t *ft)
+{
+	return &ft->fsd;
 }

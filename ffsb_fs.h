@@ -21,7 +21,7 @@
 #include "filelist.h"
 #include "ffsb_op.h"
 #include "ffsb_tg.h"
-
+#include "ffsb_stats.h"
 
 /* These are the base names for the different file types on a filesystem  */
 #define FILES_BASE "data"
@@ -92,6 +92,11 @@ typedef struct ffsb_fs {
 	/* for now, they are all just putting pointers to */
 	/* a particular benchfiles struct here, which is already sync'ed */
 	void *op_data[FFSB_NUMOPS];
+
+	/* per-fs stats */
+	ffsb_statsc_t fsc;
+	ffsb_statsd_t fsd;
+
 } ffsb_fs_t;
 
 /* set up the structure, zeros everything out and dups the basedir string  */
@@ -160,4 +165,8 @@ uint32_t          fs_get_numstartfiles(ffsb_fs_t *fs);
 uint32_t          fs_get_numdirs(ffsb_fs_t *fs);
 
 double             fs_get_desired_fsutil(ffsb_fs_t *fs);
+
+/* for these two, fs == NULL is OK */
+int         fs_needs_stats(ffsb_fs_t *fs, syscall_t s);
+void        fs_add_stat(ffsb_fs_t *fs, syscall_t sys, uint32_t val);
 #endif

@@ -45,7 +45,8 @@ void fop_age(ffsb_fs_t * fs, unsigned opnum)
 
 
 static
-unsigned readfile_helper(int fd, uint64_t size, uint32_t blocksize, char* buf)
+unsigned readfile_helper(int fd, uint64_t size, uint32_t blocksize, char* buf,
+			 ffsb_thread_t *ft, ffsb_fs_t *fs)
 {
 	int iterations,a;
 	int last;
@@ -54,9 +55,9 @@ unsigned readfile_helper(int fd, uint64_t size, uint32_t blocksize, char* buf)
 	last =  size % blocksize;
 	
 	for ( a=0 ; a<iterations ; a++)
-		fhread(fd,buf,blocksize);
+		fhread(fd,buf,blocksize,ft,fs);
 	if (last)
-		fhread(fd,buf,last);
+		fhread(fd,buf,last, ft,fs);
 	return iterations;
 }
 
@@ -90,7 +91,7 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 	uint64_t iterations = 0;
 	
 	curfile = choose_file_reader(bf, rd);
-	fd      = fhopenread(curfile->name, fs_get_directio(fs));
+	fd      = fhopenread(curfile->name,ft,fs );
 
 	
 	filesize= ffsb_get_filesize(curfile->name);
@@ -141,11 +142,11 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 /* 			       iterations,last); */
 
 			for ( i = 0; i < iterations ; i++ ) {
-				fhread(fd, buf, read_blocksize);
-				fhseek(fd,(uint64_t)read_skipsize, SEEK_CUR );
+				fhread(fd, buf, read_blocksize,ft,fs);
+				fhseek(fd,(uint64_t)read_skipsize, SEEK_CUR, ft,fs );
 			} 
 			if( last ) {
-				fhread(fd,buf,(uint64_t)last);
+				fhread(fd,buf,(uint64_t)last, ft,fs);
 				iterations++;
 			}
 
@@ -153,9 +154,9 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 			/* regular sequential reads */
 			if( range ) {
 				offset = get_random_offset(rd,range,fs_get_alignio(fs));
-				fhseek(fd, offset, SEEK_SET);
+				fhseek(fd, offset, SEEK_SET, ft,fs);
 			}
-			iterations = readfile_helper(fd, read_size, read_blocksize,buf);
+			iterations = readfile_helper(fd, read_size, read_blocksize,buf,ft,fs);
 		}
 	} else {
 		/* randomized read */
@@ -166,13 +167,13 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 		
 		for ( i=0 ; i < iterations ; i++) {
 			uint64_t offset = get_random_offset(rd, range,fs_get_alignio(fs)); 
-			fhseek(fd,offset,SEEK_SET);
-			fhread(fd,buf,read_blocksize);
+			fhseek(fd,offset,SEEK_SET,ft,fs);
+			fhread(fd,buf,read_blocksize,ft,fs);
 		}
 	}
 		
 	unlock_file_reader(curfile);
-	fhclose(fd);
+	fhclose(fd,ft,fs);
 
 	ft_incr_op(ft,opnum,iterations);
 	ft_add_readbytes(ft,read_size);
@@ -195,14 +196,14 @@ void ffsb_readall(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	unsigned iterations = 0;
 	
 	curfile = choose_file_reader(bf, rd);
-	fd      = fhopenread(curfile->name, fs_get_directio(fs));
+	fd      = fhopenread(curfile->name,ft,fs);
 
 	
 	filesize= ffsb_get_filesize(curfile->name);
-	iterations = readfile_helper(fd, filesize, read_blocksize,buf);
+	iterations = readfile_helper(fd, filesize, read_blocksize,buf,ft,fs);
 			
 	unlock_file_reader(curfile);
-	fhclose(fd);
+	fhclose(fd,ft,fs);
 
 	ft_incr_op(ft,opnum,iterations);
 	ft_add_readbytes(ft,filesize);
@@ -225,7 +226,7 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 	unsigned iterations       = 0;
 
 	curfile = choose_file_reader(bf, rd);
-	fd      = fhopenwrite(curfile->name, fs_get_directio(fs) );
+	fd      = fhopenwrite(curfile->name,ft,fs);
 
 	filesize = ffsb_get_filesize(curfile->name);
 	
@@ -237,9 +238,9 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 		uint64_t offset = 0;
 		if( range ) {
 			offset = get_random_offset(rd,range,fs_get_alignio(fs));
-			fhseek(fd, offset, SEEK_SET);
+			fhseek(fd, offset, SEEK_SET,ft,fs);
 		}
-		iterations = writefile_helper(fd,write_size,write_blocksize,buf);
+		iterations = writefile_helper(fd,write_size,write_blocksize,buf,ft,fs);
 	} else {
 		/* randomized write */
 		uint64_t range = filesize - write_blocksize;
@@ -248,8 +249,8 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 		
 		for ( i=0 ; i < iterations ; i++) {
 			uint64_t offset = get_random_offset(rd,range,fs_get_alignio(fs));
-			fhseek(fd,offset,SEEK_SET);
-			fhwrite(fd,buf,write_blocksize);
+			fhseek(fd,offset,SEEK_SET,ft,fs);
+			fhwrite(fd,buf,write_blocksize,ft,fs);
 		}
 	}
 
@@ -261,7 +262,7 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 		}
 	}
 	unlock_file_reader(curfile);
-	fhclose(fd);
+	fhclose(fd,ft,fs);
 
 	ft_incr_op(ft,opnum,iterations);
 	ft_add_writebytes(ft,write_size);
@@ -269,6 +270,7 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 
 
 /* shared core between ffsb_writeall and ffsb_writeall_fsync */
+#if 0
 static
 unsigned ffsb_writeall_core(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum,
 			    uint64_t * filesize_ret, int fsync_file)
@@ -285,11 +287,11 @@ unsigned ffsb_writeall_core(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum,
 	unsigned iterations = 0;
 	
 	curfile = choose_file_reader(bf, rd);
-	fd      = fhopenwrite(curfile->name, fs_get_directio(fs));
+	fd      = fhopenwrite(curfile->name,ft,fs);
 
 	
 	filesize= ffsb_get_filesize(curfile->name);
-	iterations = writefile_helper(fd, filesize, write_blocksize,buf);
+	iterations = writefile_helper(fd, filesize, write_blocksize,buf,ft,fs);
 	if( fsync_file ) {
 		if( fsync(fd) ) {
 			perror("fsync");
@@ -298,10 +300,11 @@ unsigned ffsb_writeall_core(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum,
 		}
 	}
 	unlock_file_reader(curfile);
-	fhclose(fd);
+	fhclose(fd,ft,fs);
 	*filesize_ret = filesize;
 	return iterations;
 }
+#endif 
 
 /* just like ffsb_writefile but we write the whole file from start to finish */
 /* regardless of file size */
@@ -343,14 +346,14 @@ void ffsb_appendfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 
 
 	curfile=choose_file_reader(bf, rd);
-	fd = fhopenappend(curfile->name, fs_get_directio(fs));
+	fd = fhopenappend(curfile->name,ft,fs);
 
 	unlock_file_reader(curfile);
 
 	curfile->size += (uint64_t)(write_size);
 	
-	iterations = writefile_helper(fd,write_size,write_blocksize,buf);
-	fhclose(fd);
+	iterations = writefile_helper(fd,write_size,write_blocksize,buf,ft,fs);
+	fhclose(fd,ft,fs);
 
 	ft_incr_op(ft,opnum,iterations);
 	ft_add_writebytes(ft,write_size);
@@ -377,9 +380,9 @@ void ffsb_createfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
 	} 
 		
 	newfile = add_file(bf,size,rd);    
-	fd = fhopencreate(newfile->name, fs_get_directio(fs));
-	iterations = writefile_helper(fd, size,write_blocksize,buf); 
-	fhclose(fd);
+	fd = fhopencreate(newfile->name,ft,fs);
+	iterations = writefile_helper(fd, size,write_blocksize,buf,ft,fs); 
+	fhclose(fd,ft,fs);
 
 	unlock_file_writer(newfile);	
 

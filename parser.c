@@ -19,12 +19,13 @@
 #include <string.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <ctype.h>
 
 #include "ffsb.h"
 #include "parser.h"
 #include "ffsb_tg.h"
+#include "ffsb_stats.h"
 #include "util.h"
-#include "ctype.h"
 
 
 
@@ -343,6 +344,73 @@ char* parse_globals(ffsb_config_t *fc, FILE *f, unsigned *fs_flags)
 	return buf;
 }
 
+static
+char * parse_stats_config(ffsb_statsc_t *fsc, FILE *f, char *buf, int *need_stats)
+{
+	int flag = 1;
+	uint32_t temp32 = 0;
+	double tempdouble1;
+	double tempdouble2;
+	//unsigned num_buckets = 0;
+	//unsigned cur_bucket = 0;
+
+	ffsb_statsc_init(fsc);
+
+	while ( flag ) {
+		buf = get_next_line(f);
+		if( (buf == NULL) || (0 == ffsb_strnlen(buf, BUFSIZE)) ) {
+			printf("parse error, nothing left to parse "
+			       "during stats parsing\n");
+			exit(1);
+		}
+
+		if ( 1 == sscanf(buf, "enable_stats=%u",&temp32) ) {
+			printf("got enable_stats = %u\n",temp32);
+			*need_stats = temp32;
+			continue;
+		}
+
+		if ( 0 == strncmp(buf,"[end]",strlen("[end]")) ) {
+			flag = 0;
+			buf = get_next_line(f);
+			continue;
+		}
+
+		if ( 2 == sscanf(buf,"bucket %lf %lf",&tempdouble1,&tempdouble2) ) {
+			uint32_t min =(uint32_t)(tempdouble1* 1000.0f);
+			uint32_t max =(uint32_t)(tempdouble2* 1000.0f);
+			/* printf("parser: bucket %lf -> %u %lf -> %u\n",
+			   tempdouble1,min,tempdouble2,max);*/
+			ffsb_statsc_addbucket( fsc, min, max);
+			continue;
+		}
+
+		if (0 == strncmp(buf,"ignore=", strlen("ignore="))) {
+			char *tmp = buf + strlen("ignore=") ;
+			unsigned len = ffsb_strnlen(buf,BUFSIZE);
+			syscall_t sys;
+			
+			if ( len == strlen("ignore=")) {
+				printf("bad ignore= line\n");
+				continue;
+			}
+			if ( ffsb_stats_str2syscall(tmp, &sys) ) {
+				/* printf("ignoring %d\n",sys); */
+				ffsb_statsc_ignore_sys(fsc, sys);
+				goto out;
+			} 
+
+			printf("warning: can't ignore unknown syscall %s\n",tmp);
+		out:
+			continue;
+			
+		}
+
+	}
+	/* printf("fsc->ignore_stats = 0x%x\n",fsc->ignore_stats); */
+	return buf;
+}
+
 /* !!! hackish verification function, we should somehow roll this into the */
 /* op descriptions/struct themselves at some point with a callback verify */
 /* op requirements: */
@@ -441,6 +509,9 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 	uint32_t rskipsize = tg_get_read_skipsize(dft);
 
 	unsigned waittime = tg_get_waittime(dft);
+
+	ffsb_statsc_t fsc = { 0, };
+	int need_stats = 0;
 
 	while( flag ) {
 		if( (buf == NULL) || (0 == ffsb_strnlen(buf, BUFSIZE)) ) {
@@ -559,7 +630,11 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 			continue;
 		}
 
-
+		if ( 0 == strncmp(buf, "[stats]",strlen("[stats]")) ) {
+			buf = parse_stats_config(&fsc,f,buf, &need_stats);
+			continue;
+		}
+		
 		if( 1 == sscanf(buf,"[end%u]\n",&temp32)){
 			if( temp32 != tgnum) {
 				fprintf(stderr,"parse_tg: tgnum isn't %u!!!\n",tgnum);
@@ -576,8 +651,13 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 		fclose(f);
 		exit(1);
 	}
+
 	init_ffsb_tg(tg,numthreads,tgnum);
 	
+	if( need_stats ) {
+		tg_set_statsc(tg,&fsc);
+	}
+
 	tg_set_bindfs(tg,bindfs);
 
 	tg_set_read_random(tg,rr);
@@ -622,8 +702,8 @@ char * parse_fs(ffsb_fs_t *fs, int fsnum, FILE *f, char *buf, unsigned fs_flags,
 	uint64_t temp64;
 	uint32_t temp32;
 	
-	int reuse             = fs_get_reuse_fs(def_fs);
-	int agefs             = fs_get_agefs(def_fs);
+	int reuse            = fs_get_reuse_fs(def_fs);
+	int agefs            = fs_get_agefs(def_fs);
 	uint32_t numfiles    = fs_get_numstartfiles(def_fs); 
 	uint32_t numdirs     = fs_get_numdirs(def_fs);
 	uint64_t minfilesize = fs_get_min_filesize(def_fs);
@@ -635,6 +715,9 @@ char * parse_fs(ffsb_fs_t *fs, int fsnum, FILE *f, char *buf, unsigned fs_flags,
 	double tempdouble;
 	double fsutil   = fs_get_desired_fsutil(def_fs);
 	ffsb_tg_t * atg = fs_get_aging_tg(def_fs);
+
+	ffsb_statsc_t fsc = { 0, };
+	int need_stats = 0;
 
 	memset(tempbuf,0,256);
 
@@ -706,6 +789,12 @@ char * parse_fs(ffsb_fs_t *fs, int fsnum, FILE *f, char *buf, unsigned fs_flags,
 			}
 			continue;
 		}
+
+		if ( 0 == strncmp(buf, "[stats]",strlen("[stats]")) ) {
+			buf = parse_stats_config(&fsc,f,buf, &need_stats);
+			continue;
+		}
+
 		if( 1 == sscanf(buf,"[end%u]\n",&temp32)){
 			if( temp32 != fsnum) {
 				fprintf(stderr,"parse_fs: %d fsnum isn't %u!!!\n",temp32,fsnum);
@@ -735,6 +824,11 @@ char * parse_fs(ffsb_fs_t *fs, int fsnum, FILE *f, char *buf, unsigned fs_flags,
 	if( agefs ) {
 		fs_set_aging_tg(fs,atg,fsutil);
 	}
+
+	if( need_stats ) {
+		fprintf(stderr,"warning, per filsystem statistics not implemented yet\n");
+	}
+
 			
 	return buf;
 }

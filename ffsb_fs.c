@@ -78,7 +78,7 @@ void clone_ffsb_fs(ffsb_fs_t *target, ffsb_fs_t *orig)
 }
 
 static 
-void add_files(struct benchfiles *bf, int num, uint64_t minsize, 
+void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num, uint64_t minsize, 
 	       uint64_t maxsize, unsigned blocksize)
 {
 	struct ffsb_file *cur;
@@ -95,9 +95,9 @@ void add_files(struct benchfiles *bf, int num, uint64_t minsize,
 			getllrandom(&rd, maxsize - minsize);
 		
 		cur = add_file( bf,size,&rd);
-		fd = fhopencreate( cur->name,0);
-		writefile_helper(fd, size , blocksize , buf);
-		fhclose(fd);
+		fd = fhopencreate( cur->name, NULL,fs);
+		writefile_helper(fd, size , blocksize , buf, NULL,fs);
+		fhclose(fd, NULL, fs);
 		unlock_file_writer(cur);
 	}
 	free(buf);
@@ -147,9 +147,9 @@ int verify_file(struct benchfiles* bf, char * fname , void* fs_ptr)
 		return 0;
 	}
 
-	/* if we can't open it readwrite, we're done */
-	if( ( fd = open(fname, O_RDWR)) < 0) {
-		printf("verify_file: error with %s\n",fname);
+	/* if we can't open it for read we're done */
+	if( ( fd = open(fname, O_RDONLY)) < 0) {
+		printf("verify_file: error opening %s for readonly\n",fname);
 		perror(fname);
 		return 1;
 		
@@ -311,7 +311,7 @@ ffsb_fs_t * construct_new_fileset(ffsb_fs_t * fs )
 	ops_setup_bench(fs);
 	
 	/* create initial fileset */
-	add_files(&fs->files,fs->num_start_files, fs->minfilesize, fs->maxfilesize, fs->create_blocksize );
+	add_files(fs, &fs->files,fs->num_start_files, fs->minfilesize, fs->maxfilesize, fs->create_blocksize );
 	return fs;
 }
 
@@ -366,7 +366,7 @@ void age_fs(ffsb_fs_t *fs, double utilization  )
 	ops_setup_age(fs);
 
 	/* throw in some files to start off, so there's something */
-	add_files(&fs->fill,10,0,0, fs->age_blocksize);
+	add_files(fs, &fs->fill,10,0,0, fs->age_blocksize);
 
 /* 	printf("starting aging fs %s, fs util is %f\n",fs->basedir, */
 /* 	       getfsutil(fs->basedir)); */
@@ -580,4 +580,16 @@ void fs_print_config(ffsb_fs_t *fs)
 		tg_print_config_aging( fs->aging_tg, fs->basedir );
 	}
 	printf("\t\n");
+}
+
+
+int         fs_needs_stats(ffsb_fs_t *fs, syscall_t sys)
+{
+	return (fs != NULL) ? (int)fs->fsd.config : 0 ;
+}
+
+void        fs_add_stat(ffsb_fs_t *fs, syscall_t sys, uint32_t val)
+{
+	if (fs)
+		ffsb_add_data( &fs->fsd, sys, val);
 }

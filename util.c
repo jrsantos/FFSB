@@ -50,24 +50,6 @@ uint64_t ffsb_get_filesize(char *name)
 #undef STAT
 }
 
-int writefile_helper(int fd, uint64_t size, uint32_t blocksize, char* buf)
-{
-	uint64_t iterations,a;
-	uint64_t last;
-	
-	iterations = size/blocksize;
-	last = size%blocksize;
-	
-	for ( a=0 ; a < iterations ; a++)
-		fhwrite(fd,buf,blocksize);
-	if (last) {
-		a++;
-		fhwrite(fd,buf,last);
-
-	}
-	return a;
-}
-
 
 void* ffsb_malloc(size_t size) 
 { 
@@ -322,4 +304,40 @@ void   ffsb_unbuffer_stdout(void)
 #else
 	setvbuf(stdout,_IONBF,NULL,0);
 #endif
+}
+
+void   ffsb_bench_gettimeofday(void)
+{
+	unsigned long i =0;
+	uint64_t total_usec;
+	uint64_t average = 0;
+	struct timeval starttime,endtime,junk, difftime;
+	gettimeofday(&starttime, NULL);
+	for (i=0; i < 1000000 ;i++) 
+		gettimeofday(&junk, NULL);
+	gettimeofday(&endtime, NULL);
+	timersub(&endtime, &starttime, &difftime);
+	total_usec = difftime.tv_sec * 1000000;
+	total_usec += difftime.tv_usec;
+	average = total_usec / 1000ull;
+	printf("average time for gettimeofday(): %llu nsec\n",
+	       average);
+}
+
+void   ffsb_bench_getpid(void)
+{
+	unsigned long i =0;
+	uint64_t total_usec;
+	uint64_t average = 0;
+	struct timeval starttime,endtime,difftime;
+	gettimeofday(&starttime, NULL);
+	for (i=0; i < 1000000 ;i++) 
+		getpid();
+	gettimeofday(&endtime, NULL);
+	timersub(&endtime, &starttime, &difftime);
+	total_usec = difftime.tv_sec * 1000000;
+	total_usec += difftime.tv_usec;
+	average = total_usec / 1000ull;
+	printf("average time for getpid(): %llu nsec\n",
+	       average);
 }
