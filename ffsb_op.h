@@ -26,73 +26,74 @@ struct ffsb_op_results;
 struct ffsb_thread;
 struct ffsb_fs;
 
-/* This file handles all of the operations FFSB supports */
-
-/* it has tight interactions with the filesystem objects, but is otherwise pretty abstract */
+/* This file handles all of the operations FFSB supports.  It has
+ * tight interactions with the filesystem objects, but is otherwise
+ * pretty abstract.
+ */
 
 /* The op callback */
-typedef void (* ffsb_op_fn )(struct ffsb_thread *,struct ffsb_fs *,unsigned op_num);
+typedef void (* ffsb_op_fn )(struct ffsb_thread *, struct ffsb_fs *,
+			     unsigned op_num);
 
 /* Operation results printing function */
-typedef void (* ffsb_op_print_fn) (struct ffsb_op_results* ,double secs, unsigned int op_num);
+typedef void (* ffsb_op_print_fn)(struct ffsb_op_results *, double secs,
+				  unsigned int op_num);
 
 /* Operation specific initialization for a filesystem */
-typedef void (* ffsb_op_fs_fn) (struct ffsb_fs*, unsigned opnum);
-
+typedef void (* ffsb_op_fs_fn)(struct ffsb_fs *, unsigned opnum);
 
 typedef struct ffsb_op {
-	unsigned int     op_id;
-	char *           op_name;
-	ffsb_op_fn       op_fn;
+	unsigned int op_id;
+	char * op_name;
+	ffsb_op_fn op_fn;
 	ffsb_op_print_fn op_print_fn;     /* optional print funcion */
-	ffsb_op_print_fn op_exl_print_fn; /* function if op is "exclusive" , also optional */
+	ffsb_op_print_fn op_exl_print_fn; /* function if op is
+					   * "exclusive", also
+					   * optional */
 	
-	/* the point of these two fields is to determine which set of */
-	/* files are being worked on, currently either data, meta, or aging */
-	/* data and meta are mutually exclusive, so we only need two funcs */
-	ffsb_op_fs_fn    op_bench;
-	ffsb_op_fs_fn    op_age;
+	/* The point of these two fields is to determine which set of
+	 * files are being worked on.  Currently either data, meta, or
+	 * aging.  Data and meta are mutually exclusive, so we only
+	 * need two funcs.
+	 */
+	ffsb_op_fs_fn op_bench;
+	ffsb_op_fs_fn op_age;
 } ffsb_op_t;
 
-/* list of all operations, located in ffsb_op.c */
+/* List of all operations, located in ffsb_op.c */
 extern ffsb_op_t ffsb_op_list[];
 
-/* This *must* be updated when a new operation is added or one is removed */
-/* several other structures use it for statically sized arrays */
+/* This *must* be updated when a new operation is added or one is
+ * removed several other structures use it for statically sized arrays
+ */
 #define FFSB_NUMOPS (7)
 
-/* returns index of an op */ 
-/* returns -1 if opname isn't found, and its  case sensitive :) */
-int  ops_find_op(char *opname);
-
+/* Returns index of an op. 
+ * Returns -1 if opname isn't found, and its case sensitive :)
+ */
+int ops_find_op (char *opname);
 
 typedef struct ffsb_op_results {
-	/* count of how many times each op was run */
+	/* Count of how many times each op was run */
 	unsigned int ops[FFSB_NUMOPS];
-	
+
 	uint64_t read_bytes;
 	uint64_t write_bytes; 
-    
 } ffsb_op_results_t;
 
+void init_ffsb_op_results (struct ffsb_op_results *);
+void print_results (struct ffsb_op_results * results, double runtime);
+char* op_get_name (int opnum);
 
-void init_ffsb_op_results(struct ffsb_op_results *);
-
-
-void print_results(struct ffsb_op_results * results, double runtime);
-
-char* op_get_name(int opnum);
-
-/* setup the ops for the benchmark */
-void ops_setup_bench(struct ffsb_fs * fs);
+/* Setup the ops for the benchmark */
+void ops_setup_bench (struct ffsb_fs * fs);
 
 /* setup the ops for aging the filesystem */
-void ops_setup_age(struct ffsb_fs * fs);
+void ops_setup_age (struct ffsb_fs * fs);
 
-void add_results(struct ffsb_op_results *target, struct ffsb_op_results *src);
+void add_results (struct ffsb_op_results *target, struct ffsb_op_results *src);
 
+/* Run this op, using this thread state, on this filesystem */
+void do_op (struct ffsb_thread *ft, struct ffsb_fs * fs, unsigned op_num);
 
-/* run this op, using this thread state, on this filesystem */
-void do_op(struct ffsb_thread *ft, struct ffsb_fs * fs,unsigned op_num);
-
-#endif
+#endif /* _FFSB_OP_H_ */
