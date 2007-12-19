@@ -96,7 +96,7 @@ typedef struct ffsb_tg {
 /* init should be the very first thing called on the tg */
 /* then after that, the user can call the set methods   */
 /* and finally run */
-void      init_ffsb_tg(ffsb_tg_t *tg, unsigned num_threads, unsigned tg_num );
+void      init_ffsb_tg(ffsb_tg_t *tg, unsigned num_threads, unsigned tg_num);
 
 void      destroy_ffsb_tg(ffsb_tg_t *tg);
 

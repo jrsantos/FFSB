@@ -347,7 +347,7 @@ unsigned  tg_get_waittime(ffsb_tg_t *tg)
 	return tg->wait_time;
 }
 
-int       tg_get_flagval(ffsb_tg_t *tg)
+int tg_get_flagval(ffsb_tg_t *tg)
 {
 	return tg->flagval;
 }

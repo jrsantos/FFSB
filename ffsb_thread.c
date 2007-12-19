@@ -32,7 +32,7 @@ void init_ffsb_thread(ffsb_thread_t *ft,struct ffsb_tg *tg, unsigned bufsize,
 	if( bufsize) {
 		ft_alter_bufsize(ft,bufsize);
 	}
-	init_random( &ft->rd, MAX_RANDBUF_SIZE );	
+	init_random( &ft->rd, MAX_RANDBUF_SIZE );
 }
 
 void destroy_ffsb_thread(ffsb_thread_t *ft)
@@ -42,7 +42,7 @@ void destroy_ffsb_thread(ffsb_thread_t *ft)
 }
 
 
-void*       ft_run( void * data )
+void* ft_run( void * data )
 {
 	ffsb_thread_t *ft = (ffsb_thread_t *) data;
 	tg_op_params_t params;
