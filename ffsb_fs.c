@@ -90,9 +90,9 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 
 	assert(blocksize);
 
-	init_random(&rd,0);
+	init_random(&rd, 0);
 
-	for (i = 0 ; i < num ; i++) {
+	for (i = 0; i < num; i++) {
 		uint64_t size = minsize +
 			getllrandom(&rd, maxsize - minsize);
 
