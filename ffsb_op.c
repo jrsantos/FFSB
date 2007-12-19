@@ -24,56 +24,51 @@
 #include "metaops.h"
 
 ffsb_op_t ffsb_op_list[] = 
-{ { 0,"read",  ffsb_readfile,   NULL, ffsb_read_print_exl,   fop_bench, NULL},
-  { 1,"readall",ffsb_readall,   NULL, ffsb_read_print_exl,   fop_bench, NULL},
-  { 2,"write", ffsb_writefile,  NULL, ffsb_write_print_exl,  fop_bench, NULL},
-/*   { 3,"writeall", ffsb_writeall,  NULL, ffsb_write_print_exl,  fop_bench, NULL} */
-  { 3,"create",ffsb_createfile, NULL, ffsb_create_print_exl, fop_bench, fop_age},
-  { 4,"append",ffsb_appendfile, NULL, ffsb_append_print_exl, fop_bench, fop_age},
-  { 5,"delete",ffsb_deletefile, NULL, NULL ,                 fop_bench, fop_age},
-  { 6,"metaop",ffsb_metaops,    NULL, NULL ,                 metaops_metadir, NULL}
+{{0, "read", ffsb_readfile, NULL, ffsb_read_print_exl, fop_bench, NULL},
+ {1, "readall",	ffsb_readall, NULL, ffsb_read_print_exl, fop_bench, NULL},
+ {2, "write", ffsb_writefile, NULL, ffsb_write_print_exl, fop_bench, NULL},
+ {3, "create", ffsb_createfile, NULL, ffsb_create_print_exl, fop_bench, fop_age},
+ {4, "append", ffsb_appendfile, NULL, ffsb_append_print_exl, fop_bench, fop_age},
+ {5, "delete", ffsb_deletefile, NULL, NULL, fop_bench, fop_age},
+ {6, "metaop", ffsb_metaops, NULL, NULL, metaops_metadir, NULL}
 };
-
 
 void init_ffsb_op_results(ffsb_op_results_t * results)
 {
-	memset(results,0,sizeof(ffsb_op_results_t));
+	memset(results, 0, sizeof(ffsb_op_results_t));
 }
 
-/* void do_op(ffsb_thread_t *ft,ffsb_config_t *fc, ffsb_fs_t * fs,unsigned op_num) */
-/* { */
-/* 	ffsb_op_list[op_num].op_fn(ft,fc,fs,op_num); */
-/* } */
-
-static
-int exclusive_op(ffsb_op_results_t * results, unsigned int op_num)
+static int exclusive_op(ffsb_op_results_t * results, unsigned int op_num)
 {
 	int i;
 	int ret = 0;
-	for(i =0 ; i < FFSB_NUMOPS ; i++) {
-		if( i == op_num) continue;
+	for (i =0 ; i < FFSB_NUMOPS ; i++) {
+		if (i == op_num)
+			continue;
 		ret += results->ops[i];
 	}
 
-	if ( ret ) return 0;
+	if (ret)
+		return 0;
 	return 1;
 } 
 
-static
-void generic_op_print(char* name, unsigned num, double percentage)
+static void generic_op_print(char *name, unsigned num, double percentage)
 {
-	printf("%20s : %u ops (%lf%%) \n",name,num, percentage);
+	printf("%20s : %u ops (%lf%%) \n", name, num, percentage);
 }
 
-static
-void print_op_results(unsigned int op_num , ffsb_op_results_t * results, double runtime, unsigned total_ops)
+static void print_op_results(unsigned int op_num, ffsb_op_results_t * results,
+			     double runtime, unsigned total_ops)
 {
-	if( exclusive_op(results,op_num) && 
-	    ffsb_op_list[op_num].op_exl_print_fn != NULL ) {
-		ffsb_op_list[op_num].op_exl_print_fn(results,runtime, op_num);
+	if (exclusive_op(results,op_num) && 
+	    ffsb_op_list[op_num].op_exl_print_fn != NULL) {
+		ffsb_op_list[op_num].op_exl_print_fn(results, runtime, op_num);
 	} else {
-	    double percentage = 100* (double)results->ops[op_num] / (double)total_ops; 
-	    generic_op_print(ffsb_op_list[op_num].op_name, results->ops[op_num], percentage);
+	    double percentage = 100 * (double)results->ops[op_num] / 
+		    (double)total_ops; 
+	    generic_op_print(ffsb_op_list[op_num].op_name, results->ops[op_num], 
+			     percentage);
 	}
 }
 
@@ -82,64 +77,57 @@ void print_results(struct ffsb_op_results * results, double runtime)
 	int i;
 	uint64_t total_ops = 0;
 
-	for( i = 0; i < FFSB_NUMOPS ; i++){
+	for (i = 0; i < FFSB_NUMOPS ; i++)
 		total_ops += results->ops[i];
-	}
-	for( i = 0; i < FFSB_NUMOPS ; i++){
-		if( results->ops[i] != 0 ) {
-			print_op_results(i,results,runtime,total_ops);
-			
-		}
-	}
-	printf("%.2lf Transactions per Second\n",((double)total_ops)/runtime);
+
+	for (i = 0; i < FFSB_NUMOPS ; i++)
+		if (results->ops[i] != 0)
+			print_op_results(i, results, runtime, total_ops);
+
+	printf("%.2lf Transactions per Second\n", (double)total_ops / runtime);
 }
 
 
-char* op_get_name(int opnum)
+char * op_get_name(int opnum)
 {
 	return ffsb_op_list[opnum].op_name;
 }
+
 void ops_setup_bench(ffsb_fs_t * fs)
 {
 	int i;
-	for (  i = 0; i < FFSB_NUMOPS; i++) {
-		ffsb_op_list[i].op_bench(fs,i);
-	}
+	for (i = 0; i < FFSB_NUMOPS; i++)
+		ffsb_op_list[i].op_bench(fs, i);
 }
 
 void ops_setup_age(ffsb_fs_t * fs)
 {
 	int i;
-	for (  i = 0; i < FFSB_NUMOPS; i++) {
-		if( ffsb_op_list[i].op_age ) 
-		    ffsb_op_list[i].op_age(fs,i);
-	}
+	for (i = 0; i < FFSB_NUMOPS; i++)
+		if (ffsb_op_list[i].op_age)
+		    ffsb_op_list[i].op_age(fs, i);
 }
 
-
-int  ops_find_op(char *opname)
+int ops_find_op(char *opname)
 {
 	int i;
-	for(i = 0; i < FFSB_NUMOPS; i++) {
-		if( 0 == strcmp( opname, ffsb_op_list[i].op_name )) {
+	for(i = 0; i < FFSB_NUMOPS; i++)
+		if(!strcmp(opname, ffsb_op_list[i].op_name ))
 			return i;
-		}
-	}
 	return -1;
 }
 
 void add_results(struct ffsb_op_results *target, struct ffsb_op_results *src)
 {
 	int i;
-	target->read_bytes  += src->read_bytes;
+	target->read_bytes += src->read_bytes;
 	target->write_bytes += src->write_bytes;
-	
-	for(i = 0; i < FFSB_NUMOPS ; i++) {
+
+	for (i = 0; i < FFSB_NUMOPS; i++)
 		target->ops[i] += src->ops[i];
-	}
 }
 
-void do_op(struct ffsb_thread *ft, struct ffsb_fs * fs,unsigned op_num)
+void do_op(struct ffsb_thread *ft, struct ffsb_fs * fs, unsigned op_num)
 {
-	ffsb_op_list[op_num].op_fn(ft,fs,op_num);
+	ffsb_op_list[op_num].op_fn(ft, fs, op_num);
 }
