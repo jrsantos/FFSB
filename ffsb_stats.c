@@ -4,7 +4,6 @@
 #include "ffsb_stats.h"
 #include "util.h"
 
-
 char * syscall_names[] = {
 	"open",
 	"read",
@@ -16,15 +15,16 @@ char * syscall_names[] = {
 };
 
 /* yuck, just for the parser anyway.. */
-int ffsb_stats_str2syscall(char * str, syscall_t * sys )
+int ffsb_stats_str2syscall(char *str, syscall_t *sys)
 {
 	int i;
 	int ret;
-	for ( i=0; i < FFSB_NUM_SYSCALLS; i++) {
+	for (i=0; i < FFSB_NUM_SYSCALLS; i++) {
 		ret = strncasecmp(syscall_names[i],str,strlen(syscall_names[i]));
 		/* printf("%s = syscall_names[%d] vs %str ret = %d\n",
-		   syscall_names[i],i,str,ret); */
-		if ( 0 ==  ret) {
+		 * syscall_names[i],i,str,ret);
+		 */
+		if (0 ==  ret) {
 			*sys = (syscall_t)i; /* ewww */
 			/* printf("matched syscall %s\n",syscall_names[i]); */
 			return 1;
@@ -34,88 +34,86 @@ int ffsb_stats_str2syscall(char * str, syscall_t * sys )
 	return 0;
 }
 
-void  ffsb_statsc_init( ffsb_statsc_t * fsc)
+void  ffsb_statsc_init(ffsb_statsc_t * fsc)
 {
 	fsc->num_buckets = 0;
 	fsc->buckets = NULL;
 	fsc->ignore_stats = 0;
 }
 
-void ffsb_statsc_addbucket( ffsb_statsc_t * fsc, uint32_t min, uint32_t max)
+void ffsb_statsc_addbucket(ffsb_statsc_t *fsc, uint32_t min, uint32_t max)
 {
 	struct stat_bucket *temp;
 	fsc->num_buckets++;
 
-	/*	printf("ffsb_realloc(): fsc_buckets = %d\n",fsc->num_buckets); */
-	temp = ffsb_realloc(fsc->buckets, sizeof(struct stat_bucket) * fsc->num_buckets);
-	
+	/* printf("ffsb_realloc(): fsc_buckets = %d\n",fsc->num_buckets); */
+	temp = ffsb_realloc(fsc->buckets, sizeof(struct stat_bucket) * 
+			    fsc->num_buckets);
+
 	fsc->buckets = temp;
-	
-	/* convert to micro-secs from milli-secs */
+
+	/* Convert to micro-secs from milli-secs */
 	fsc->buckets[fsc->num_buckets-1].min = min ;
 	fsc->buckets[fsc->num_buckets-1].max = max ;
 }
 
-void ffsb_statsc_destroy(ffsb_statsc_t * fsc)
+void ffsb_statsc_destroy(ffsb_statsc_t *fsc)
 {
 	free(fsc->buckets);
 }
 
-
-void ffsb_statsc_ignore_sys( ffsb_statsc_t *fsc, syscall_t s)
+void ffsb_statsc_ignore_sys(ffsb_statsc_t *fsc, syscall_t s)
 {
-  /* printf("fsis: oring 0x%x with 0x%x\n", 
-	       fsc->ignore_stats,
-	       (1 << s ) );*/
+	/* printf("fsis: oring 0x%x with 0x%x\n", 
+	 *      fsc->ignore_stats,
+	 *      (1 << s ) );
+	 */
 	fsc->ignore_stats |= (1 << s);
 }
 
-int fsc_ignore_sys( ffsb_statsc_t *fsc, syscall_t s)
+int fsc_ignore_sys(ffsb_statsc_t *fsc, syscall_t s)
 {
 	return fsc->ignore_stats & ( 1 << s);
 }
 
-void ffsb_statsd_init( ffsb_statsd_t * fsd, ffsb_statsc_t * fsc)
+void ffsb_statsd_init(ffsb_statsd_t *fsd, ffsb_statsc_t *fsc)
 {
 	int i;
 	memset(fsd, 0, sizeof(*fsd));
 
-	for (i=0; i < FFSB_NUM_SYSCALLS ; i ++ ) {
+	for (i=0; i < FFSB_NUM_SYSCALLS; i++) {
 		fsd->totals[i] = 0;
-		fsd->mins[i]   = UINT_MAX;
-		fsd->maxs[i]   = 0;
-		fsd->buckets[i] = ffsb_malloc( sizeof(uint32_t) *
-				    fsc->num_buckets);
-		assert( fsd->buckets[i] != NULL);
+		fsd->mins[i] = UINT_MAX;
+		fsd->maxs[i] = 0;
+		fsd->buckets[i] = ffsb_malloc(sizeof(uint32_t) *
+					      fsc->num_buckets);
+		assert(fsd->buckets[i] != NULL);
 
-		memset( fsd->buckets[i], 0, sizeof(uint32_t) * fsc->num_buckets);
+		memset(fsd->buckets[i], 0, sizeof(uint32_t) *
+		       fsc->num_buckets);
 	}
-
 	fsd->config = fsc;
 }
 
-void ffsb_statsd_destroy(ffsb_statsd_t * fsd)
+void ffsb_statsd_destroy(ffsb_statsd_t *fsd)
 {
 	int i ;
-	for ( i=0 ; i < FFSB_NUM_SYSCALLS ; i ++ ) {
+	for (i=0 ; i < FFSB_NUM_SYSCALLS; i++)
 		free(fsd->buckets[i]);
-	}
 }
 
-void ffsb_add_data( ffsb_statsd_t * fsd, syscall_t s, uint32_t value)
+void ffsb_add_data(ffsb_statsd_t *fsd, syscall_t s, uint32_t value)
 {
 	unsigned num_buckets, i;
-	struct stat_bucket * bucket_defs;
+	struct stat_bucket *bucket_defs;
 
-	if ((!fsd) || fsc_ignore_sys(fsd->config,s))
+	if (!fsd || fsc_ignore_sys(fsd->config, s))
 		return;
 
-	if ( value < fsd->mins[s] ) 
+	if (value < fsd->mins[s]) 
 		fsd->mins[s] = value;
-	
-	if (value > fsd->maxs[s] ) 
+	if (value > fsd->maxs[s]) 
 		fsd->maxs[s] = value;
-	
 
 	fsd->counts[s]++;
 	fsd->totals[s] += value;
@@ -126,84 +124,76 @@ void ffsb_add_data( ffsb_statsd_t * fsd, syscall_t s, uint32_t value)
 	num_buckets = fsd->config->num_buckets;
 	bucket_defs = fsd->config->buckets;
 
-	
-	for( i=0 ; i < num_buckets ; i++ ) {
+	for (i = 0; i < num_buckets; i++) {
 		struct stat_bucket *b = &bucket_defs[i];
 
-		if ( value <= b->max && value >= b->min ) {
+		if (value <= b->max && value >= b->min) {
 			fsd->buckets[s][i]++;
 			break;
 		}
 	}
 }
 
-
 void ffsb_statsc_copy(ffsb_statsc_t *dest, ffsb_statsc_t *src)
 {
-	memcpy(dest,src,sizeof(*src));
+	memcpy(dest, src, sizeof(*src));
 }
 
 void ffsb_statsd_add(ffsb_statsd_t *dest, ffsb_statsd_t *src)
 {
 	int i, j;
 	unsigned num_buckets;
-	if( dest->config != src->config ) {
-		printf("ffsb_statsd_add: warning configs do not match for data being collected\n");
-	}
+	if (dest->config != src->config)
+		printf("ffsb_statsd_add: warning configs do not"
+		       "match for data being collected\n");
+
 	num_buckets = dest->config->num_buckets;       
 
-	for ( i = 0 ; i < FFSB_NUM_SYSCALLS ; i++) {
+	for (i = 0; i < FFSB_NUM_SYSCALLS; i++) {
 		dest->counts[i] += src->counts[i];
 		dest->totals[i] += src->totals[i];
-		
-		if ( src->mins[i] < dest->mins[i] )
+
+		if (src->mins[i] < dest->mins[i])
 			dest->mins[i] = src->mins[i];
-		
 		if ( src->maxs[i] > dest->maxs[i] )
 			dest->maxs[i] = src->maxs[i];
 
-		for (j = 0 ; j < num_buckets ; j ++ ) {
+		for (j = 0; j < num_buckets; j ++)
 			dest->buckets[i][j] += src->buckets[i][j];
-		}
 	}
 }
-
 
 static void print_buckets_helper( ffsb_statsc_t *fsc, uint32_t *buckets)
 {
 	int i;
 	if( fsc->num_buckets == 0 )
 		return;
-	for ( i = 0 ; i < fsc->num_buckets; i++ ) {
-		struct stat_bucket * sb = &fsc->buckets[i];
+	for (i = 0; i < fsc->num_buckets; i++) {
+		struct stat_bucket *sb = &fsc->buckets[i];
 		printf("\t\t bucket[%d] %f - %f - %u\n",
-		       i, (double)sb->min/1000.0f, (double)sb->max/1000.0f, 
+		       i, (double)sb->min/1000.0f, (double)sb->max/1000.0f,
 		       buckets[i]);
 	}
-	
-  
 }
 
 void ffsb_statsd_print( ffsb_statsd_t *fsd )
 {
 	int i;
 	printf("\nSystem Call Latency statistics in millisecs\n" "=====\n");
-	for ( i = 0 ; i < FFSB_NUM_SYSCALLS ; i++) {
-		if ( fsd->counts[i] ) {
-			printf("\t[%s] count = %u \n\t min = %05f millisec \n\t avg = %05lf \n\t max = %05f\n",
-			       syscall_names[i],
-			       fsd->counts[i], 
+	for (i = 0; i < FFSB_NUM_SYSCALLS; i++)
+		if (fsd->counts[i]) {
+			printf("\t[%s] count = %u \n\t min = %05f millisec \n"
+			       "\t avg = %05lf \n\t max = %05f\n",
+			       syscall_names[i], fsd->counts[i], 
 			       (float)fsd->mins[i] / 1000.0f ,
-			       (fsd->totals[i] / (1000.0f * (double)fsd->counts[i])),
+			       (fsd->totals[i] / (1000.0f * 
+						  (double)fsd->counts[i])),
 			       (float)fsd->maxs[i] / 1000.0f );
-				
 			print_buckets_helper( fsd->config, fsd->buckets[i]);
 		}
-	}
-
 }
 
-#if 0 /* testing */
+#if 0 /* Testing */
 
 void * ffsb_malloc(size_t s)
 {
@@ -234,7 +224,7 @@ int main(int arc, char * argv[])
 	ffsb_statsd_init(&fsd, &fsc);
 	
 	printf("test\n");
-	for ( i = 0 ; i < 50000000 ; i++ ) {
+	for (i = 0; i < 50000000; i++) {
 		ffsb_add_data(&fsd, SYS_READ, (float)i);
 	}
 
@@ -244,4 +234,4 @@ int main(int arc, char * argv[])
 	return 0;
 }
 
-#endif
+#endif /* Testing */
