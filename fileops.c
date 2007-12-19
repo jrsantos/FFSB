@@ -1,0 +1,444 @@
+/*
+ *   Copyright (c) International Business Machines Corp., 2001-2004
+ *
+ *   This program is free software;  you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or 
+ *   (at your option) any later version.
+ * 
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+ *   the GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program;  if not, write to the Free Software 
+ *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
+#define _LARGEFILE64_SOURCE
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <pthread.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <errno.h>
+
+
+#include "fh.h"
+#include "util.h"
+#include "ffsb.h"
+#include "fileops.h"
+#include "ffsb_op.h"
+
+
+void fop_bench(ffsb_fs_t * fs, unsigned opnum)
+{
+	fs_set_opdata(fs,fs_get_datafiles(fs),opnum);
+}
+
+void fop_age(ffsb_fs_t * fs, unsigned opnum)
+{
+	fs_set_opdata(fs,fs_get_agefiles(fs),opnum);
+}
+
+
+static
+unsigned readfile_helper(int fd, uint64_t size, uint32_t blocksize, char* buf)
+{
+	int iterations,a;
+	int last;
+	
+	iterations = size/blocksize;
+	last =  size % blocksize;
+	
+	for ( a=0 ; a<iterations ; a++)
+		fhread(fd,buf,blocksize);
+	if (last)
+		fhread(fd,buf,last);
+	return iterations;
+}
+
+static
+uint64_t get_random_offset( randdata_t *rd, uint64_t filesize, int aligned)
+{
+	if( ! aligned ) {
+		return getllrandom(rd,filesize);
+	}
+	filesize /= 4096;
+	return getllrandom(rd,filesize) * 4096;
+}
+
+
+void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
+	
+	struct benchfiles *bf = (struct benchfiles *) fs_get_opdata(fs,opnum);
+	struct ffsb_file *curfile = NULL;
+	
+	int fd;
+	uint64_t filesize;
+	
+	char *buf                = ft_getbuf(ft);
+	int       read_random    = ft_get_read_random(ft);
+	uint64_t read_size       = ft_get_read_size(ft);
+	uint32_t read_blocksize  = ft_get_read_blocksize(ft);
+	uint32_t read_skipsize   = ft_get_read_skipsize(ft);
+	int      skip_reads      = ft_get_read_skip(ft);
+	struct randdata *rd      = ft_get_randdata(ft);
+	
+	uint64_t iterations = 0;
+	
+	curfile = choose_file_reader(bf, rd);
+	fd      = fhopenread(curfile->name, fs_get_directio(fs));
+
+	
+	filesize= ffsb_get_filesize(curfile->name);
+	
+	assert(filesize >= read_size);  
+
+	/* sequential read, starting at a random point */
+	if( ! read_random ) {
+		uint64_t range = filesize - read_size;
+		uint64_t offset = 0;
+		/* skip or "stride" reads option */
+		if( skip_reads ) {
+			unsigned i, last;
+			uint64_t minfilesize;
+			iterations = read_size / ( read_blocksize );
+			last = read_size % ( read_blocksize ) ;
+			
+			/* double check that the user hasn't specified */
+			/* a read_size that is too large when combined */
+			/* with the seeks */
+			if( last ) {
+				minfilesize = last +
+					(iterations) *
+					(read_blocksize + read_skipsize);
+				
+			} else {
+				minfilesize = read_blocksize + 
+					(iterations -1 ) * 
+					(read_blocksize + read_skipsize);
+			}
+
+			if( minfilesize > filesize) {
+			    
+				  printf("Error: read size %llu bytes too big "
+					 "w/ skipsize %u and blocksize %u," 
+					 " for file of size %llu bytes\n"
+					 " aborting\n\n",
+					 read_size, 
+					 read_skipsize,
+					 read_blocksize,
+					 filesize);
+				  printf("minimum file size must be at least "
+					 " %llu bytes\n", minfilesize);
+					 exit(1);
+			}
+
+/* 			printf("readfile: iterations is %llu last is %llu\n", */
+/* 			       iterations,last); */
+
+			for ( i = 0; i < iterations ; i++ ) {
+				fhread(fd, buf, read_blocksize);
+				fhseek(fd,(uint64_t)read_skipsize, SEEK_CUR );
+			} 
+			if( last ) {
+				fhread(fd,buf,(uint64_t)last);
+				iterations++;
+			}
+
+		} else { 
+			/* regular sequential reads */
+			if( range ) {
+				offset = get_random_offset(rd,range,fs_get_alignio(fs));
+				fhseek(fd, offset, SEEK_SET);
+			}
+			iterations = readfile_helper(fd, read_size, read_blocksize,buf);
+		}
+	} else {
+		/* randomized read */
+		uint64_t range = filesize - read_blocksize;
+		int i;
+		
+		iterations = read_size / read_blocksize;		
+		
+		for ( i=0 ; i < iterations ; i++) {
+			uint64_t offset = get_random_offset(rd, range,fs_get_alignio(fs)); 
+			fhseek(fd,offset,SEEK_SET);
+			fhread(fd,buf,read_blocksize);
+		}
+	}
+		
+	unlock_file_reader(curfile);
+	fhclose(fd);
+
+	ft_incr_op(ft,opnum,iterations);
+	ft_add_readbytes(ft,read_size);
+
+}
+
+/* just like ffsb_readfile but we read the whole file from start to finish */
+/* regardless of file size */
+void ffsb_readall(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	struct benchfiles *bf = (struct benchfiles *) fs_get_opdata(fs,opnum);
+	struct ffsb_file *curfile = NULL;
+	int fd;
+	uint64_t filesize;
+	
+	char *buf                = ft_getbuf(ft);
+	uint32_t read_blocksize  = ft_get_read_blocksize(ft);
+	struct randdata *rd      = ft_get_randdata(ft);
+	
+	unsigned iterations = 0;
+	
+	curfile = choose_file_reader(bf, rd);
+	fd      = fhopenread(curfile->name, fs_get_directio(fs));
+
+	
+	filesize= ffsb_get_filesize(curfile->name);
+	iterations = readfile_helper(fd, filesize, read_blocksize,buf);
+			
+	unlock_file_reader(curfile);
+	fhclose(fd);
+
+	ft_incr_op(ft,opnum,iterations);
+	ft_add_readbytes(ft,filesize);
+}
+
+
+void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
+	struct benchfiles *bf = (struct benchfiles *) fs_get_opdata(fs,opnum);
+	struct ffsb_file *curfile = NULL;
+		
+	int fd;
+	uint64_t filesize;
+		
+	char *buf                 = ft_getbuf(ft);
+	int       write_random    = ft_get_write_random(ft);
+	int      fsync_file       = ft_get_fsync_file(ft);
+	uint32_t write_size      = ft_get_write_size(ft);
+	uint32_t write_blocksize = ft_get_write_blocksize(ft);
+	struct randdata *rd       = ft_get_randdata(ft);
+	unsigned iterations       = 0;
+
+	curfile = choose_file_reader(bf, rd);
+	fd      = fhopenwrite(curfile->name, fs_get_directio(fs) );
+
+	filesize = ffsb_get_filesize(curfile->name);
+	
+	assert(filesize>=(write_size));  
+
+	/* sequential write, starting at a random point  */
+	if( ! write_random ) {
+		uint64_t range = filesize - write_size;
+		uint64_t offset = 0;
+		if( range ) {
+			offset = get_random_offset(rd,range,fs_get_alignio(fs));
+			fhseek(fd, offset, SEEK_SET);
+		}
+		iterations = writefile_helper(fd,write_size,write_blocksize,buf);
+	} else {
+		/* randomized write */
+		uint64_t range = filesize - write_blocksize;
+		int i;
+		iterations = write_size / write_blocksize;
+		
+		for ( i=0 ; i < iterations ; i++) {
+			uint64_t offset = get_random_offset(rd,range,fs_get_alignio(fs));
+			fhseek(fd,offset,SEEK_SET);
+			fhwrite(fd,buf,write_blocksize);
+		}
+	}
+
+	if( fsync_file ) {
+		if( fsync(fd) ) {
+			perror("fsync");
+			printf("aborting\n");
+			exit(1);
+		}
+	}
+	unlock_file_reader(curfile);
+	fhclose(fd);
+
+	ft_incr_op(ft,opnum,iterations);
+	ft_add_writebytes(ft,write_size);
+}
+
+
+/* shared core between ffsb_writeall and ffsb_writeall_fsync */
+static
+unsigned ffsb_writeall_core(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum,
+			    uint64_t * filesize_ret, int fsync_file)
+{
+	struct benchfiles *bf = (struct benchfiles *) fs_get_opdata(fs,opnum);
+	struct ffsb_file *curfile = NULL;
+	int fd;
+	uint64_t filesize;
+	
+	char *buf                = ft_getbuf(ft);
+	uint32_t write_blocksize  = ft_get_write_blocksize(ft);
+	struct randdata *rd      = ft_get_randdata(ft);
+	
+	unsigned iterations = 0;
+	
+	curfile = choose_file_reader(bf, rd);
+	fd      = fhopenwrite(curfile->name, fs_get_directio(fs));
+
+	
+	filesize= ffsb_get_filesize(curfile->name);
+	iterations = writefile_helper(fd, filesize, write_blocksize,buf);
+	if( fsync_file ) {
+		if( fsync(fd) ) {
+			perror("fsync");
+			printf("aborting\n");
+			exit(1);
+		}
+	}
+	unlock_file_reader(curfile);
+	fhclose(fd);
+	*filesize_ret = filesize;
+	return iterations;
+}
+
+/* just like ffsb_writefile but we write the whole file from start to finish */
+/* regardless of file size */
+#if 0
+void ffsb_writeall(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	unsigned iterations;
+	uint64_t filesize;
+
+	iterations = ffsb_writeall_core(ft,fs,opnum, &filesize, 0);
+	ft_incr_op(ft,opnum,iterations);
+	ft_add_writebytes(ft,filesize);
+}
+#endif
+
+#if 0
+void ffsb_rewritefsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	unsigned iterations;
+	uint64_t filesize;
+
+	iterations = ffsb_writeall_core(ft,fs,opnum, &filesize, 1);
+	ft_incr_op(ft,opnum,iterations);
+	ft_add_writebytes(ft,filesize);
+}
+#endif
+
+void ffsb_appendfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
+	struct benchfiles *bf = (struct benchfiles *) fs_get_opdata(fs,opnum);
+	struct ffsb_file *curfile;
+	
+	int fd;
+
+	char *buf                 = ft_getbuf(ft);
+	uint32_t write_size      = ft_get_write_size(ft);
+	uint32_t write_blocksize = ft_get_write_blocksize(ft);
+	struct randdata *rd       = ft_get_randdata(ft);
+	unsigned iterations       = 0;
+
+
+	curfile=choose_file_reader(bf, rd);
+	fd = fhopenappend(curfile->name, fs_get_directio(fs));
+
+	unlock_file_reader(curfile);
+
+	curfile->size += (uint64_t)(write_size);
+	
+	iterations = writefile_helper(fd,write_size,write_blocksize,buf);
+	fhclose(fd);
+
+	ft_incr_op(ft,opnum,iterations);
+	ft_add_writebytes(ft,write_size);
+}
+
+
+
+
+void ffsb_createfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
+	struct benchfiles *bf = (struct benchfiles *) fs_get_opdata(fs,opnum);
+	struct ffsb_file *newfile = NULL;
+
+	int fd ;
+	uint64_t range  = fs_get_max_filesize(fs) - fs_get_min_filesize(fs);
+	uint64_t size   = fs_get_min_filesize(fs);
+
+	char *buf                 = ft_getbuf(ft);
+	uint32_t write_blocksize = ft_get_write_blocksize(ft);
+	struct randdata *rd       = ft_get_randdata(ft);
+	unsigned iterations       = 0;
+
+	if( range != 0 ) {
+		size += getllrandom(rd, range);
+	} 
+		
+	newfile = add_file(bf,size,rd);    
+	fd = fhopencreate(newfile->name, fs_get_directio(fs));
+	iterations = writefile_helper(fd, size,write_blocksize,buf); 
+	fhclose(fd);
+
+	unlock_file_writer(newfile);	
+
+	ft_incr_op(ft,opnum,iterations);
+	ft_add_writebytes(ft,size);
+}
+
+void ffsb_deletefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum){
+	struct benchfiles *bf = (struct benchfiles *) fs_get_opdata(fs,opnum);
+	struct ffsb_file *curfile = NULL;
+	randdata_t *rd = ft_get_randdata(ft);
+
+	curfile = choose_file_writer(bf, rd);
+	remove_file(bf, curfile);
+	
+	if(unlink(curfile->name)==-1){
+		printf("error deleting %s in deletefile\n",curfile->name);
+		perror("deletefile");
+		exit(0);
+	}
+	rw_unlock_write(&curfile->lock);
+
+	ft_incr_op(ft,opnum,1);
+}
+
+
+
+void ffsb_read_print_exl(struct ffsb_op_results *results, double secs, unsigned int op_num)
+{
+	char buf[256];
+	ffsb_printsize(buf,results->read_bytes/secs ,256);
+	printf("Throughput: %.2f reads/sec -> %s/sec\n",
+	       results->ops[op_num]/secs, buf );
+}
+
+
+void ffsb_write_print_exl(struct ffsb_op_results *results, double secs, unsigned int op_num)
+{
+	char buf[256];
+	ffsb_printsize(buf,results->write_bytes/secs,256);
+	printf("Throughput: %.2f writes/sec -> %s/sec\n",
+	       results->ops[op_num]/secs,buf);
+}
+
+void ffsb_create_print_exl(struct ffsb_op_results *results, double secs, unsigned int op_num)
+{
+	char buf[256];
+	ffsb_printsize(buf,results->write_bytes/secs,256);
+	printf("Throughput: %.2f creates/sec -> %s/sec\n",
+	       results->ops[op_num]/secs,buf);
+
+}
+
+void ffsb_append_print_exl(struct ffsb_op_results *results, double secs, unsigned int op_num)
+{
+	char buf[256];
+        ffsb_printsize(buf,results->write_bytes/secs,256);
+	printf("Throughput: %.2f append writes/sec -> %s/sec\n",
+	       results->ops[op_num]/secs,buf);
+
+}
+

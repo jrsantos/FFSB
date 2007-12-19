@@ -1,0 +1,16 @@
+num_filesystems=2
+num_threadgroups=1
+directio=0
+time=120
+
+[filesystem0]
+reuse=1
+location=/tmp/bonnie-test/
+num_files=100
+num_dirs=1
+max_filesize=4096000
+min_filesize=4096
+[end0]
+
+
+

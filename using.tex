@@ -1,0 +1,255 @@
+\documentclass[twocolumn]{article}
+\title{Using the Flexible File System Benchmark}
+\author{Dominique Heger \and Josh Jacobs\and Bill McCloskey \and Shaya
+Potter \and John Stultz}
+\begin{document}
+\maketitle
+\section{Introduction}	
+
+FFSB is a unique file system benchmarking tool that benchmarks file
+systems from the perspective of the application. Where conventional
+file system benchmarking tools carry out a fixed set of operations on
+the filesystem, FFSB is more flexible.  FFSB can be customized by the
+tester so that the file system usage pattern it tests is similar to
+the application of interest.  The relative performance of an
+application across different file systems can be determined by running
+FFSB on the systems of interest with the application's file system
+usage pattern.
+
+FFSB attempts to mimic an application's file system usage pattern as
+closely as possible.  To this end, FFSB's infrastucture is very
+flexible and allows most aspects of its behavior to be customized via
+its configuration file.  FFSB can spawn multiple threads in order to
+model multithreaded applications and allows each of these threads to
+have different file system usage patterns.  The configuration file also
+allows the tester to specify file system usage patterns in terms of
+characteristics such as relative frequencies of
+reads/writes/creates/deletes, read size, write size, whether
+sequential or random read are done, the number of files initially
+created, etc...  Modifying these parameters (on a per-thread basis, if
+necessary), allows FFSB to approximate the file system usage patterns
+of most applications.  In fact, these parameters are flexible enough
+that with the appropriate configuration file, FFSB can effectively
+replace most existing file system benchmarks.
+
+FFSB runs in two phases: the initialization phase and the testing
+phase.  The initialization phase sets up the benchmarking environment
+according to the configuration file.  This involves creating initial
+test files and possibly aging the file system to reach the level of
+utilization specified in the configuration file.  The testing phase
+spawns off threads as specified in the configuration file, giving each
+thread its own file system usage pattern to follow.  Statistics
+are kept as the threads execute and once all the threads complete
+their workload, they are summarized and printed to standard output and
+optionally appended to a log file.
+
+FFSB models the application's file system usage pattern using
+transactions.  A transaction is a high-level file system operation.
+Each thread is configured to run a fixed number of transactions.  Each
+transaction involves reading, writing, creating, or deleting a file.
+The tester can customize the weighting for each transaction type to
+modify how often each type of transaction occurs. A read transaction
+chooses a file at random and reads data from a random position in the
+file.  (The number of bytes read are controlled in the configuration
+program.).  A write transaction appends data to the end of the file.
+A create transaction opens a new file and fills it with a number of
+bytes.  A delete transaction chooses a file at random and unlinks it.
+
+\section{Running the program}
+
+The first step in actually running the benchmark is to create a
+configuration file.  The ffsb_setup program makes a configuration file
+for the benchmark by interactively querying the user for the required
+benchmark parameters.  There are two types of variables that the user
+needs to specify: global parameters and thread-specific parameters.
+Global parameters affect the benchmark as a whole and are independant
+of the number of threads.  Thread-specific parameters allow you to
+specify the file system usage pattern for each thread specifically.
+
+\subsection{Global Parameters}
+\subsubsection{Benchmark location}
+
+The benchmark location is the directory where FFSB will create its
+files.  This directory should be on the file system that FFSB is to
+test.  The data in this directory will be erased every time the
+benchmark is run so there is no need to change the benchmark location
+between tests.
+
+\subsubsection{Number of initial files}
+
+The configuration file allows the tester to specify the number of
+files are created in the initialization phase.  These files will be
+used for the read and write transactions when the benchmark is
+actually running.
+
+\subsubsection{Maximium/Minimum size of initially created files}
+
+The initially created files will vary randomly in size between the
+values specified for the max and min size of these initially created
+files.  If the maximum and minimum file sizes are equal, then all of
+the files will be created the same size.
+
+\subsubsection{Number of directories}
+
+This number is the number of different directories that you want files
+your files to be created in.  When a file is created, it is randomly
+placed in one of the directories that the benchmark program is using.
+If only one directory is specified, then the only directory that the
+program uses is the root benchmark directory specified above.  If more
+than one directory is specified, additional directories are created in
+a flat directory structure beneath the root benchmark directory.
+
+\subsubsection{File system utilization:}
+
+FFSB allows the tester to age the file system before testing by
+specifying the file system utilization that the benchmark should be
+run at.  The utilization is specified by a decimal between 0 and 1.
+When the benchmark is run, if the current file system utilization is
+below this number, then it will be aged to this point by filling it with
+garbage files until the specified utilization is reached.  Once the
+file system is aged to the specified utilization, these garbage files
+are ignored while the benchmark runs.
+
+\subsubsection{Create and delete weight for aging}
+
+When FFSB ages the file system, it is done by alternatively creating
+files and then randomly selecting files to be deleted until the
+desired file system utilization is reached. This is necessary in order
+to create file system fragmentation in a realistic manner.  The create
+weight that the user enters is the number of files that are created in
+each iteration of this aging process.  Likewise, the delete weight is
+the number of files that are deleted in each iteration of of this
+cycle.  If the delete weight is close to the create weight, then it is
+likely that there will be a relatively high level of fragmentation
+once the file system is aged.  The files that are created during aging
+are of a random size varying evenly between the minimum and maximum
+initial file sizes specified above.  (Note: in order for this aging
+process to correctly function, the create weight must be greater than
+the delete weight.)
+
+\subsubsection{Buffered vs. standard i/o.}
+
+FFSB can be configured to use use the buffered i/o library (functions
+like fopen and fread) or the standard stream library (open and read).
+This can make a difference in the performance numbers because the
+buffered i/o library does internal readahead buffering that
+potentially alter performance.
+
+\subsubsection{Verbose vs. standard output}
+
+When verbose output is chosen, at the conclusion of the benchmark
+statistics are printed for the performance of each thread in addition
+to a summary with the performance of all the threads combined.  When
+standard output is chosen only the thread summary data is printed.
+
+\subsubsection{Re-age file system}
+
+If FFSB is set to re-age the file system, then the aging data from a
+previous benchmark run (if present) is erased.  Then the system is
+re-aged according to the aging criteria specified in the configuration
+file.  If FFSB is not set to re-age the file system, then any existing
+aging garbage data is ignored nad additional aging data is only
+written if the file system is not at the desired level of utilization.
+
+\subsection{Thread Parameters}
+
+\subsubsection{Iterations}
+
+This number is the total number of transactions that the thread will
+perform.
+
+\subsubsection{Readsize}
+
+The readsize is the number of kilobytes read from disk during each
+read transaction
+
+\subsubsection{Readblocksize and readseeksize}
+
+Readblocksize is the size in kilobytes of each block read during each
+read transaction.  If readblocksize is the same as readsize, then it
+means that each read transaction only involves a single read call.  
+
+If readblocksize is less than readsize than in each read transaction
+the benchmark repeatedly reads in blocks of readblocksize kilobytes until
+readsize kilobytes have been read in total.  The benchmark seeks
+forward readseeksize kilobytes in between each block read.  Setting
+readseeksize to a value greater than 0 allows you to examine the
+system's readahead algorithm (when buffered i/o is set above) because
+the seeking will affect the efficiency of the readahead algorithm.
+
+\subsubsection{Writesize}
+
+Writesize is the number of kilobytes appended to the end of
+a file during every write transaction.
+
+\subsubsection{Transaction Weights}
+
+The numbers that you enter for the weights of each transaction
+essentially form the ratio of the frequencies that each transaction type
+will occur.  eg. if the following weights are entered:
+\begin{verbatim}
+	readweight=2
+	writeweight=1
+	createweight=1
+	deleteweight=0
+\end{verbatim}
+Half the transactions will be reads, one quarter will be writes and
+one quarter will be creates.  No deletes will ever occur.
+
+\subsection{Example}
+
+In this example we used the default configuration built into the setup
+program. It produces a configuration file like the following:
+\begin{verbatim}
+numconfigs=1
+numfiles=100
+maxfilesize=1024
+minfilesize=1024
+numdirs=1
+utilization=0.000000
+initialcreateweight=2
+initialdeleteweight=1
+location=/scratch/bench
+bufferedio=0
+verbose=0
+[config0]
+threads=1
+iterations=10000
+readsize=256
+readblocksize=256
+readseeksize=256
+writesize=256
+readweight=2
+writeweight=2
+createweight=2
+deleteweight=1
+\end{verbatim}
+The output of the benchmark when run on this setup is:
+\begin{verbatim}
+Using configuration from default.txt:
+	Performing Tests in /scratch/bench
+	FS filled to 0% using create/delete ratio 2/1
+	Using 100 initial files ranging from 1024kb to 1024kb
+	Files stored in 1 directory
+	Using un-buffered i/o.
+Thread 0
+	10000 iterations
+	28.6% reads, 28.6% writes, 28.6% creates, 14.3% deletes
+	Reading 256kb blocks
+	Writing blocks of 256kb
+Deleting /scratch/bench
+Recreating directory /scratch/bench
+Performing testing...
+
+Results:
+1 simultaneous threads. 281.0 seconds runtime
+Total stats:
+9.1% CPU utilization
+10.36 reads/sec. for 2652.47 kb read/sec.
+20.05 writes/sec. for 12762.26 kb written/sec.
+9.93 creates/sec.
+5.17 deletes/sec.
+\end{verbatim}
+
+
+\end{document}

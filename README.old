@@ -1,0 +1,113 @@
+	     Flexible File System Benchmark (FFSB) Readme
+		  Dominique Heger (dheger@us.ibm.com)
+		     Josh Jacobs (josh@mit.edu)
+
+                    FFSB Version 3.0 (see results.c)
+
+
+Introduction
+------------
+
+The Flexible File System Benchmark (FFSB) is designed to give its user
+a relative measure of file system performance for a given application.
+The FFSB works by creating a workload that resembles an application's
+file system usage pattern and measuring the time that the benchmark
+takes to complete the workload.  The file system usage pattern that
+the FFSB simulates is specified through a configuration file passed to
+FFSB by the tester.  The configuration file contains a number of
+parameters that can be modified by the tester to specify the desired
+file system usage pattern:
+
+ * Range of initial file size
+ * Initial number of files
+ * Number of transactions
+ * Ratio of read/write/create/delete operations
+ * Read/write size
+ * Sequential vs. Random I/O
+ * Random I/O block size
+ * Random I/O seek size
+ * Unbuffered (read) vs. buffered I/O (fread)
+ * File System Utilization and create/delete ratio for aging
+ * Number of threads (each thread is given its own file system usage pattern)
+
+By varying these parameters, FFSB gives the tester unparallelled
+control over the test scenario.  The above parameters are flexible
+enough that it allows the tester to simulate the operation of most
+existing disk benchmarks by setting the parameters correctly.  The
+parameters also allow the tester to vary parameters (like the number
+of threads) to benchmark applications in a much more realistic manner
+than previous tools allow.
+
+
+Building FFSB
+-------------
+
+FFSB uses GNU autoconf in order to configure itself and attempt to
+provide cross-platform compatibility.  To configure FFSB for your
+system, run the configure script in the current directory with the
+command:
+
+./configure
+
+Then the program can actually be built by running make:
+
+make
+
+Assuming all goes correctly, this will result in the ffsb and
+ffsb-setup binaries being created in the current directory.
+
+
+Configuring FFSB
+----------------
+
+FFSB's operation is controlled by a configuration file which specifies
+the specific parameters that are to be used in each run of the
+benchmark. The configuration file can be created by the use of the
+ffsb-setup program.  ffsb-setup interactively queries the user for the
+necessary parameters to setup a run of FFSB.  ffsb-setup is invoked as
+
+./ffsb-setup [configfile]
+
+where configfile should be replaced with the name of the configuration
+flie that you want to create.
+
+ffsb-setup gives the user the option of choosing from a number of
+default configurations.  These default configurations include
+meta-data and data intensive tests along with pure read, write, file
+creation and deletion tests.  The user can use these configurations
+as they are, or customize them by changing any of the default
+parameters to a different value.
+
+When entering a quantity of bytes to ffsb-setup, it is possible to
+append an optional suffix to the quantity to specify that the number
+represents a number of kilobytes (K), megabytes (M) or gigabytes (G)
+instead of (the default) bytes.  For example, if the minimum initial
+file size is entered in as 2M, then this is interpreted as 2
+Megabytes.  20K corresponds to 20 kilobytes, 3G corresponds to 3
+gigabytes.  A number entered without a suffix is interpreted simply in
+bytes.
+
+
+Running the Benchmark
+---------------------
+
+Once the configuration file is created, the benchmark can be run by
+passing the configuration file to FFSB as a command-line parameter.
+FFSB is run as:
+
+ffsb [configfile] [logfile]
+
+[configfile] is the name of the configuration file created using the
+ffsb-setup program.  
+
+By default ffsb prints its output to standard output.  logfile is an
+optional parameter that allows you to specify a filename that ffsb
+will append its output to.  This is useful for keeping logs of FFSB
+results.
+
+-------------------------------------------------------------------------
+PLEASE SEE THE FOLLWING FILES FOR MORE INFORMATION:
+
+	- USAGE (some more info on the read/write behavior)
+	- using.xyz (diff file formats - all the parameters are in there)
+-------------------------------------------------------------------------
