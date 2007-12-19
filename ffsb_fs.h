@@ -39,7 +39,7 @@ struct ffsb_tg ;
 /* "meta" only contains directories for use in the metadata operation */
 
 /* Aging */
-/* The this object contains methods for aging the filesystem if needed */
+/* This object contains methods for aging the filesystem if needed */
 /* a properly set up threadgroup is supplied by the parser which is run */
 /* until the filesystem reaches the desired utilization */
 
