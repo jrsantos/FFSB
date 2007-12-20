@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #ifndef RED_BLACK_TREE_H
@@ -23,14 +23,14 @@
  *
  * Container class for a red-black tree ......
  *
- * A binary tree that satisfies the following properties: 
+ * A binary tree that satisfies the following properties:
  *
- * 1. Every node is either red or black 
+ * 1. Every node is either red or black
  * 2. The root node is black
  * 3. Every leaf (NIL) is black
- * 4. If a node is red, both its children are black 
+ * 4. If a node is red, both its children are black
  * 5. For each node, all paths from the node to descendant leaf nodes
- *    contain the same number of black nodes 
+ *    contain the same number of black nodes
  *
  * Due to points 4 & 5, the depth of a red-black tree containing n nodes
  * is bounded by 2*log2(n+1) (WC).
@@ -39,7 +39,7 @@
  * The rb_tree template requires two additional parmeters:
  *
  * - The contained TYPE class represents the objects stored in the tree.
- *   It has to support the copy constructor and the assignment operator (opr) 
+ *   It has to support the copy constructor and the assignment operator (opr)
  * - cmp is a functor used to define the order of objects of class TYPE:
  *   This class has to support an operator() that recieves two objects from
  *   the TYPE class and returns a negative, 0, or a positive integer,
@@ -73,7 +73,7 @@ typedef struct red_black_node {
 typedef int(cmp)(datatype, datatype);
 typedef void(opr)(void *);
 typedef void(destructor)(datatype);
-  
+
 /* Construct of a red-black tree node
  * - The object stored in the node
  * - The color of the node
@@ -272,7 +272,7 @@ extern rb_node * rbtree_predecessor(rb_tree * tree,
 
 extern rb_node * rbtree_find(rb_tree * tree, datatype object);
 
-/* Remove the object stored in the given tree node 
+/* Remove the object stored in the given tree node
  * - The tree
  * - The node storing the object to be removed from the tree
  */

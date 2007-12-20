@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <stdio.h>
@@ -32,7 +32,7 @@ void init_ffsb_fs(ffsb_fs_t * fs, char *basedir, uint32_t num_data_dirs,
 {
 	memset(fs, 0, sizeof(ffsb_fs_t));
 	fs->basedir = ffsb_strdup(basedir);
-	fs->num_dirs = num_data_dirs; 
+	fs->num_dirs = num_data_dirs;
 	fs->num_start_files = numstartfiles;
 	fs->flags = flags;
 	fs->create_blocksize = FFSB_FS_DEFAULT_CREATE_BLOCKSIZE;
@@ -239,7 +239,7 @@ static ffsb_fs_t * check_existing_fileset(ffsb_fs_t * fs)
 	}
 
 	/* Even though we won't use it, we still need to be consistent
-	 * here. 
+	 * here.
 	 */
 	init_filelist(&fs->fill,  buf, AGE_BASE, 0, 0);
 
@@ -250,7 +250,7 @@ static ffsb_fs_t * check_existing_fileset(ffsb_fs_t * fs)
 }
 
 /*
- *  clean up fs, "rm -rf data meta" 
+ *  clean up fs, "rm -rf data meta"
  *  record utilization
  *  set up the dirs: files, meta
  *  age filesystem
@@ -279,7 +279,7 @@ static ffsb_fs_t * construct_new_fileset(ffsb_fs_t * fs )
 	fs->start_fsutil = getfsutil(fs->basedir);
 
 	/* Set up bench/age dir */
-	if (FILENAME_MAX <= 
+	if (FILENAME_MAX <=
 	    snprintf(buf, FILENAME_MAX,"%s/%s", fs->basedir,FILES_BASE)) {
 		printf("pathname \"%s\" is too long, aborting\n", buf);
 		return NULL;
@@ -333,7 +333,7 @@ static void age_fs(ffsb_fs_t *fs, double utilization)
 {
 	ffsb_barrier_t barrier;
 	pthread_t thread;
-	struct poll_data pdata;	
+	struct poll_data pdata;
 	ffsb_tg_t *tg = fs_get_aging_tg(fs);
 	tg_run_params_t params;
 	ffsb_config_t fc;
@@ -469,7 +469,7 @@ struct benchfiles * fs_get_agefiles(ffsb_fs_t *fs)
 	return &fs->fill;
 }
 
-void fs_set_aging_tg(ffsb_fs_t *fs, struct ffsb_tg *tg, double util) 
+void fs_set_aging_tg(ffsb_fs_t *fs, struct ffsb_tg *tg, double util)
 {
 	fs->aging_tg = tg;
 	fs->age_fs = 1;
@@ -478,7 +478,7 @@ void fs_set_aging_tg(ffsb_fs_t *fs, struct ffsb_tg *tg, double util)
 
 struct ffsb_tg * fs_get_aging_tg(ffsb_fs_t *fs)
 {
-	return fs->aging_tg; 
+	return fs->aging_tg;
 }
 
 int fs_get_agefs(ffsb_fs_t *fs)

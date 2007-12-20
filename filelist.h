@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #ifndef _FILELIST_H_
@@ -41,7 +41,7 @@ struct cirlist;
  */
 struct benchfiles {
 	/* The base directory in which all subdirs and files are
-	 * created 
+	 * created
 	 */
 	char *basedir;
 
@@ -53,7 +53,7 @@ struct benchfiles {
 	struct red_black_tree *files;
 
 	/* Files which have been deleted, and whose numbers should be
-	 * reused 
+	 * reused
 	 */
 	struct cirlist *holes;
 
@@ -92,12 +92,12 @@ struct ffsb_file * add_file (struct benchfiles *b, uint64_t size,randdata_t *rd)
 void remove_file (struct benchfiles *, struct ffsb_file *);
 
 /* Picks a file at random, locks it for reading and returns it
- * locked 
+ * locked
  */
 struct ffsb_file * choose_file_reader (struct benchfiles *, randdata_t *);
 
 /* Picks a file at random, locks it for writing and returns it
- * locked 
+ * locked
  */
 struct ffsb_file * choose_file_writer (struct benchfiles *, randdata_t *);
 

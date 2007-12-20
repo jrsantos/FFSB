@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
@@ -33,7 +33,7 @@
 #include "config.h"
 
 /* !!! ugly */
-#ifndef HAVE_OPEN64 
+#ifndef HAVE_OPEN64
 #define open64 open
 #endif
 
@@ -47,7 +47,7 @@
  * ha, well, they're supposed to anyway...!!! TODO -SR 2006/05/14
  */
 
-static void do_stats(struct timeval *start, struct timeval *end, 
+static void do_stats(struct timeval *start, struct timeval *end,
 		     ffsb_thread_t *ft, ffsb_fs_t *fs, syscall_t sys)
 {
 	struct timeval diff;
@@ -57,21 +57,21 @@ static void do_stats(struct timeval *start, struct timeval *end,
 		return;
 
 	timersub(end, start, &diff);
-	
+
 	value = 1000000 * diff.tv_sec + diff.tv_usec;
-	
+
 	if (ft && ft_needs_stats(ft, sys))
 		ft_add_stat(ft, sys, value);
 	if (fs && fs_needs_stats(fs, sys))
 		fs_add_stat(fs, sys, value);
 }
 
-static int fhopenhelper(char *filename, char *bufflags, int flags,  
+static int fhopenhelper(char *filename, char *bufflags, int flags,
 			ffsb_thread_t *ft, ffsb_fs_t *fs)
 {
 	int fd = 0;
 	struct timeval start, end;
-	int need_stats = ft_needs_stats(ft, SYS_OPEN) || 
+	int need_stats = ft_needs_stats(ft, SYS_OPEN) ||
 		fs_needs_stats(fs, SYS_OPEN);
 
 	flags |= O_LARGEFILE;
@@ -128,7 +128,7 @@ int fhopencreate(char *filename, ffsb_thread_t *ft, ffsb_fs_t *fs)
 	int flags = O_CREAT | O_RDWR | O_TRUNC;
 	int directio = fs_get_directio(fs);
 
-	if (directio) 
+	if (directio)
 		flags |= O_DIRECT;
 	return fhopenhelper(filename, "rw", flags, ft, fs);
 }
@@ -141,7 +141,7 @@ void fhread(int fd, void *buf, uint64_t size, ffsb_thread_t *ft, ffsb_fs_t *fs)
 		fs_needs_stats(fs, SYS_READ);
 
 	assert(size <= SIZE_MAX);
-	if (need_stats) 
+	if (need_stats)
 		gettimeofday(&start ,NULL);
 	realsize = read(fd, buf, size);
 
@@ -166,7 +166,7 @@ void fhwrite(int fd, void *buf, uint32_t size, ffsb_thread_t *ft, ffsb_fs_t *fs)
 		fs_needs_stats(fs, SYS_WRITE);
 
 	assert (size <= SIZE_MAX);
-	if (need_stats) 
+	if (need_stats)
 		gettimeofday(&start ,NULL);
 
 	realsize = write(fd, buf, size);
@@ -194,7 +194,7 @@ void fhseek(int fd, uint64_t offset, int whence, ffsb_thread_t *ft, ffsb_fs_t *f
 	if ((whence == SEEK_CUR) && (offset == 0))
 		return;
 
-	if (need_stats) 
+	if (need_stats)
 		gettimeofday(&start ,NULL);
 
 	res = lseek64(fd, offset, whence);
@@ -224,7 +224,7 @@ void fhclose(int fd, ffsb_thread_t *ft, ffsb_fs_t *fs)
 	int need_stats = ft_needs_stats(ft, SYS_CLOSE) ||
 		fs_needs_stats(fs, SYS_CLOSE);
 
-	if (need_stats) 
+	if (need_stats)
 		gettimeofday(&start, NULL);
 
 	close(fd);
@@ -240,10 +240,10 @@ int writefile_helper(int fd, uint64_t size, uint32_t blocksize, char *buf,
 {
 	uint64_t iterations,a;
 	uint64_t last;
-	
+
 	iterations = size / blocksize;
 	last = size % blocksize;
-	
+
 	for (a = 0; a < iterations; a++)
 		fhwrite(fd, buf, blocksize, ft, fs);
 

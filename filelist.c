@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <limits.h>
@@ -47,10 +47,10 @@ void print_cl(struct cirlist *cl)
 	} while( cur != cl->head);
 	printf("\n");
 }
-#endif 
+#endif
 
 #if 0
-static 
+static
 int node_cmp(struct ffsb_file * a, struct ffsb_file *b)
 {
 	return a->num - b->num;
@@ -62,7 +62,7 @@ void build_dirs(struct benchfiles *bf)
 {
 	char buf[FILENAME_MAX];
 	int i;
-	
+
 	if (mkdir(bf->basedir, S_IRWXU) < 0)
 		if (errno != EEXIST) {
 			perror(bf->basedir);
@@ -92,7 +92,7 @@ void init_filelist(struct benchfiles *b, char *basedir, char *basename,
 	b->files = rbtree_construct();
 	b->holes = ffsb_malloc(sizeof(struct cirlist));
 	init_cirlist(b->holes);
-	
+
 	if (builddirs)
 		build_dirs(b);
 }
@@ -107,7 +107,7 @@ void destroy_filelist(struct benchfiles *bf)
 {
 	free(bf->basedir);
 	free(bf->basename);
-	
+
 	while (!cl_empty(bf->holes)) {
 		struct ffsb_file *cur = cl_remove_head(bf->holes);
 		file_destructor(cur);
@@ -137,15 +137,15 @@ struct ffsb_file * add_file(struct benchfiles *b, uint64_t size, randdata_t *rd)
 	/* First check "holes" for a file  */
 	if (!cl_empty(b->holes)) {
 		oldfile = cl_remove_head(b->holes);
-		rbtree_insert(b->files, oldfile); 
+		rbtree_insert(b->files, oldfile);
 		rw_lock_write(&oldfile->lock);
 	} else {
 		filenum = b->listsize;
 		b->listsize++;
-		
+
 		newfile->num = filenum;
 		rbtree_insert(b->files, newfile);
-		
+
 		rw_lock_write(&newfile->lock);
 	}
 
@@ -179,9 +179,9 @@ struct ffsb_file * add_file(struct benchfiles *b, uint64_t size, randdata_t *rd)
 
 
 /* Private version of above function used only for reusing a
- * fileset. 
+ * fileset.
  */
-static struct ffsb_file * add_file_named(struct benchfiles *b, uint64_t size, 
+static struct ffsb_file * add_file_named(struct benchfiles *b, uint64_t size,
 					 char *name)
 {
 	struct ffsb_file *newfile = NULL;
@@ -198,7 +198,7 @@ static struct ffsb_file * add_file_named(struct benchfiles *b, uint64_t size,
 	newfile->num = b->listsize;
 	b->listsize++;
 
-	/* Add a new file to the rbtree */	
+	/* Add a new file to the rbtree */
 	rbtree_insert(b->files, newfile);
 
 	rw_lock_write(&newfile->lock);
@@ -218,13 +218,13 @@ static void print_rb_helper(rb_node * cur)
 		printf("%d ", cur->object->num);
 		print_rb_helper(cur->right);
 	}
-}	
+}
 
-static void print_rb(rb_tree *tree) 
+static void print_rb(rb_tree *tree)
 {
 	print_rb_helper(tree->root);
 }
-#endif 
+#endif
 
 void remove_file(struct benchfiles *b, struct ffsb_file *entry)
 {
@@ -251,7 +251,7 @@ static struct ffsb_file * choose_file(struct benchfiles *b, randdata_t *rd)
 		exit(0);
 	}
 
-	while (cur == NULL) {		
+	while (cur == NULL) {
 		chosen = getrandom(rd, b->listsize);
 		temp.num = chosen;
 		cur = rbtree_find(b->files, &temp);
@@ -265,7 +265,7 @@ struct ffsb_file * choose_file_reader(struct benchfiles *bf, randdata_t *rd)
 
 	rw_lock_read(&bf->fileslock);
 	/* If b->holes->count == bf->listsize, all files have been
-	 * deleted! 
+	 * deleted!
 	 */
 	assert(bf->holes->count != bf->listsize);
 
@@ -317,21 +317,21 @@ int validate_filename(struct benchfiles *bf, char *name)
 {
 	int retval = -1;
 	char fmt_str[FILENAME_MAX];
-	if (FILENAME_MAX <= snprintf(fmt_str, FILENAME_MAX, 
+	if (FILENAME_MAX <= snprintf(fmt_str, FILENAME_MAX,
 				 "%s%s%%d", bf->basename, FILENAME_BASE)) {
 		printf("filename is too long declaring it invalid\n");
 		return -1;
 	}
 
 	sscanf(name, fmt_str, &retval);
-	return retval;	
+	return retval;
 }
 
 int validate_dirname (struct benchfiles *bf, char *name)
 {
 	int retval = -1;
 	char fmt_str[FILENAME_MAX];
-	if( FILENAME_MAX <= snprintf(fmt_str, FILENAME_MAX, 
+	if( FILENAME_MAX <= snprintf(fmt_str, FILENAME_MAX,
 				 "%s%s%%d", bf->basename, SUBDIRNAME_BASE)) {
 		printf("dirname is too long declaring it invalid\n");
 		return -1;
@@ -378,7 +378,7 @@ static int add_dir_to_filelist(struct benchfiles *bf, DIR *subdir, char *subdir_
 				return -1;
 			}
 			/* Add file to data structure */
-			ffsb_file = add_file_named(bf, ffsb_get_filesize(filename_buf), 
+			ffsb_file = add_file_named(bf, ffsb_get_filesize(filename_buf),
 				       filename_buf);
 			unlock_file_writer(ffsb_file);
 		} else {
@@ -415,7 +415,7 @@ static int add_dir_to_filelist(struct benchfiles *bf, DIR *subdir, char *subdir_
 }
 
 
-int grab_old_fileset(struct benchfiles *bf, char *basename, 
+int grab_old_fileset(struct benchfiles *bf, char *basename,
 		      fl_validation_func_t vfunc, void *vfunc_data)
 {
 	int retval = 0;

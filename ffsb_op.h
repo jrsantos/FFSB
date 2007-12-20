@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #ifndef _FFSB_OP_H_
@@ -50,7 +50,7 @@ typedef struct ffsb_op {
 	ffsb_op_print_fn op_exl_print_fn; /* function if op is
 					   * "exclusive", also
 					   * optional */
-	
+
 	/* The point of these two fields is to determine which set of
 	 * files are being worked on.  Currently either data, meta, or
 	 * aging.  Data and meta are mutually exclusive, so we only
@@ -68,7 +68,7 @@ extern ffsb_op_t ffsb_op_list[];
  */
 #define FFSB_NUMOPS (7)
 
-/* Returns index of an op. 
+/* Returns index of an op.
  * Returns -1 if opname isn't found, and its case sensitive :)
  */
 int ops_find_op (char *opname);
@@ -78,7 +78,7 @@ typedef struct ffsb_op_results {
 	unsigned int ops[FFSB_NUMOPS];
 
 	uint64_t read_bytes;
-	uint64_t write_bytes; 
+	uint64_t write_bytes;
 } ffsb_op_results_t;
 
 void init_ffsb_op_results (struct ffsb_op_results *);

@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <string.h>
@@ -23,7 +23,7 @@
 #include "fileops.h"
 #include "metaops.h"
 
-ffsb_op_t ffsb_op_list[] = 
+ffsb_op_t ffsb_op_list[] =
 {{0, "read", ffsb_readfile, NULL, ffsb_read_print_exl, fop_bench, NULL},
  {1, "readall",	ffsb_readall, NULL, ffsb_read_print_exl, fop_bench, NULL},
  {2, "write", ffsb_writefile, NULL, ffsb_write_print_exl, fop_bench, NULL},
@@ -51,7 +51,7 @@ static int exclusive_op(ffsb_op_results_t * results, unsigned int op_num)
 	if (ret)
 		return 0;
 	return 1;
-} 
+}
 
 static void generic_op_print(char *name, unsigned num, double percentage)
 {
@@ -61,13 +61,13 @@ static void generic_op_print(char *name, unsigned num, double percentage)
 static void print_op_results(unsigned int op_num, ffsb_op_results_t * results,
 			     double runtime, unsigned total_ops)
 {
-	if (exclusive_op(results,op_num) && 
+	if (exclusive_op(results,op_num) &&
 	    ffsb_op_list[op_num].op_exl_print_fn != NULL) {
 		ffsb_op_list[op_num].op_exl_print_fn(results, runtime, op_num);
 	} else {
-	    double percentage = 100 * (double)results->ops[op_num] / 
-		    (double)total_ops; 
-	    generic_op_print(ffsb_op_list[op_num].op_name, results->ops[op_num], 
+	    double percentage = 100 * (double)results->ops[op_num] /
+		    (double)total_ops;
+	    generic_op_print(ffsb_op_list[op_num].op_name, results->ops[op_num],
 			     percentage);
 	}
 }

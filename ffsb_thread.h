@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #ifndef _FFSB_THREAD_H_
@@ -48,17 +48,17 @@ typedef struct ffsb_thread {
 	/* If we are using Direct IO, then we must only use a 4k
 	 * aligned buffer so, alignedbuf_4k is a pointer into
 	 * "mallocbuf" which is what malloc gave us.
-	 */	
-	char *alignedbuf; 	
+	 */
+	char *alignedbuf;
 	char *mallocbuf;
 
 	struct ffsb_op_results results;
-	
+
 	/* stats */
 	ffsb_statsd_t fsd;
 } ffsb_thread_t ;
 
-void init_ffsb_thread (ffsb_thread_t *, struct ffsb_tg *, unsigned, 
+void init_ffsb_thread (ffsb_thread_t *, struct ffsb_tg *, unsigned,
 		       unsigned, unsigned);
 void destroy_ffsb_thread (ffsb_thread_t *);
 
@@ -68,7 +68,7 @@ void destroy_ffsb_thread (ffsb_thread_t *);
  * expensive) bus-locking.
  *
  * pthread_create() is called by tg with this function as a parameter
- * data is a (ffsb_thread_t*) 
+ * data is a (ffsb_thread_t*)
  */
 void * ft_run (void *);
 

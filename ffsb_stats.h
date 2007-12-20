@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #ifndef _FFSB_STATS_H_
@@ -35,14 +35,14 @@
 
 struct stat_bucket {
 	uint32_t min;
-	uint32_t max; 
+	uint32_t max;
         /* max = 0 indicates uninitialized bucket */
 };
 
 /* These are all the syscalls we currently support */
-typedef enum { SYS_OPEN = 0, 
-	       SYS_READ, 
-	       SYS_WRITE, 
+typedef enum { SYS_OPEN = 0,
+	       SYS_READ,
+	       SYS_WRITE,
 	       SYS_CREATE,
 	       SYS_LSEEK,
 	       SYS_UNLINK,
@@ -56,7 +56,7 @@ extern char * syscall_names[];
 int ffsb_stats_str2syscall (char *, syscall_t *);
 
 /* Keep it in sync with syscall_t */
-#define FFSB_NUM_SYSCALLS (7UL) 
+#define FFSB_NUM_SYSCALLS (7UL)
 
 /* What stats to collect, shared among all threads  */
 typedef struct ffsb_stats_config {
@@ -77,7 +77,7 @@ void ffsb_statsc_destroy (ffsb_statsc_t *);
 /* If we are collecting stats, then the config field is non-NULL */
 typedef struct ffsb_stats_data {
 	ffsb_statsc_t *config;
-	uint32_t counts[FFSB_NUM_SYSCALLS]; 
+	uint32_t counts[FFSB_NUM_SYSCALLS];
 	uint64_t totals[FFSB_NUM_SYSCALLS]; /* cumulative sums */
 	uint64_t mins[FFSB_NUM_SYSCALLS];
 	uint64_t maxs[FFSB_NUM_SYSCALLS];

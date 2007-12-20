@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <stdlib.h>
@@ -56,7 +56,7 @@ void sgenrand(randdata_t *state)
 		/* printf("fallback_rand\n"); */
 
 		for (i = got ; i < state->size ; i += 4) {
-			long int  rand = 0; 
+			long int  rand = 0;
 #ifdef HAVE_LRAND48
 			lrand48_r(&(state->data), &rand);
 #else
@@ -68,13 +68,13 @@ void sgenrand(randdata_t *state)
 			state->mt[i+2] = (rand >>  8) & (512 - 1);
 			state->mt[i+3] = (rand) & (512 - 1);
 		}
-		
-	} 
-	state->mti = 0;    
+
+	}
+	state->mti = 0;
 }
 
 /* returns 8 random bits */
-static	
+static
 uint8_t genrand8(randdata_t *state)
 {
 	unsigned long ret = 0;
@@ -98,7 +98,7 @@ uint32_t genrand32(randdata_t *state)
 	bytes[1] = genrand8(state);
 	bytes[2] = genrand8(state);
 	bytes[3] = genrand8(state);
-	
+
 	ret = *((uint32_t*)bytes); /* !!! hack */
 	return ret;
 }
@@ -114,7 +114,7 @@ void init_random(randdata_t *state, uint32_t iter)
 		state->size = iter * AVG_ITR_RNDBTS;
 	}
 	state->mt = ffsb_malloc(state->size );
-	
+
         /* !!!! racy? add pthread_once stuff later  */
 	if( (randfd < 0) && (randfd = open( RANDSRC, O_RDONLY )) < 0 ){
 		perror("open " RANDSRC);
@@ -132,7 +132,7 @@ void destroy_random(randdata_t *rd)
 	free(rd->mt);
 }
 
-/* 
+/*
  * I've taken the liberty of slightly redesigning this stuff.
  * Instead of simply getting the full word of random bits
  * and throwing away most of it using the mod operator,
@@ -141,12 +141,12 @@ void destroy_random(randdata_t *rd)
  */
 uint32_t getrandom(randdata_t *state,uint32_t mod)
 {
-    
+
     uint8_t bytes[4] = { 0, 0, 0, 0 };
     uint32_t ret;
     int num_bytes = 4;
     int i;
-    
+
     if((mod == 0) || (mod == 1)) return 0;
 
     if( ! (mod >> 8) ) {
@@ -156,7 +156,7 @@ uint32_t getrandom(randdata_t *state,uint32_t mod)
     } else if( !(mod >> 24)) {
 	    num_bytes = 3;
     }
-    
+
     for( i = 0 ; i < num_bytes ; i++) {
 	    bytes[i] = genrand8(state);
     }
@@ -169,24 +169,24 @@ uint64_t getllrandom(randdata_t *state,uint64_t mod){
 	uint64_t result = 0;
 	uint64_t high   = 0;
 	uint32_t low    = 0;
-	
+
 	if(mod == 0) return 0;
-	
+
 	/* ULONG_MAX comes from limits.h */
 	if( mod < ULONG_MAX ) {
 		return (uint64_t)getrandom(state,(uint32_t)mod);
 	}
-	
+
 	high = genrand32(state);
-	
+
 	low  = genrand32(state);
-	
+
 	result  = high << 32  ;
 	result |= (uint64_t)low ;
-	
+
 	assert(result!=0);
 	assert(result>0);
-	
-	
+
+
 	return result % mod;
 }

@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <pthread.h>
@@ -44,14 +44,14 @@ void rw_lock_read(struct rwlock *rw)
 	pthread_mutex_lock(&rw->plock);
 #ifdef RWDEBUG
 	rw->n_read_waiting++;
-#endif	
+#endif
 	while( rw->n_readers < 0 ){
 		pthread_cond_wait(&rw->pcond, &rw->plock);
 	}
 	rw->n_readers++;
 #ifdef RWDEBUG
 	rw->n_read_waiting--;
-#endif	
+#endif
 	pthread_mutex_unlock(&rw->plock);
 }
 
@@ -60,7 +60,7 @@ void rw_lock_write(struct rwlock *rw)
 	pthread_mutex_lock(&rw->plock);
 #ifdef RWDEBUG
 	rw->n_write_waiting++;
-#endif	
+#endif
 	while( rw->n_readers != 0 ){
 		pthread_cond_wait(&rw->pcond, &rw->plock);
 	}
@@ -86,7 +86,7 @@ void rw_unlock_write(struct rwlock *rw)
 	rw->n_readers = 0 ;
 	pthread_cond_broadcast(&rw->pcond);
 	pthread_mutex_unlock(&rw->plock);
-	
+
 }
 
 int rw_trylock_read(struct rwlock *rw)

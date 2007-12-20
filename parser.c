@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <stdio.h>
@@ -39,7 +39,7 @@ void parseerror(char *msg){
 
 /* strips out whitespace and comments, returns NULL on eof */
 static
-char* get_next_line(FILE *f ) 
+char* get_next_line(FILE *f )
 {
 	static char buf[BUFSIZE];
 	char * ret;
@@ -61,7 +61,7 @@ static
 char* parse_globals(ffsb_config_t *fc, FILE *f, unsigned *fs_flags)
 {
 	char *buf = get_next_line(f);
-	uint32_t numfs = 0, numtg = 0,dio = 0, verbose = 0, time = 0, bio =0, 
+	uint32_t numfs = 0, numtg = 0,dio = 0, verbose = 0, time = 0, bio =0,
 	    aio = 0, callout_flag = 0;
 	uint32_t temp32;
 	char callout_buf[4096];
@@ -70,7 +70,7 @@ char* parse_globals(ffsb_config_t *fc, FILE *f, unsigned *fs_flags)
 		numfs = temp32;
 		buf = get_next_line(f);
 	}
-	
+
 	if( 1 == sscanf(buf,"num_threadgroups=%u\n",&temp32)) {
 		numtg = temp32;
 		buf = get_next_line(f);
@@ -80,20 +80,20 @@ char* parse_globals(ffsb_config_t *fc, FILE *f, unsigned *fs_flags)
 	        verbose = temp32;
 		buf = get_next_line(f);
 	}
-	
+
 	if( 1 == sscanf(buf,"directio=%u\n",&temp32)) {
 		dio = temp32;
 		buf = get_next_line(f);
-	}	
+	}
 	if( 1 == sscanf(buf,"bufferedio=%u\n",&temp32)) {
 		bio = temp32;
 		buf = get_next_line(f);
-	}	
+	}
 
 	if( 1 == sscanf(buf,"alignio=%u\n",&temp32)) {
 		aio = temp32;
 		buf = get_next_line(f);
-	}	
+	}
 
 	if( 1 == sscanf(buf,"time=%u\n",&temp32)) {
 		time = temp32;
@@ -118,7 +118,7 @@ char* parse_globals(ffsb_config_t *fc, FILE *f, unsigned *fs_flags)
 		fclose(f);
 		exit(1);
 	}
-	
+
 	if( dio )  *fs_flags |= FFSB_FS_DIRECTIO | FFSB_FS_ALIGNIO4K;
 	if( bio )  *fs_flags |= FFSB_FS_LIBCIO;
 	if( aio )  *fs_flags |= FFSB_FS_ALIGNIO4K;
@@ -178,7 +178,7 @@ char * parse_stats_config(ffsb_statsc_t *fsc, FILE *f, char *buf, int *need_stat
 			char *tmp = buf + strlen("ignore=") ;
 			unsigned len = ffsb_strnlen(buf,BUFSIZE);
 			syscall_t sys;
-			
+
 			if ( len == strlen("ignore=")) {
 				printf("bad ignore= line\n");
 				continue;
@@ -187,12 +187,12 @@ char * parse_stats_config(ffsb_statsc_t *fsc, FILE *f, char *buf, int *need_stat
 				/* printf("ignoring %d\n",sys); */
 				ffsb_statsc_ignore_sys(fsc, sys);
 				goto out;
-			} 
+			}
 
 			printf("warning: can't ignore unknown syscall %s\n",tmp);
 		out:
 			continue;
-			
+
 		}
 
 	}
@@ -219,7 +219,7 @@ int verify_tg( ffsb_tg_t *tg)
 	uint32_t metaop_weight    = tg_get_op_weight(tg,"metaop");
 	uint32_t delete_weight    = tg_get_op_weight(tg,"delete");
 
-	uint32_t sum_weight     = read_weight + 
+	uint32_t sum_weight     = read_weight +
 	                          readall_weight +
 	                          write_weight +
 /* 	                          rewritefsync_weight + */
@@ -227,15 +227,15 @@ int verify_tg( ffsb_tg_t *tg)
 	                          append_weight +
 		                  metaop_weight +
 	                          delete_weight;
-	                          
-	
+
+
 	uint32_t read_blocksize  = tg_get_read_blocksize(tg);
-	uint32_t write_blocksize = tg_get_write_blocksize(tg); 
-	
+	uint32_t write_blocksize = tg_get_write_blocksize(tg);
+
 	int read_random          = tg_get_read_random(tg);
 	int read_skip            = tg_get_read_skip(tg);
 	uint32_t read_skipsize   = tg_get_read_skipsize(tg);
-	
+
 	if( sum_weight == 0 ) {
 		printf("Error: A threadgroup must have at least one weighted operation\n");
 		return 1;
@@ -246,7 +246,7 @@ int verify_tg( ffsb_tg_t *tg)
 		return 1;
 	}
 
-	if( (write_weight || create_weight || append_weight) && 
+	if( (write_weight || create_weight || append_weight) &&
 	     !(write_blocksize) ) {
 		printf( "Error: write, create, append"
 			"operations require a write_blocksize\n");
@@ -258,12 +258,12 @@ int verify_tg( ffsb_tg_t *tg)
 		       "exclusive\n");
 		return 1;
 	}
-	
+
 	if( read_skip && !(read_skipsize) ) {
 		printf("Error: read_skip specified but read_skipsize is zero\n");
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -275,7 +275,7 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 	uint32_t temp32 = 0;
 	uint64_t temp64 = 0;
 	uint32_t numthreads = tg_get_numthreads(dft);
-	
+
 	uint32_t rwgt = 0;   /* read weight */
 	uint32_t rawgt = 0;  /* readall weight */
 	uint32_t wwgt = 0;   /* write weight */
@@ -285,11 +285,11 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 	uint32_t awgt = 0;   /* append weight  */
 	uint32_t dwgt = 0;   /* delete weight */
 	uint32_t mwgt = 0;   /* meta weight */
-	
+
 	uint64_t rsize  = tg_get_read_size(dft);
 	uint32_t rbsize = tg_get_read_blocksize(dft);
 	uint64_t wsize  = tg_get_write_size(dft);
-	uint32_t wbsize = tg_get_write_blocksize(dft); 
+	uint32_t wbsize = tg_get_write_blocksize(dft);
 	uint32_t rr     = tg_get_read_random(dft);
 	uint32_t wr     = tg_get_write_random(dft);
 	uint32_t fsync  = tg_get_fsync_file(dft);
@@ -308,7 +308,7 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 			       "for threadgroup %u\n",tgnum);
 			exit(1);
 		}
-		
+
 		if( 1 == sscanf(buf,"bindfs=%d\n",&temp32)) {
 			bindfs = temp32;
 			buf = get_next_line(f);
@@ -338,13 +338,13 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 			rskip = temp32;
 			buf = get_next_line(f);
 			continue;
-		}		
+		}
 		if( 1 == sscanf(buf,"read_size=%llu\n",&temp64)){
 			rsize = temp64;
 			buf = get_next_line(f);
 			continue;
 		}
-	
+
 		if( 1 == sscanf(buf,"read_blocksize=%u\n",&temp32)){
 			rbsize = temp32;
 			buf = get_next_line(f);
@@ -379,13 +379,13 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 			fsync = temp32;
 			buf = get_next_line(f);
 			continue;
-		}   
+		}
 		if( 1 == sscanf(buf,"write_size=%llu\n",&temp64)){
 			wsize = temp64;
 			buf = get_next_line(f);
 			continue;
 		}
-	
+
 		if( 1 == sscanf(buf,"write_blocksize=%u\n",&temp32)){
 			wbsize = temp32;
 			buf = get_next_line(f);
@@ -412,7 +412,7 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 			buf = get_next_line(f);
 			continue;
 		}
-		
+
 		if( 1 == sscanf(buf,"op_delay=%u\n",&temp32)){
 			waittime = temp32;
 			buf = get_next_line(f);
@@ -423,7 +423,7 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 			buf = parse_stats_config(&fsc,f,buf, &need_stats);
 			continue;
 		}
-		
+
 		if( 1 == sscanf(buf,"[end%u]\n",&temp32)){
 			if( temp32 != tgnum) {
 				fprintf(stderr,"parse_tg: tgnum isn't %u!!!\n",tgnum);
@@ -442,7 +442,7 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 	}
 
 	init_ffsb_tg(tg,numthreads,tgnum);
-	
+
 	if( need_stats ) {
 		tg_set_statsc(tg,&fsc);
 	}
@@ -450,7 +450,7 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 	tg_set_bindfs(tg,bindfs);
 
 	tg_set_read_random(tg,rr);
-	tg_set_write_random(tg,wr); 
+	tg_set_write_random(tg,wr);
 	tg_set_fsync_file(tg,fsync);
 
 	tg_set_read_size(tg,rsize);
@@ -460,18 +460,18 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 	tg_set_read_skipsize(tg,rskipsize);
 
 	tg_set_write_size(tg,wsize);
-	tg_set_write_blocksize(tg,wbsize); 
-	
+	tg_set_write_blocksize(tg,wbsize);
+
 	tg_set_op_weight(tg,"read"  ,rwgt);
 	tg_set_op_weight(tg,"readall",rawgt);
-	tg_set_op_weight(tg,"write" ,wwgt); 
+	tg_set_op_weight(tg,"write" ,wwgt);
 /* 	tg_set_op_weight(tg,"writeall",wawgt); */
 /* 	tg_set_op_weight(tg,"rewritefsync" ,rwfwgt); */
 	tg_set_op_weight(tg,"append",awgt);
 	tg_set_op_weight(tg,"create",cwgt);
 	tg_set_op_weight(tg,"delete",dwgt);
 	tg_set_op_weight(tg,"metaop",mwgt);
-	
+
 	tg_set_waittime(tg,waittime);
 
 	if ( verify_tg(tg) ) {
@@ -490,10 +490,10 @@ char * parse_fs(ffsb_fs_t *fs, int fsnum, FILE *f, char *buf, unsigned fs_flags,
 	int flag = 1;
 	uint64_t temp64;
 	uint32_t temp32;
-	
+
 	int reuse            = fs_get_reuse_fs(def_fs);
 	int agefs            = fs_get_agefs(def_fs);
-	uint32_t numfiles    = fs_get_numstartfiles(def_fs); 
+	uint32_t numfiles    = fs_get_numstartfiles(def_fs);
 	uint32_t numdirs     = fs_get_numdirs(def_fs);
 	uint64_t minfilesize = fs_get_min_filesize(def_fs);
 	uint64_t maxfilesize = fs_get_max_filesize(def_fs);
@@ -561,7 +561,7 @@ char * parse_fs(ffsb_fs_t *fs, int fsnum, FILE *f, char *buf, unsigned fs_flags,
 			continue;
 		}
 		if( 1 == sscanf(buf,"agefs=%u\n",&temp32)){
-			
+
 			agefs = temp32;
 			buf = get_next_line(f);
 			if( agefs != 0) {
@@ -595,13 +595,13 @@ char * parse_fs(ffsb_fs_t *fs, int fsnum, FILE *f, char *buf, unsigned fs_flags,
 		fprintf(stderr,"parse error, unexpected line: %s\n",buf);
 		buf = get_next_line(f);
 	}
-	
+
 	if( strlen(tempbuf) == 0 ){
 		fprintf(stderr,"filesystems must have a location, aborting\n");
 		fclose(f);
 		exit(1);
 	}
-	
+
 	init_ffsb_fs(fs,tempbuf,numdirs, numfiles,fs_flags);
 
 	fs_set_min_filesize(fs,minfilesize);
@@ -618,7 +618,7 @@ char * parse_fs(ffsb_fs_t *fs, int fsnum, FILE *f, char *buf, unsigned fs_flags,
 		fprintf(stderr,"warning, per filsystem statistics not implemented yet\n");
 	}
 
-			
+
 	return buf;
 }
 static
@@ -646,7 +646,7 @@ char * parse_all_fs(ffsb_config_t *fc, FILE *f, char *buf, unsigned fs_flags)
 		} else {
 			fprintf(stderr,"wtf ??: %s\n",buf);
 		}
-				
+
 	}
 	return buf;
 }
@@ -662,7 +662,7 @@ char * parse_all_tgs(ffsb_config_t *fc, FILE *f, char *buf)
 
 	memset(&zero_default,0,sizeof(zero_default));
 
-	
+
 	for( i = 0; i < numtg; i++){
 		if( (buf == NULL) || (0 == ffsb_strnlen(buf, BUFSIZE)) ) {
 			printf("parse error before threadgroup %u\n",
@@ -677,7 +677,7 @@ char * parse_all_tgs(ffsb_config_t *fc, FILE *f, char *buf)
 		} else {
 			fprintf(stderr,"parser: expecting [threadgroup%u] got : %s\n",i,buf);
 		}
-				
+
 	}
 	return buf;
 }
@@ -685,7 +685,7 @@ char * parse_all_tgs(ffsb_config_t *fc, FILE *f, char *buf)
 
 void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename)
 {
-	
+
 	FILE *f;
 	char *buf;
 	int i, numtg, num_threads = 0;
@@ -695,11 +695,11 @@ void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename)
 	if (f == NULL) {
 		perror(filename);
 		exit(1);
-	}	
+	}
 	buf  = parse_globals(fc,f, &fs_flags);
 	buf  = parse_all_fs(fc,f, buf , fs_flags);
 	buf  = parse_all_tgs(fc,f, buf );
-	
+
 	if( buf != NULL ) {
 		fprintf(stderr,"extra stuff at end of config file: %s\n",buf);
 	}

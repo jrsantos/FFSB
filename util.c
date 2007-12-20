@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <sys/types.h>
@@ -43,34 +43,34 @@ uint64_t ffsb_get_filesize(char *name)
  #define STAT(a,b) do { stat64((a),(b));} while(0)
 	struct stat64 filestat;
 #endif
-	
-	
+
+
 	STAT(name, &filestat);
 	return (uint64_t)filestat.st_size;
 #undef STAT
 }
 
 
-void* ffsb_malloc(size_t size) 
-{ 
-	void *ptr = malloc( (size) ); 
-	assert(ptr != NULL); 
+void* ffsb_malloc(size_t size)
+{
+	void *ptr = malloc( (size) );
+	assert(ptr != NULL);
 	memset(ptr,0,size);
-	return ptr; 
+	return ptr;
 }
 
-void* ffsb_realloc(void *ptr, size_t size) 
-{ 
+void* ffsb_realloc(void *ptr, size_t size)
+{
 	void *tmp ;
 	//printf("ffsb_realloc: ptr = %p  size = %ld\n",ptr,size);
 
-	if ( ptr == NULL ) 
+	if ( ptr == NULL )
 		return ffsb_malloc(size);
 
-	tmp = realloc(ptr, (size) ); 
-	assert(ptr != NULL); 
+	tmp = realloc(ptr, (size) );
+	assert(ptr != NULL);
 	ptr = tmp;
-	return ptr; 
+	return ptr;
 }
 
 
@@ -112,9 +112,9 @@ void   ffsb_sleep(unsigned secs)
 	select(0,NULL,NULL,NULL,&tv);
 }
 
- 
+
 char* ffsb_printsize(char *buf, double size, int bufsize){
-	
+
 	if (size>=1024*1024*1024)
 		snprintf(buf,bufsize,"%.3gGB",size/(1024*1024*1024));
 	else if (size>=1024*1024)
@@ -123,7 +123,7 @@ char* ffsb_printsize(char *buf, double size, int bufsize){
 		snprintf(buf,bufsize,"%.3gKB",size/1024);
 	else
 		snprintf(buf,bufsize,"%.3gB",size);
-	
+
 	return buf;
 }
 
@@ -293,7 +293,7 @@ void ffsb_barrier_wait(ffsb_barrier_t *fb)
 	} else {
 		while( fb->current_count != fb->required_count) {
 			pthread_cond_wait(&fb->pcond, &fb->plock);
-		} 
+		}
 	}
 
 	pthread_mutex_unlock(&fb->plock);
@@ -315,7 +315,7 @@ void   ffsb_bench_gettimeofday(void)
 	uint64_t average = 0;
 	struct timeval starttime,endtime,junk, difftime;
 	gettimeofday(&starttime, NULL);
-	for (i=0; i < 1000000 ;i++) 
+	for (i=0; i < 1000000 ;i++)
 		gettimeofday(&junk, NULL);
 	gettimeofday(&endtime, NULL);
 	timersub(&endtime, &starttime, &difftime);
@@ -333,7 +333,7 @@ void   ffsb_bench_getpid(void)
 	uint64_t average = 0;
 	struct timeval starttime,endtime,difftime;
 	gettimeofday(&starttime, NULL);
-	for (i=0; i < 1000000 ;i++) 
+	for (i=0; i < 1000000 ;i++)
 		getpid();
 	gettimeofday(&endtime, NULL);
 	timersub(&endtime, &starttime, &difftime);

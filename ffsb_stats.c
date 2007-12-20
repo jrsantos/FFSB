@@ -47,7 +47,7 @@ void ffsb_statsc_addbucket(ffsb_statsc_t *fsc, uint32_t min, uint32_t max)
 	fsc->num_buckets++;
 
 	/* printf("ffsb_realloc(): fsc_buckets = %d\n",fsc->num_buckets); */
-	temp = ffsb_realloc(fsc->buckets, sizeof(struct stat_bucket) * 
+	temp = ffsb_realloc(fsc->buckets, sizeof(struct stat_bucket) *
 			    fsc->num_buckets);
 
 	fsc->buckets = temp;
@@ -64,7 +64,7 @@ void ffsb_statsc_destroy(ffsb_statsc_t *fsc)
 
 void ffsb_statsc_ignore_sys(ffsb_statsc_t *fsc, syscall_t s)
 {
-	/* printf("fsis: oring 0x%x with 0x%x\n", 
+	/* printf("fsis: oring 0x%x with 0x%x\n",
 	 *      fsc->ignore_stats,
 	 *      (1 << s ) );
 	 */
@@ -110,9 +110,9 @@ void ffsb_add_data(ffsb_statsd_t *fsd, syscall_t s, uint32_t value)
 	if (!fsd || fsc_ignore_sys(fsd->config, s))
 		return;
 
-	if (value < fsd->mins[s]) 
+	if (value < fsd->mins[s])
 		fsd->mins[s] = value;
-	if (value > fsd->maxs[s]) 
+	if (value > fsd->maxs[s])
 		fsd->maxs[s] = value;
 
 	fsd->counts[s]++;
@@ -147,7 +147,7 @@ void ffsb_statsd_add(ffsb_statsd_t *dest, ffsb_statsd_t *src)
 		printf("ffsb_statsd_add: warning configs do not"
 		       "match for data being collected\n");
 
-	num_buckets = dest->config->num_buckets;       
+	num_buckets = dest->config->num_buckets;
 
 	for (i = 0; i < FFSB_NUM_SYSCALLS; i++) {
 		dest->counts[i] += src->counts[i];
@@ -184,9 +184,9 @@ void ffsb_statsd_print( ffsb_statsd_t *fsd )
 		if (fsd->counts[i]) {
 			printf("\t[%s] count = %u \n\t min = %05f millisec \n"
 			       "\t avg = %05lf \n\t max = %05f\n",
-			       syscall_names[i], fsd->counts[i], 
+			       syscall_names[i], fsd->counts[i],
 			       (float)fsd->mins[i] / 1000.0f ,
-			       (fsd->totals[i] / (1000.0f * 
+			       (fsd->totals[i] / (1000.0f *
 						  (double)fsd->counts[i])),
 			       (float)fsd->maxs[i] / 1000.0f );
 			print_buckets_helper( fsd->config, fsd->buckets[i]);
@@ -222,7 +222,7 @@ int main(int arc, char * argv[])
 	ffsb_statsc_setbucket(&fsc,8, 0.1f, 0.2f);
 	ffsb_statsc_setbucket(&fsc,9, 50.0f, 10000.0f);
 	ffsb_statsd_init(&fsd, &fsc);
-	
+
 	printf("test\n");
 	for (i = 0; i < 50000000; i++) {
 		ffsb_add_data(&fsd, SYS_READ, (float)i);

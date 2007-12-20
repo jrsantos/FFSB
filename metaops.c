@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <unistd.h>
@@ -43,11 +43,11 @@ static void createdir(struct benchfiles *dirs, randdata_t *rd)
 {
 	struct ffsb_file *newdir;
 
-	newdir = add_file(dirs, 0, rd); 
+	newdir = add_file(dirs, 0, rd);
 	if (mkdir(newdir->name,S_IRWXU) < 0) {
 		perror("mkdir");
 		exit(1);
-	}	
+	}
 	unlock_file_writer(newdir);
 }
 
@@ -62,7 +62,7 @@ static void removedir(struct benchfiles *dirs, randdata_t *rd)
 		perror("rmdir");
 		exit(1);
 	}
- 	unlock_file_writer(deldir); 
+ 	unlock_file_writer(deldir);
 }
 
 static void renamedir(struct benchfiles *dirs, randdata_t *rd)

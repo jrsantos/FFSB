@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <string.h>
@@ -45,7 +45,7 @@ void destroy_ffsb_tg(ffsb_tg_t *tg)
 	for (i = 0; i < tg->num_threads; i++)
 		destroy_ffsb_thread(tg->threads + i);
 	free(tg->threads);
-	if (tg_needs_stats(tg)) 
+	if (tg_needs_stats(tg))
 		ffsb_statsc_destroy(&tg->fsc);
 }
 
@@ -55,7 +55,7 @@ void * tg_run(void *data)
 	ffsb_tg_t *tg = params->tg;
 	int i;
 	pthread_attr_t attr;
-	
+
 	pthread_attr_init(&attr);
 	pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 
@@ -64,16 +64,16 @@ void * tg_run(void *data)
 	/* Sum up the weights for use later by tg_get_op() */
 	tg->sum_weights = 0;
 	for (i = 0; i < FFSB_NUMOPS; i++)
-		tg->sum_weights += tg->op_weights[i]; 
+		tg->sum_weights += tg->op_weights[i];
 
- 	tg->fc = params->fc; 
+ 	tg->fc = params->fc;
 	tg->flagval = -1;
 	tg->stopval = 1;
 
         /* spawn threads */
 	for (i = 0; i < tg->num_threads; i++) {
 		ffsb_thread_t * ft = &tg->threads[i];
-		pthread_create(&ft->ptid, &attr, ft_run, ft); 
+		pthread_create(&ft->ptid, &attr, ft_run, ft);
 	}
 
 	if( params->tg_barrier )
@@ -110,7 +110,7 @@ void tg_get_op(ffsb_tg_t *tg, randdata_t *rd, tg_op_params_t *params)
 	}
 
 	params->opnum = curop;
-	
+
 	/* If we're bound to a particular filesystem, use that,
 	 * otherwise, pick one at random.
 	 */
@@ -272,7 +272,7 @@ static void tg_print_config_helper(ffsb_tg_t *tg)
 	printf("\t num_threads      = %d\n", tg->num_threads);
 	printf("\t\n");
 	printf("\t read_random      = %s\n", (tg->read_random) ? "on" : "off" );
-	printf("\t read_size        = %llu\t(%s)\n", tg->read_size, 
+	printf("\t read_size        = %llu\t(%s)\n", tg->read_size,
 	       ffsb_printsize(buf, tg->read_size,256));
 	printf("\t read_blocksize   = %u\t(%s)\n", tg->read_blocksize,
 	       ffsb_printsize(buf, tg->read_blocksize,256));
@@ -294,12 +294,12 @@ static void tg_print_config_helper(ffsb_tg_t *tg)
 	printf("\t\n");
 	printf("\t op weights\n");
 
-	for (i = 0; i < FFSB_NUMOPS; i++) 
+	for (i = 0; i < FFSB_NUMOPS; i++)
 		sumweights += tg->op_weights[i];
 
 	for (i = 0; i < FFSB_NUMOPS; i++)
-		printf("\t %20s = %d (%.2f%%)\n",op_get_name(i), 
-		       tg->op_weights[i], 100 * (float)tg->op_weights[i] / 
+		printf("\t %20s = %d (%.2f%%)\n",op_get_name(i),
+		       tg->op_weights[i], 100 * (float)tg->op_weights[i] /
 		       (float)sumweights);
 	printf("\t\n");
 }

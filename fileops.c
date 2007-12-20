@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #define _LARGEFILE64_SOURCE
@@ -59,7 +59,7 @@ static unsigned readfile_helper(int fd, uint64_t size, uint32_t blocksize,
 	return iterations;
 }
 
-static uint64_t get_random_offset(randdata_t *rd, uint64_t filesize, 
+static uint64_t get_random_offset(randdata_t *rd, uint64_t filesize,
 				  int aligned)
 {
 	if (!aligned)
@@ -92,7 +92,7 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 
 	filesize = ffsb_get_filesize(curfile->name);
 
-	assert(filesize >= read_size);  
+	assert(filesize >= read_size);
 
 	/* Sequential read, starting at a random point */
 	if (! read_random) {
@@ -113,14 +113,14 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 				minfilesize = last + iterations *
 					(read_blocksize + read_skipsize);
 			else
-				minfilesize = read_blocksize + iterations - 1 * 
+				minfilesize = read_blocksize + iterations - 1 *
 					(read_blocksize + read_skipsize);
 
 			if (minfilesize > filesize) {
 				  printf("Error: read size %llu bytes too big "
-					 "w/ skipsize %u and blocksize %u," 
+					 "w/ skipsize %u and blocksize %u,"
 					 " for file of size %llu bytes\n"
-					 " aborting\n\n", read_size, 
+					 " aborting\n\n", read_size,
 					 read_skipsize, read_blocksize,
 					 filesize);
 				  printf("minimum file size must be at least "
@@ -131,12 +131,12 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 			for (i = 0; i < iterations; i++) {
 				fhread(fd, buf, read_blocksize, ft, fs);
 				fhseek(fd, (uint64_t)read_skipsize, SEEK_CUR, ft, fs);
-			} 
+			}
 			if (last) {
 				fhread(fd, buf, (uint64_t)last, ft, fs);
 				iterations++;
 			}
-		} else { 
+		} else {
 			/* Regular sequential reads */
 			if (range) {
 				offset = get_random_offset(rd, range,
@@ -152,7 +152,7 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 		uint64_t range = filesize - read_blocksize;
 		int i;
 
-		iterations = read_size / read_blocksize;		
+		iterations = read_size / read_blocksize;
 
 		for (i=0; i < iterations; i++) {
 			uint64_t offset = get_random_offset(rd, range,
@@ -178,7 +178,7 @@ void ffsb_readall(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	struct ffsb_file *curfile = NULL;
 	int fd;
 	uint64_t filesize;
-	
+
 	char *buf = ft_getbuf(ft);
 	uint32_t read_blocksize = ft_get_read_blocksize(ft);
 	struct randdata *rd = ft_get_randdata(ft);
@@ -219,7 +219,7 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 
 	filesize = ffsb_get_filesize(curfile->name);
 
-	assert(filesize>=(write_size));  
+	assert(filesize>=(write_size));
 
 	/* Sequential write, starting at a random point  */
 	if (!write_random) {
@@ -286,7 +286,7 @@ static unsigned ffsb_writeall_core(ffsb_thread_t *ft, ffsb_fs_t *fs,
 	fd = fhopenwrite(curfile->name, ft, fs);
 
 	filesize = ffsb_get_filesize(curfile->name);
-	iterations = writefile_helper(fd, filesize, write_blocksize, buf, 
+	iterations = writefile_helper(fd, filesize, write_blocksize, buf,
 				      ft, fs);
 	if (fsync_file)
 		if (fsync(fd)) {
@@ -370,12 +370,12 @@ void ffsb_createfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	if (range != 0)
 		size += getllrandom(rd, range);
 
-	newfile = add_file(bf,size,rd);    
+	newfile = add_file(bf,size,rd);
 	fd = fhopencreate(newfile->name, ft, fs);
-	iterations = writefile_helper(fd, size, write_blocksize, buf, ft, fs); 
+	iterations = writefile_helper(fd, size, write_blocksize, buf, ft, fs);
 	fhclose(fd, ft, fs);
 
-	unlock_file_writer(newfile);	
+	unlock_file_writer(newfile);
 
 	ft_incr_op(ft, opnum, iterations);
 	ft_add_writebytes(ft, size);

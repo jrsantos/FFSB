@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #include <pthread.h>
@@ -45,7 +45,7 @@ struct ffsb_time_poll {
  */
 static int ffsb_poll_fn(void *ptr)
 {
-	struct ffsb_time_poll * data = (struct ffsb_time_poll *)ptr;  
+	struct ffsb_time_poll * data = (struct ffsb_time_poll *)ptr;
 	struct timeval curtime, difftime;
 	gettimeofday(&curtime, NULL);
 
@@ -108,9 +108,9 @@ int main(int argc, char *argv[])
 
 	gettimeofday(&starttime, NULL);
 	for (i = 0; i < fc.num_filesys; i++) {
-		fs_print_config(&fc.filesystems[i]); 		
+		fs_print_config(&fc.filesystems[i]);
 		pthread_create(fs_pts + i,&attr, construct_ffsb_fs,
-			       &fc.filesystems[i]); 
+			       &fc.filesystems[i]);
 	}
 
 	fflush(stdout);
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 		pthread_create(&params[i].pt, &attr, tg_run, &params[i] );
 	}
 
-	ffsb_getrusage (&before_self, &before_children); 
+	ffsb_getrusage (&before_self, &before_children);
 	gettimeofday (&pdata.starttime, NULL );
 
 	ffsb_barrier_wait(&tg_barrier);  /* sync with tg's to start*/
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 	gettimeofday(&endtime, NULL);
 	ffsb_getrusage(&after_self, &after_children);
 
-	printf("FFSB benchmark finished   at: %s\n", 
+	printf("FFSB benchmark finished   at: %s\n",
 	       ctime_r(&endtime.tv_sec, ctime_end_buf));
 	printf("Results:\n");
 	fflush(stdout);
@@ -223,34 +223,34 @@ int main(int argc, char *argv[])
 #define USEC_PER_SEC ((double)(1000000.0f))
 
 	/* sum up self and children after */
-	usertime = (after_self.ru_utime.tv_sec + 
+	usertime = (after_self.ru_utime.tv_sec +
 		    ((after_self.ru_utime.tv_usec)/USEC_PER_SEC)) +
-		((after_children.ru_utime.tv_sec + 
+		((after_children.ru_utime.tv_sec +
 	          ((after_children.ru_utime.tv_usec)/USEC_PER_SEC)));
 
 	/* subtract away the before */
-	usertime -= (before_self.ru_utime.tv_sec + 
+	usertime -= (before_self.ru_utime.tv_sec +
 		     ((before_self.ru_utime.tv_usec)/USEC_PER_SEC)) +
-		((before_children.ru_utime.tv_sec + 
+		((before_children.ru_utime.tv_sec +
 		  ((before_children.ru_utime.tv_usec)/USEC_PER_SEC)));
 
 
 	/* sum up self and children after */
-	systime = (after_self.ru_stime.tv_sec + 
+	systime = (after_self.ru_stime.tv_sec +
 		   ((after_self.ru_stime.tv_usec)/USEC_PER_SEC)) +
-		((after_children.ru_stime.tv_sec + 
+		((after_children.ru_stime.tv_sec +
 		  ((after_children.ru_stime.tv_usec)/USEC_PER_SEC)));
 
 	/* subtract away the before */
-	systime -= (before_self.ru_stime.tv_sec + 
+	systime -= (before_self.ru_stime.tv_sec +
 		    ((before_self.ru_stime.tv_usec)/USEC_PER_SEC)) +
-		((before_children.ru_stime.tv_sec + 
+		((before_children.ru_stime.tv_sec +
 		  ((before_children.ru_stime.tv_usec)/USEC_PER_SEC)));
 
 	printf("\n\n");
 	printf("%.1lf%% User   Time\n", 100 * usertime / totaltime);
 	printf("%.1lf%% System Time\n", 100 * systime / totaltime);
-	printf("%.1f%% CPU Utilization\n", 100 * (usertime + systime) / 
+	printf("%.1f%% CPU Utilization\n", 100 * (usertime + systime) /
 	       totaltime);
 	free(params);
 	destroy_ffsb_config(&fc);

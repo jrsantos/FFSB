@@ -3,16 +3,16 @@
  *
  *   This program is free software;  you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or 
+ *   the Free Software Foundation; either version 2 of the License, or
  *   (at your option) any later version.
- * 
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
  *   the GNU General Public License for more details.
  *
  *   You should have received a copy of the GNU General Public License
- *   along with this program;  if not, write to the Free Software 
+ *   along with this program;  if not, write to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 #ifndef _FFSB_FS_H_
@@ -45,7 +45,7 @@ struct ffsb_tg;
  * a properly set up threadgroup is supplied by the parser which is run
  * until the filesystem reaches the desired utilization
  *
- * Operations 
+ * Operations
  * The semantics of a ffsb operation are always such that they occur on
  * a filesystem, so the filesystem also hold operation specific data as
  * an opaque type
@@ -59,8 +59,8 @@ typedef struct ffsb_fs {
 
 	struct benchfiles files;
 	struct benchfiles meta;
- 	struct benchfiles fill; 
-	
+ 	struct benchfiles fill;
+
 	int flags;
 #define FFSB_FS_DIRECTIO   (1 << 0)
 #define FFSB_FS_ALIGNIO4K  (1 << 1)
@@ -80,7 +80,7 @@ typedef struct ffsb_fs {
 	uint32_t create_blocksize, age_blocksize;
 #define FFSB_FS_DEFAULT_CREATE_BLOCKSIZE 4096
 #define FFSB_FS_DEFAULT_AGE_BLOCKSIZE    4096
-	
+
 	double start_fsutil;
 
 	/* Aging data/parameters */
@@ -108,11 +108,11 @@ typedef struct ffsb_fs {
 /* Set up the structure, zeros everything out and dups the basedir
  * string
  */
-void init_ffsb_fs (ffsb_fs_t * fs, char * basedir, uint32_t num_data_dirs, 
+void init_ffsb_fs (ffsb_fs_t * fs, char * basedir, uint32_t num_data_dirs,
 		   uint32_t num_start_files, unsigned flags);
 
 /* Does not remove files/dirs on disk, only frees up data
- * structures 
+ * structures
  */
 void destroy_ffsb_fs (ffsb_fs_t *fs);
 
