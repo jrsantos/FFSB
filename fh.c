@@ -79,7 +79,7 @@ static int fhopenhelper(char *filename, char *bufflags, int flags,
 	if (need_stats)
 		gettimeofday(&start,NULL);
 
-	if (fd = open64(filename, flags, S_IRWXU) < 0) {
+	if ((fd = open64(filename, flags, S_IRWXU)) < 0) {
 		perror(filename);
 		exit(0);
 	}
