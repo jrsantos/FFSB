@@ -245,11 +245,13 @@ void   ffsb_getrusage(struct rusage *ru_self, struct rusage *ru_children)
 	int ret = 0;
 /* 	printf("cpu_so_far is %lf\n",cpu_so_far()); */
 /* 	printf("cpu_so_far_children is %lf\n",cpu_so_far_children()); */
-	if( (ret = getrusage(RUSAGE_SELF ,ru_self)) < 0){
+	ret = getrusage(RUSAGE_SELF, ru_self);
+	if (ret < 0) {
 		perror("getrusage self");
 	}
 /* 	printf("self returned %d\n",ret); */
-	if( (ret = getrusage(RUSAGE_CHILDREN ,ru_children)) < 0){
+	ret = getrusage(RUSAGE_CHILDREN, ru_children);
+	if (ret < 0) {
 		perror("getrusage children");
 	}
 /* 	printf("children returned %d\n",ret); */

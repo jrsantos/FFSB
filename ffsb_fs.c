@@ -144,13 +144,15 @@ static int verify_file(struct benchfiles* bf, char * fname , void* fs_ptr)
 	/* If it is a directory and it passed the name verification we
 	 * don't need to do anything here
 	 */
-	if ((dirptr = opendir(fname))) {
+	dirptr = opendir(fname);
+	if (dirptr) {
 		closedir(dirptr);
 		return 0;
 	}
 
+	fd = open(fname, O_RDONLY);
 	/* If we can't open it for read we're done */
-	if ((fd = open(fname, O_RDONLY)) < 0) {
+	if (fd < 0) {
 		printf("verify_file: error opening %s for readonly\n",fname);
 		perror(fname);
 		return 1;

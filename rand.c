@@ -49,7 +49,8 @@ static
 void sgenrand(randdata_t *state)
 {
 	int got = 0;
-	if( state->size != (got = read(randfd, state->mt, state->size))){
+	got = read(randfd, state->mt, state->size);
+	if (got != state->size) {
 		int i ;
 		/* fall back on lrand48 */
 		/* printf("fallback_rand\n"); */

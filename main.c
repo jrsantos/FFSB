@@ -136,7 +136,8 @@ int main(int argc, char *argv[])
 	ffsb_sync();
 
 	/* Execute the callout if any and wait for it to return */
-	if (callout = fc_get_callout(&fc)) {
+	callout = fc_get_callout(&fc);
+	if (callout) {
 		printf("executing callout: \n %s\n", callout);
 		if (ffsb_system(callout) < 0) {
 			perror("system");

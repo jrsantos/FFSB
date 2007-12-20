@@ -691,7 +691,8 @@ void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename)
 	int i, numtg, num_threads = 0;
 	unsigned fs_flags = 0;
 
-	if( NULL == (f = fopen(filename,"r"))){
+	f = fopen(filename,"r");
+	if (f == NULL) {
 		perror(filename);
 		exit(1);
 	}	

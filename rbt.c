@@ -620,8 +620,9 @@ rb_node * rbtree_find(rb_tree * tree, datatype object)
   int comp_result;
 
   while (cur_node) {
+    comp_result = COMP_NODES(object, cur_node->object);
     /* In case of equality, we can return the current node. */
-    if ((comp_result = COMP_NODES(object, cur_node->object)) == 0)
+    if (comp_result == 0)
       return cur_node;
     /* Go down to the left or right child. */
     cur_node = (comp_result > 0) ? cur_node->left : cur_node->right;

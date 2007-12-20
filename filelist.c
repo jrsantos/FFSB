@@ -362,8 +362,8 @@ static int add_dir_to_filelist(struct benchfiles *bf, DIR *subdir, char *subdir_
 			       filename_buf);
 			return -1;
 		}
-
-		if ((tmp = opendir(filename_buf)) == NULL) {
+		tmp = opendir(filename_buf);
+		if (tmp == NULL) {
 			struct ffsb_file * ffsb_file = NULL;
 
 			if (validate_filename(bf, d_ent->d_name ) < 0) {
@@ -428,7 +428,8 @@ int grab_old_fileset(struct benchfiles *bf, char *basename,
 		return -1;
 	}
 
-	if ((lc_dir = opendir(buf)) == NULL) {
+	lc_dir = opendir(buf);
+	if (lc_dir == NULL) {
 		perror("opendir");
 		return -1;
 	}
