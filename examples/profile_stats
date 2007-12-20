@@ -1,0 +1,49 @@
+num_filesystems=1
+num_threadgroups=1
+directio=0
+time=20
+
+[filesystem0]
+	location=/mnt/tmp2
+	reuse=1
+	num_files=100
+	num_dirs=1
+	max_filesize=40960
+	min_filesize=40960
+[end0]
+
+
+[threadgroup0]
+	num_threads=1
+	read_weight=1
+	read_size=40960
+	read_random=0
+	read_blocksize=4096
+	write_weight=1
+	write_size=40960
+	write_blocksize=4096
+
+	[stats]	
+		enable_stats=1
+		ignore=close
+		ignore=open
+#		ignore=lseek
+#		ignore=write
+#		ignore=read
+		bucket 0.00 0.01
+		bucket 0.01 0.02
+		bucket 0.02 0.03
+		bucket 0.03 0.04
+		bucket 0.04 0.05
+		bucket 0.05 0.1
+		bucket 0.1 0.2
+		bucket 0.2 0.5
+		bucket 0.5 1.0
+		bucket 1.0 2.0
+		bucket 2.0 3.0
+		bucket 3.0 4.0
+		bucket 4.0 5.0
+		bucket 5.0 10.0
+		bucket 10.0 10000.0
+	[end]
+[end0]
