@@ -77,6 +77,7 @@ void destroy_filelist (struct benchfiles *);
  * Caller must ensure file is actually created on disk
  */
 struct ffsb_file * add_file (struct benchfiles *b, uint64_t size,randdata_t *rd);
+struct ffsb_file * add_dir (struct benchfiles *, uint64_t, randdata_t *);
 
 /* Removes file from list, decrements listsize.
  *

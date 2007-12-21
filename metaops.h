@@ -22,6 +22,7 @@
 #include "fileops.h"
 
 void ffsb_metaops(struct ffsb_thread *, ffsb_fs_t *, unsigned);
+void ffsb_createdir(struct ffsb_thread *, ffsb_fs_t *, unsigned);
 void metaops_metadir(ffsb_fs_t *, unsigned);
 
 #endif /* _METAOPS_H_ */

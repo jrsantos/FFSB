@@ -43,7 +43,7 @@ static void createdir(struct benchfiles *dirs, randdata_t *rd)
 {
 	struct ffsb_file *newdir;
 
-	newdir = add_file(dirs, 0, rd);
+	newdir = add_dir(dirs, 0, rd);
 	if (mkdir(newdir->name,S_IRWXU) < 0) {
 		perror("mkdir");
 		exit(1);
@@ -95,3 +95,11 @@ void ffsb_metaops(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	ft_incr_op(ft,opnum,1);
 }
 
+void ffsb_createdir(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
+	randdata_t *rd = ft_get_randdata(ft);
+
+	createdir(bf, rd);
+	ft_incr_op(ft, opnum, 1);
+}

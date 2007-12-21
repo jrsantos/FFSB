@@ -177,6 +177,44 @@ struct ffsb_file * add_file(struct benchfiles *b, uint64_t size, randdata_t *rd)
 	}
 }
 
+struct ffsb_file * add_dir(struct benchfiles *b, uint64_t size, randdata_t *rd)
+{
+	struct ffsb_file *newfile, *oldfile = NULL;
+	int dirnum = 0;
+
+	newfile = ffsb_malloc(sizeof(struct ffsb_file));
+
+	newfile->size = size;
+	init_rwlock(&newfile->lock);
+
+	/* write lock the filelist, beging critical section */
+	rw_lock_write(&b->fileslock);
+
+	dirnum = b->numsubdirs;
+	b->numsubdirs++;
+
+	newfile->num = dirnum;
+	rw_lock_write(&newfile->lock);
+
+	/* unlock filelist */
+	rw_unlock_write(&b->fileslock);
+
+	if (oldfile == NULL) {
+		char buf[FILENAME_MAX];
+		int namesize = 0;
+		namesize = snprintf(buf, FILENAME_MAX, "%s/%s%s%d",
+				    b->basedir, b->basename,
+				    SUBDIRNAME_BASE, dirnum);
+		if (namesize >= FILENAME_MAX)
+			printf("warning: filename \"%s\" too long\n", buf);
+			/* TODO: take action here... */
+		newfile->name = ffsb_strdup(buf);
+		return newfile;
+	} else {
+		free(newfile);
+		return oldfile;
+	}
+}
 
 /* Private version of above function used only for reusing a
  * fileset.

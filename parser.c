@@ -217,6 +217,7 @@ int verify_tg( ffsb_tg_t *tg)
 	uint32_t create_weight  = tg_get_op_weight(tg,"create");
 	uint32_t append_weight  = tg_get_op_weight(tg,"append");
 	uint32_t metaop_weight    = tg_get_op_weight(tg,"metaop");
+	uint32_t createdir_weight = tg_get_op_weight(tg,"createdir");
 	uint32_t delete_weight    = tg_get_op_weight(tg,"delete");
 
 	uint32_t sum_weight     = read_weight +
@@ -226,6 +227,7 @@ int verify_tg( ffsb_tg_t *tg)
                                   create_weight +
 	                          append_weight +
 		                  metaop_weight +
+		                  createdir_weight +     
 	                          delete_weight;
 
 
@@ -285,6 +287,7 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 	uint32_t awgt = 0;   /* append weight  */
 	uint32_t dwgt = 0;   /* delete weight */
 	uint32_t mwgt = 0;   /* meta weight */
+	uint32_t cdwgt = 0;  /* createdir weight */
 
 	uint64_t rsize  = tg_get_read_size(dft);
 	uint32_t rbsize = tg_get_read_blocksize(dft);
@@ -413,6 +416,12 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 			continue;
 		}
 
+		if( 1 == sscanf(buf,"createdir_weight=%u\n",&temp32)){
+			cdwgt = temp32;
+			buf = get_next_line(f);
+			continue;
+		}
+
 		if( 1 == sscanf(buf,"op_delay=%u\n",&temp32)){
 			waittime = temp32;
 			buf = get_next_line(f);
@@ -471,6 +480,7 @@ char * parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,ffsb_tg_t *dft)
 	tg_set_op_weight(tg,"create",cwgt);
 	tg_set_op_weight(tg,"delete",dwgt);
 	tg_set_op_weight(tg,"metaop",mwgt);
+	tg_set_op_weight(tg,"createdir",cdwgt);
 
 	tg_set_waittime(tg,waittime);
 
