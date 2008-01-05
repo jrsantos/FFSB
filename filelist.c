@@ -90,8 +90,11 @@ void init_filelist(struct benchfiles *b, char *basedir, char *basename,
 	b->numsubdirs = numsubdirs;
 	init_rwlock(&b->fileslock);
 	b->files = rbtree_construct();
+	b->dirs = rbtree_construct();
 	b->holes = ffsb_malloc(sizeof(struct cirlist));
+	b->dholes = ffsb_malloc(sizeof(struct cirlist));
 	init_cirlist(b->holes);
+	init_cirlist(b->dholes);
 
 	if (builddirs)
 		build_dirs(b);
@@ -179,27 +182,35 @@ struct ffsb_file * add_file(struct benchfiles *b, uint64_t size, randdata_t *rd)
 
 struct ffsb_file * add_dir(struct benchfiles *b, uint64_t size, randdata_t *rd)
 {
-	struct ffsb_file *newfile, *oldfile = NULL;
+	struct ffsb_dir *newdir, *olddir = NULL;
 	int dirnum = 0;
 
-	newfile = ffsb_malloc(sizeof(struct ffsb_file));
+	newdir = ffsb_malloc(sizeof(struct ffsb_dir));
 
-	newfile->size = size;
-	init_rwlock(&newfile->lock);
+	init_rwlock(&newdir->lock);
 
 	/* write lock the filelist, beging critical section */
 	rw_lock_write(&b->fileslock);
 
-	dirnum = b->numsubdirs;
-	b->numsubdirs++;
+	/* First check "holes" for a file  */
+	if (!cl_empty(b->dholes)) {
+		olddir = cl_remove_head(b->dholes);
+		rbtree_insert(b->files, olddir);
+		rw_lock_write(&olddir->lock);
+	} else {
+		dirnum = b->numsubdirs;
+		b->numsubdirs++;
+		printf("dirnum: %d\n", dirnum);
+		newdir->num = dirnum;
+		rbtree_insert(b->dirs, newdir);
 
-	newfile->num = dirnum;
-	rw_lock_write(&newfile->lock);
+		rw_lock_write(&newdir->lock);
+	}
 
 	/* unlock filelist */
 	rw_unlock_write(&b->fileslock);
 
-	if (oldfile == NULL) {
+	if (olddir == NULL) {
 		char buf[FILENAME_MAX];
 		int namesize = 0;
 		namesize = snprintf(buf, FILENAME_MAX, "%s/%s%s%d",
@@ -208,11 +219,11 @@ struct ffsb_file * add_dir(struct benchfiles *b, uint64_t size, randdata_t *rd)
 		if (namesize >= FILENAME_MAX)
 			printf("warning: filename \"%s\" too long\n", buf);
 			/* TODO: take action here... */
-		newfile->name = ffsb_strdup(buf);
-		return newfile;
+		newdir->name = ffsb_strdup(buf);
+		return newdir;
 	} else {
-		free(newfile);
-		return oldfile;
+		free(newdir);
+		return olddir;
 	}
 }
 

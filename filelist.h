@@ -34,6 +34,13 @@ struct ffsb_file {
 	uint32_t num;
 };
 
+struct ffsb_dir {
+	char *name;
+	uint64_t pad;
+	struct rwlock lock;
+	uint32_t num;
+};
+
 struct cirlist;
 
 /* Tree of ffsb_file structs and associated state info struct must be
@@ -52,10 +59,14 @@ struct benchfiles {
 	/* Files which currently exist on the filesystem */
 	struct red_black_tree *files;
 
+	/* Directories which currently exist on the filesystem */
+	struct red_black_tree *dirs;
+
 	/* Files which have been deleted, and whose numbers should be
 	 * reused
 	 */
 	struct cirlist *holes;
+	struct cirlist *dholes;
 
 	/* This lock must be held while manipulating the structure */
 	struct rwlock fileslock;
