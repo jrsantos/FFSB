@@ -22,7 +22,7 @@
 #include "util.h"
 
 
-void init_cirlist(struct cirlist * cl)
+void init_cirlist(struct cirlist *cl)
 {
 	cl->count = 0;
 	cl->head  = NULL;
@@ -35,9 +35,9 @@ int cl_empty(struct cirlist *cl)
 
 void cl_insert_tail(struct cirlist *cl , cldatatype object)
 {
-	struct cnode * new = ffsb_malloc(sizeof(struct cnode));
+	struct cnode *new = ffsb_malloc(sizeof(struct cnode));
 	new->obj = object;
-	if (cl->count == 0){
+	if (cl->count == 0) {
 		assert(cl->head == NULL);
 		cl->head = new;
 		cl->head->next = cl->head;
@@ -74,7 +74,7 @@ cldatatype cl_remove_head(struct cirlist *cl)
 		assert(cl->head == NULL);
 		return NULL;
 	}
-	if (cl->count == 1 ) {
+	if (cl->count == 1) {
 		assert(cl->head->next == cl->head);
 		assert(cl->head->prev == cl->head);
 		oldhead = cl->head;
@@ -98,9 +98,9 @@ cldatatype cl_remove_head(struct cirlist *cl)
 		cl->count--;
 	}
 	ret = oldhead->obj;
-	oldhead->obj = (void*)(-1);
-	oldhead->next = (void*)(-1);
-	oldhead->prev = (void*)(-1);
+	oldhead->obj = (void *)(-1);
+	oldhead->next = (void *)(-1);
+	oldhead->prev = (void *)(-1);
 	free(oldhead);
 
 	return ret;
