@@ -35,8 +35,8 @@ void init_ffsb_tg(ffsb_tg_t *tg, unsigned num_threads, unsigned tg_num)
 	tg->bindfs = -1; /* default is not bound */
 
 	tg->thread_bufsize = 0;
-	for( i = 0 ; i < num_threads ; i++)
-		init_ffsb_thread( tg->threads + i, tg, 0, tg_num, i);
+	for (i = 0 ; i < num_threads ; i++)
+		init_ffsb_thread(tg->threads + i, tg, 0, tg_num, i);
 }
 
 void destroy_ffsb_tg(ffsb_tg_t *tg)
@@ -49,9 +49,9 @@ void destroy_ffsb_tg(ffsb_tg_t *tg)
 		ffsb_statsc_destroy(&tg->fsc);
 }
 
-void * tg_run(void *data)
+void *tg_run(void *data)
 {
-	tg_run_params_t * params = (tg_run_params_t *)data;
+	tg_run_params_t *params = (tg_run_params_t *)data;
 	ffsb_tg_t *tg = params->tg;
 	int i;
 	pthread_attr_t attr;
@@ -66,18 +66,18 @@ void * tg_run(void *data)
 	for (i = 0; i < FFSB_NUMOPS; i++)
 		tg->sum_weights += tg->op_weights[i];
 
- 	tg->fc = params->fc;
+	tg->fc = params->fc;
 	tg->flagval = -1;
 	tg->stopval = 1;
 
-        /* spawn threads */
+	/* spawn threads */
 	for (i = 0; i < tg->num_threads; i++) {
-		ffsb_thread_t * ft = &tg->threads[i];
+		ffsb_thread_t *ft = &tg->threads[i];
 		pthread_create(&ft->ptid, &attr, ft_run, ft);
 	}
 
-	if( params->tg_barrier )
-		ffsb_barrier_wait( params->tg_barrier);
+	if (params->tg_barrier)
+		ffsb_barrier_wait(params->tg_barrier);
 
 	/* wait for termination condition to be true */
 	do {
@@ -118,7 +118,7 @@ void tg_get_op(ffsb_tg_t *tg, randdata_t *rd, tg_op_params_t *params)
 	if (fsnum < 0)
 		fsnum = getrandom(rd, fc_get_num_filesys(tg->fc));
 
-	params->fs = fc_get_fs(tg->fc,fsnum);
+	params->fs = fc_get_fs(tg->fc, fsnum);
 }
 
 void tg_set_op_weight(ffsb_tg_t *tg, char *opname, unsigned weight)
@@ -186,11 +186,10 @@ void tg_set_read_blocksize(ffsb_tg_t *tg, uint32_t rs)
 	update_bufsize(tg);
 }
 
-void tg_set_read_skip(ffsb_tg_t *tg, int rs )
+void tg_set_read_skip(ffsb_tg_t *tg, int rs)
 {
 	tg->read_skip = rs;
 }
-
 
 void tg_set_read_skipsize(ffsb_tg_t *tg, uint32_t rs)
 {
@@ -271,12 +270,12 @@ static void tg_print_config_helper(ffsb_tg_t *tg)
 
 	printf("\t num_threads      = %d\n", tg->num_threads);
 	printf("\t\n");
-	printf("\t read_random      = %s\n", (tg->read_random) ? "on" : "off" );
+	printf("\t read_random      = %s\n", (tg->read_random) ? "on" : "off");
 	printf("\t read_size        = %llu\t(%s)\n", tg->read_size,
-	       ffsb_printsize(buf, tg->read_size,256));
+	       ffsb_printsize(buf, tg->read_size, 256));
 	printf("\t read_blocksize   = %u\t(%s)\n", tg->read_blocksize,
-	       ffsb_printsize(buf, tg->read_blocksize,256));
-	printf("\t read_skip        = %s\n", (tg->read_skip) ? "on" : "off" );
+	       ffsb_printsize(buf, tg->read_blocksize, 256));
+	printf("\t read_skip        = %s\n", (tg->read_skip) ? "on" : "off");
 	printf("\t read_skipsize    = %u\t(%s)\n", tg->read_skipsize,
 	       ffsb_printsize(buf, tg->read_skipsize, 256));
 	printf("\t\n");
@@ -289,7 +288,7 @@ static void tg_print_config_helper(ffsb_tg_t *tg)
 	printf("\t wait time        = %u\n", tg->wait_time);
 	if (tg->bindfs >= 0) {
 		printf("\t\n");
-		printf("\t bound to fs %d\n",tg->bindfs);
+		printf("\t bound to fs %d\n", tg->bindfs);
 	}
 	printf("\t\n");
 	printf("\t op weights\n");
@@ -298,7 +297,7 @@ static void tg_print_config_helper(ffsb_tg_t *tg)
 		sumweights += tg->op_weights[i];
 
 	for (i = 0; i < FFSB_NUMOPS; i++)
-		printf("\t %20s = %d (%.2f%%)\n",op_get_name(i),
+		printf("\t %20s = %d (%.2f%%)\n", op_get_name(i),
 		       tg->op_weights[i], 100 * (float)tg->op_weights[i] /
 		       (float)sumweights);
 	printf("\t\n");
@@ -313,7 +312,7 @@ void tg_print_config(ffsb_tg_t *tg)
 
 void tg_print_config_aging(ffsb_tg_t *tg, char *fsname)
 {
-	printf("\t Aging ThreadGroup for fs %s\n",fsname);
+	printf("\t Aging ThreadGroup for fs %s\n", fsname);
 	printf("\t ================\n");
 	tg_print_config_helper(tg);
 }
@@ -321,8 +320,8 @@ void tg_print_config_aging(ffsb_tg_t *tg, char *fsname)
 void tg_collect_results(ffsb_tg_t *tg, ffsb_op_results_t *r)
 {
 	int i;
-	for(i = 0  ; i < tg_get_numthreads(tg) ; i++)
-		add_results(r, ft_get_results( tg->threads + i ) );
+	for (i = 0; i < tg_get_numthreads(tg); i++)
+		add_results(r, ft_get_results(tg->threads + i));
 }
 
 void tg_set_waittime(ffsb_tg_t *tg, unsigned time)
@@ -348,7 +347,7 @@ void tg_set_statsc(ffsb_tg_t *tg, ffsb_statsc_t *fsc)
 		tg->need_stats = 1;
 		ffsb_statsc_copy(&tg->fsc, fsc);
 
-		for (i = 0; i < tg->num_threads; i ++)
+		for (i = 0; i < tg->num_threads; i++)
 			ft_set_statsc(tg->threads + i, &tg->fsc);
 	}
 }
@@ -360,7 +359,7 @@ void tg_collect_stats(ffsb_tg_t *tg, ffsb_statsd_t *fsd)
 	assert(tg->need_stats);
 	ffsb_statsd_init(fsd, &tg->fsc);
 
-	for(i = 0  ; i < tg_get_numthreads(tg) ; i++)
+	for (i = 0; i < tg_get_numthreads(tg); i++)
 		ffsb_statsd_add(fsd, ft_get_stats_data(tg->threads+i));
 }
 
