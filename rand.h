@@ -32,14 +32,14 @@
 
 /* Set a cap on the size of the array, note this */
 /* is multiplied by AVG_ITR_RNDBTS */
-#define MAX_RANDBUF_SIZE ( 10 * 1024 )
+#define MAX_RANDBUF_SIZE (10 * 1024)
 
 #define MIN_RANDBUF_SIZE 1024
 
 
-typedef struct randdata{
+typedef struct randdata {
 	int size;
-	uint8_t * mt; /* the array of random bits  */
+	uint8_t *mt; /* the array of random bits  */
 	int mti; /* mti==N+1 means mt[N] is not initialized */
 
 	/* fallback random source, lrand48_r() */
@@ -48,14 +48,13 @@ typedef struct randdata{
 #endif
 } randdata_t;
 
-uint32_t getrandom(randdata_t *rd,uint32_t mod);
-uint64_t getllrandom(randdata_t *rd,uint64_t mod);
-
+uint32_t getrandom(randdata_t *rd, uint32_t mod);
+uint64_t getllrandom(randdata_t *rd, uint64_t mod);
 
 /* pass in thread-local state, and est. number of "uses" */
 /* pass in 0 for size if size is unknown/not important */
 void init_random(randdata_t *state, uint32_t size);
 void destroy_random(randdata_t *rd);
-void randcleanup( void );
+void randcleanup(void);
 
 #endif
