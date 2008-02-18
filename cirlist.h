@@ -20,7 +20,7 @@
 
 #include "filelist.h"
 
-typedef struct ffsb_file * cldatatype;
+typedef struct ffsb_file *cldatatype;
 
 struct cnode {
 	cldatatype obj;
@@ -33,9 +33,9 @@ struct cirlist {
 	struct cnode *head;
 };
 
-void init_cirlist (struct cirlist * cl);
-int cl_empty (struct cirlist *cl);
-void cl_insert_tail (struct cirlist *cl , cldatatype object);
-cldatatype cl_remove_head (struct cirlist *cl );
+void init_cirlist(struct cirlist *cl);
+int cl_empty(struct cirlist *cl);
+void cl_insert_tail(struct cirlist *cl , cldatatype object);
+cldatatype cl_remove_head(struct cirlist *cl);
 
 #endif /* _CIRLIST_H */

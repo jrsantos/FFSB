@@ -33,18 +33,18 @@
 #include "ffsb_op.h"
 
 
-void fop_bench(ffsb_fs_t * fs, unsigned opnum)
+void fop_bench(ffsb_fs_t *fs, unsigned opnum)
 {
 	fs_set_opdata(fs, fs_get_datafiles(fs), opnum);
 }
 
-void fop_age(ffsb_fs_t * fs, unsigned opnum)
+void fop_age(ffsb_fs_t *fs, unsigned opnum)
 {
 	fs_set_opdata(fs, fs_get_agefiles(fs), opnum);
 }
 
 static unsigned readfile_helper(int fd, uint64_t size, uint32_t blocksize,
-				char* buf, ffsb_thread_t *ft, ffsb_fs_t *fs)
+				char *buf, ffsb_thread_t *ft, ffsb_fs_t *fs)
 {
 	int iterations, a;
 	int last;
@@ -95,7 +95,7 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	assert(filesize >= read_size);
 
 	/* Sequential read, starting at a random point */
-	if (! read_random) {
+	if (!read_random) {
 		uint64_t range = filesize - read_size;
 		uint64_t offset = 0;
 		/* Skip or "stride" reads option */
@@ -130,7 +130,8 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 
 			for (i = 0; i < iterations; i++) {
 				fhread(fd, buf, read_blocksize, ft, fs);
-				fhseek(fd, (uint64_t)read_skipsize, SEEK_CUR, ft, fs);
+				fhseek(fd, (uint64_t)read_skipsize, SEEK_CUR,
+				       ft, fs);
 			}
 			if (last) {
 				fhread(fd, buf, (uint64_t)last, ft, fs);
@@ -154,10 +155,10 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 
 		iterations = read_size / read_blocksize;
 
-		for (i=0; i < iterations; i++) {
+		for (i = 0; i < iterations; i++) {
 			uint64_t offset = get_random_offset(rd, range,
 							    fs_get_alignio(fs));
-			fhseek(fd, offset, SEEK_SET,ft, fs);
+			fhseek(fd, offset, SEEK_SET, ft, fs);
 			fhread(fd, buf, read_blocksize, ft, fs);
 		}
 	}
@@ -188,7 +189,7 @@ void ffsb_readall(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	curfile = choose_file_reader(bf, rd);
 	fd = fhopenread(curfile->name, ft, fs);
 
-	filesize= ffsb_get_filesize(curfile->name);
+	filesize = ffsb_get_filesize(curfile->name);
 	iterations = readfile_helper(fd, filesize, read_blocksize, buf, ft, fs);
 
 	unlock_file_reader(curfile);
@@ -219,7 +220,7 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 
 	filesize = ffsb_get_filesize(curfile->name);
 
-	assert(filesize>=(write_size));
+	assert(filesize >= write_size);
 
 	/* Sequential write, starting at a random point  */
 	if (!write_random) {
@@ -238,7 +239,7 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 		int i;
 		iterations = write_size / write_blocksize;
 
-		for (i=0; i < iterations; i++) {
+		for (i = 0; i < iterations; i++) {
 			uint64_t offset = get_random_offset(rd, range,
 							    fs_get_alignio(fs));
 			fhseek(fd, offset, SEEK_SET, ft, fs);
@@ -268,7 +269,7 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 
 #if 0
 static unsigned ffsb_writeall_core(ffsb_thread_t *ft, ffsb_fs_t *fs,
-				   unsigned opnum, uint64_t * filesize_ret,
+				   unsigned opnum, uint64_t *filesize_ret,
 				   int fsync_file)
 {
 	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
@@ -370,7 +371,7 @@ void ffsb_createfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	if (range != 0)
 		size += getllrandom(rd, range);
 
-	newfile = add_file(bf,size,rd);
+	newfile = add_file(bf, size, rd);
 	fd = fhopencreate(newfile->name, ft, fs);
 	iterations = writefile_helper(fd, size, write_blocksize, buf, ft, fs);
 	fhclose(fd, ft, fs);
@@ -407,7 +408,7 @@ void ffsb_read_print_exl(struct ffsb_op_results *results, double secs,
 
 	ffsb_printsize(buf, results->read_bytes / secs, 256);
 	printf("Throughput: %.2f reads/sec -> %s/sec\n",
-	       results->ops[op_num] / secs, buf );
+	       results->ops[op_num] / secs, buf);
 }
 
 void ffsb_write_print_exl(struct ffsb_op_results *results, double secs,
@@ -435,7 +436,7 @@ void ffsb_append_print_exl(struct ffsb_op_results *results, double secs,
 {
 	char buf[256];
 
-        ffsb_printsize(buf, results->write_bytes / secs, 256);
+	ffsb_printsize(buf, results->write_bytes / secs, 256);
 	printf("Throughput: %.2f append writes/sec -> %s/sec\n",
 	       results->ops[op_num] / secs, buf);
 

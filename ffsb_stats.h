@@ -36,7 +36,7 @@
 struct stat_bucket {
 	uint32_t min;
 	uint32_t max;
-        /* max = 0 indicates uninitialized bucket */
+	/* max = 0 indicates uninitialized bucket */
 };
 
 /* These are all the syscalls we currently support */
@@ -50,10 +50,10 @@ typedef enum { SYS_OPEN = 0,
 } syscall_t;
 
 /* ASCII versions of the syscall names */
-extern char * syscall_names[];
+extern char *syscall_names[];
 
 /* Return 1 on success, 0 on error */
-int ffsb_stats_str2syscall (char *, syscall_t *);
+int ffsb_stats_str2syscall(char *, syscall_t *);
 
 /* Keep it in sync with syscall_t */
 #define FFSB_NUM_SYSCALLS (7UL)
@@ -63,16 +63,16 @@ typedef struct ffsb_stats_config {
 	unsigned num_buckets;
 	struct stat_bucket *buckets;
 
-        /* Ignore stats collection for some syscalls.
-	/* Each bit corresponds to one syscall.
-	*/
+	/* Ignore stats collection for some syscalls.
+	 * Each bit corresponds to one syscall.
+	 */
 	uint32_t ignore_stats;
 } ffsb_statsc_t;
 
-void ffsb_statsc_init (ffsb_statsc_t *);
-void ffsb_statsc_addbucket (ffsb_statsc_t *, uint32_t min, uint32_t max);
-void ffsb_statsc_ignore_sys (ffsb_statsc_t *, syscall_t s);
-void ffsb_statsc_destroy (ffsb_statsc_t *);
+void ffsb_statsc_init(ffsb_statsc_t *);
+void ffsb_statsc_addbucket(ffsb_statsc_t *, uint32_t min, uint32_t max);
+void ffsb_statsc_ignore_sys(ffsb_statsc_t *, syscall_t s);
+void ffsb_statsc_destroy(ffsb_statsc_t *);
 
 /* If we are collecting stats, then the config field is non-NULL */
 typedef struct ffsb_stats_data {
@@ -85,24 +85,24 @@ typedef struct ffsb_stats_data {
 } ffsb_statsd_t ;
 
 /* constructor/destructor */
-void ffsb_statsd_init (ffsb_statsd_t *, ffsb_statsc_t *);
-void ffsb_statsd_destroy (ffsb_statsd_t *);
+void ffsb_statsd_init(ffsb_statsd_t *, ffsb_statsc_t *);
+void ffsb_statsd_destroy(ffsb_statsd_t *);
 
 /* Add data to a stats data struct.  Value should be in microsecs
  * _NOT_ milli-secs
-*/
-void ffsb_add_data (ffsb_statsd_t *, syscall_t, uint32_t);
+ */
+void ffsb_add_data(ffsb_statsd_t *, syscall_t, uint32_t);
 
 /* Make a copy of a stats config */
-void ffsb_statsc_copy (ffsb_statsc_t *, ffsb_statsc_t *);
+void ffsb_statsc_copy(ffsb_statsc_t *, ffsb_statsc_t *);
 
 /* Add two statsd structs together */
-void ffsb_statsd_add (ffsb_statsd_t *, ffsb_statsd_t *);
+void ffsb_statsd_add(ffsb_statsd_t *, ffsb_statsd_t *);
 
 /* Print out statsd structure */
-void ffsb_statsd_print (ffsb_statsd_t *fsd );
+void ffsb_statsd_print(ffsb_statsd_t *fsd);
 
 /* Do we want stats for the specified syscall */
-int fsc_ignore_sys (ffsb_statsc_t *fsc, syscall_t s);
+int fsc_ignore_sys(ffsb_statsc_t *fsc, syscall_t s);
 
 #endif /* _FFSB_STATS_H_ */

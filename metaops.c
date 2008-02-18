@@ -44,7 +44,7 @@ static void createdir(struct benchfiles *dirs, randdata_t *rd)
 	struct ffsb_file *newdir;
 
 	newdir = add_file(dirs, 0, rd);
-	if (mkdir(newdir->name,S_IRWXU) < 0) {
+	if (mkdir(newdir->name, S_IRWXU) < 0) {
 		perror("mkdir");
 		exit(1);
 	}
@@ -62,12 +62,12 @@ static void removedir(struct benchfiles *dirs, randdata_t *rd)
 		perror("rmdir");
 		exit(1);
 	}
- 	unlock_file_writer(deldir);
+	unlock_file_writer(deldir);
 }
 
 static void renamedir(struct benchfiles *dirs, randdata_t *rd)
 {
-	struct ffsb_file * dir;
+	struct ffsb_file *dir;
 	char *oldname;
 
 	dir = choose_file_writer(dirs, rd);
@@ -87,12 +87,12 @@ void ffsb_metaops(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
 	randdata_t *rd = ft_get_randdata(ft);
 
-	createdir(bf,rd);
-	createdir(bf,rd);
-	removedir(bf,rd);
-	renamedir(bf,rd);
+	createdir(bf, rd);
+	createdir(bf, rd);
+	removedir(bf, rd);
+	renamedir(bf, rd);
 
-	ft_incr_op(ft,opnum,1);
+	ft_incr_op(ft, opnum, 1);
 }
 
 void ffsb_createdir(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
@@ -102,7 +102,7 @@ void ffsb_createdir(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	randdata_t *rd = ft_get_randdata(ft);
 
 	newdir = add_dir(bf, 0, rd);
-	if (mkdir(newdir->name,S_IRWXU) < 0) {
+	if (mkdir(newdir->name, S_IRWXU) < 0) {
 		perror("mkdir");
 		exit(1);
 	}

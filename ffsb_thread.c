@@ -39,7 +39,7 @@ void destroy_ffsb_thread(ffsb_thread_t *ft)
 	free(ft->mallocbuf);
 	destroy_random(&ft->rd);
 	if (ft->fsd.config)
-		ffsb_statsd_destroy( &ft->fsd );
+		ffsb_statsd_destroy(&ft->fsd);
 }
 
 void ft_set_statsc(ffsb_thread_t *ft, ffsb_statsc_t *fsc)
@@ -47,7 +47,7 @@ void ft_set_statsc(ffsb_thread_t *ft, ffsb_statsc_t *fsc)
 	ffsb_statsd_init(&ft->fsd, fsc);
 }
 
-void * ft_run(void *data)
+void *ft_run(void *data)
 {
 	ffsb_thread_t *ft = (ffsb_thread_t *)data;
 	tg_op_params_t params;
@@ -72,7 +72,7 @@ void ft_alter_bufsize(ffsb_thread_t *ft, unsigned bufsize)
 	ft->alignedbuf = ffsb_align_4k(ft->mallocbuf + (4096 - 1));
 }
 
-char * ft_getbuf(ffsb_thread_t *ft)
+char *ft_getbuf(ffsb_thread_t *ft)
 {
 	return ft->alignedbuf;
 }
@@ -113,7 +113,7 @@ int ft_get_fsync_file(ffsb_thread_t *ft)
 	return tg_get_fsync_file(ft->tg);
 }
 
-randdata_t* ft_get_randdata(ffsb_thread_t *ft)
+randdata_t *ft_get_randdata(ffsb_thread_t *ft)
 {
 	return &ft->rd;
 }
@@ -162,7 +162,7 @@ void ft_add_stat(ffsb_thread_t *ft, syscall_t sys, uint32_t val)
 		ffsb_add_data(&ft->fsd, sys, val);
 }
 
-ffsb_statsd_t * ft_get_stats_data(ffsb_thread_t *ft)
+ffsb_statsd_t *ft_get_stats_data(ffsb_thread_t *ft)
 {
 	return &ft->fsd;
 }

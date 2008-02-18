@@ -23,12 +23,12 @@
 struct ffsb_thread;
 struct ffsb_fs;
 
-int fhopenread (char *, struct ffsb_thread *, struct ffsb_fs *);
-int fhopenwrite (char *, struct ffsb_thread *, struct ffsb_fs *);
-int fhopencreate (char *, struct ffsb_thread *, struct ffsb_fs *);
-int fhopenappend (char *, struct ffsb_thread *, struct ffsb_fs *);
+int fhopenread(char *, struct ffsb_thread *, struct ffsb_fs *);
+int fhopenwrite(char *, struct ffsb_thread *, struct ffsb_fs *);
+int fhopencreate(char *, struct ffsb_thread *, struct ffsb_fs *);
+int fhopenappend(char *, struct ffsb_thread *, struct ffsb_fs *);
 
-void fhread (int, void *, uint64_t, struct ffsb_thread *, struct ffsb_fs *);
+void fhread(int, void *, uint64_t, struct ffsb_thread *, struct ffsb_fs *);
 
 /* can only write up to size_t bytes at a time, so size is a uint32_t */
 void fhwrite(int, void *, uint32_t, struct ffsb_thread *, struct ffsb_fs *);

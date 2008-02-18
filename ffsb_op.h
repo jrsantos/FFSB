@@ -32,19 +32,19 @@ struct ffsb_fs;
  */
 
 /* The op callback */
-typedef void (* ffsb_op_fn )(struct ffsb_thread *, struct ffsb_fs *,
+typedef void (*ffsb_op_fn)(struct ffsb_thread *, struct ffsb_fs *,
 			     unsigned op_num);
 
 /* Operation results printing function */
-typedef void (* ffsb_op_print_fn)(struct ffsb_op_results *, double secs,
+typedef void (*ffsb_op_print_fn)(struct ffsb_op_results *, double secs,
 				  unsigned int op_num);
 
 /* Operation specific initialization for a filesystem */
-typedef void (* ffsb_op_fs_fn)(struct ffsb_fs *, unsigned opnum);
+typedef void (*ffsb_op_fs_fn)(struct ffsb_fs *, unsigned opnum);
 
 typedef struct ffsb_op {
 	unsigned int op_id;
-	char * op_name;
+	char *op_name;
 	ffsb_op_fn op_fn;
 	ffsb_op_print_fn op_print_fn;     /* optional print funcion */
 	ffsb_op_print_fn op_exl_print_fn; /* function if op is
@@ -71,7 +71,7 @@ extern ffsb_op_t ffsb_op_list[];
 /* Returns index of an op.
  * Returns -1 if opname isn't found, and its case sensitive :)
  */
-int ops_find_op (char *opname);
+int ops_find_op(char *opname);
 
 typedef struct ffsb_op_results {
 	/* Count of how many times each op was run */
@@ -81,19 +81,19 @@ typedef struct ffsb_op_results {
 	uint64_t write_bytes;
 } ffsb_op_results_t;
 
-void init_ffsb_op_results (struct ffsb_op_results *);
-void print_results (struct ffsb_op_results * results, double runtime);
-char* op_get_name (int opnum);
+void init_ffsb_op_results(struct ffsb_op_results *);
+void print_results(struct ffsb_op_results *results, double runtime);
+char *op_get_name(int opnum);
 
 /* Setup the ops for the benchmark */
-void ops_setup_bench (struct ffsb_fs * fs);
+void ops_setup_bench(struct ffsb_fs *fs);
 
 /* setup the ops for aging the filesystem */
-void ops_setup_age (struct ffsb_fs * fs);
+void ops_setup_age(struct ffsb_fs *fs);
 
-void add_results (struct ffsb_op_results *target, struct ffsb_op_results *src);
+void add_results(struct ffsb_op_results *target, struct ffsb_op_results *src);
 
 /* Run this op, using this thread state, on this filesystem */
-void do_op (struct ffsb_thread *ft, struct ffsb_fs * fs, unsigned op_num);
+void do_op(struct ffsb_thread *ft, struct ffsb_fs *fs, unsigned op_num);
 
 #endif /* _FFSB_OP_H_ */

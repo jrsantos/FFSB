@@ -58,9 +58,9 @@ typedef struct ffsb_thread {
 	ffsb_statsd_t fsd;
 } ffsb_thread_t ;
 
-void init_ffsb_thread (ffsb_thread_t *, struct ffsb_tg *, unsigned,
+void init_ffsb_thread(ffsb_thread_t *, struct ffsb_tg *, unsigned,
 		       unsigned, unsigned);
-void destroy_ffsb_thread (ffsb_thread_t *);
+void destroy_ffsb_thread(ffsb_thread_t *);
 
 /* Owning thread group will start thread with this, thread runs until
  * *ft->checkval == ft->stopval.  Yes this is not strictly
@@ -70,39 +70,39 @@ void destroy_ffsb_thread (ffsb_thread_t *);
  * pthread_create() is called by tg with this function as a parameter
  * data is a (ffsb_thread_t*)
  */
-void * ft_run (void *);
+void *ft_run(void *);
 
-void ft_alter_bufsize (ffsb_thread_t *, unsigned);
-char * ft_getbuf (ffsb_thread_t *);
+void ft_alter_bufsize(ffsb_thread_t *, unsigned);
+char *ft_getbuf(ffsb_thread_t *);
 
-int ft_get_read_random (ffsb_thread_t *);
-uint32_t ft_get_read_size (ffsb_thread_t *);
-uint32_t ft_get_read_blocksize (ffsb_thread_t *);
+int ft_get_read_random(ffsb_thread_t *);
+uint32_t ft_get_read_size(ffsb_thread_t *);
+uint32_t ft_get_read_blocksize(ffsb_thread_t *);
 
-int ft_get_write_random (ffsb_thread_t *);
-uint32_t ft_get_write_size (ffsb_thread_t *);
-uint32_t ft_get_write_blocksize (ffsb_thread_t *);
+int ft_get_write_random(ffsb_thread_t *);
+uint32_t ft_get_write_size(ffsb_thread_t *);
+uint32_t ft_get_write_blocksize(ffsb_thread_t *);
 
-int ft_get_fsync_file (ffsb_thread_t *);
+int ft_get_fsync_file(ffsb_thread_t *);
 
-randdata_t * ft_get_randdata (ffsb_thread_t *);
+randdata_t *ft_get_randdata(ffsb_thread_t *);
 
 void ft_incr_op(ffsb_thread_t *ft, unsigned opnum, unsigned increment);
 
-void ft_add_readbytes (ffsb_thread_t *, uint32_t);
-void ft_add_writebytes (ffsb_thread_t *, uint32_t);
+void ft_add_readbytes(ffsb_thread_t *, uint32_t);
+void ft_add_writebytes(ffsb_thread_t *, uint32_t);
 
-int ft_get_read_skip (ffsb_thread_t *);
-uint32_t ft_get_read_skipsize (ffsb_thread_t *);
+int ft_get_read_skip(ffsb_thread_t *);
+uint32_t ft_get_read_skipsize(ffsb_thread_t *);
 
-ffsb_op_results_t *ft_get_results (ffsb_thread_t *);
+ffsb_op_results_t *ft_get_results(ffsb_thread_t *);
 
-void ft_set_statsc (ffsb_thread_t *, ffsb_statsc_t *);
+void ft_set_statsc(ffsb_thread_t *, ffsb_statsc_t *);
 
 /* for these two, ft == NULL is OK */
-int ft_needs_stats (ffsb_thread_t *, syscall_t);
-void ft_add_stat (ffsb_thread_t *, syscall_t, uint32_t);
+int ft_needs_stats(ffsb_thread_t *, syscall_t);
+void ft_add_stat(ffsb_thread_t *, syscall_t, uint32_t);
 
-ffsb_statsd_t * ft_get_stats_data (ffsb_thread_t *);
+ffsb_statsd_t *ft_get_stats_data(ffsb_thread_t *);
 
 #endif /* _FFSB_THREAD_H_ */

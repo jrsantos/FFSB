@@ -45,14 +45,13 @@ struct ffsb_time_poll {
  */
 static int ffsb_poll_fn(void *ptr)
 {
-	struct ffsb_time_poll * data = (struct ffsb_time_poll *)ptr;
+	struct ffsb_time_poll *data = (struct ffsb_time_poll *)ptr;
 	struct timeval curtime, difftime;
 	gettimeofday(&curtime, NULL);
 
 	timersub(&curtime, &data->starttime, &difftime);
-	if (difftime.tv_sec >= data->wait_time) {
+	if (difftime.tv_sec >= data->wait_time)
 		return 1;
-	}
 	return 0;
 }
 
@@ -68,21 +67,21 @@ int main(int argc, char *argv[])
 	ffsb_op_results_t total_results;
 	double totaltime = 0.0f, usertime = 0.0f, systime = 0.0f;
 	struct rusage before_self, before_children, after_self, after_children;
-	pthread_t * fs_pts; /* threads to do filesystem creates in parallel */
-	char * callout = NULL;
+	pthread_t *fs_pts; /* threads to do filesystem creates in parallel */
+	char *callout = NULL;
 
 	char ctime_start_buf[32];
 	char ctime_end_buf[32];
 
-	memset(&before_self,0,sizeof(before_self));
-	memset(&before_children,0,sizeof(before_children));
-	memset(&after_self ,0,sizeof(after_self ));
-	memset(&after_children ,0,sizeof(after_children ));
+	memset(&before_self, 0, sizeof(before_self));
+	memset(&before_children, 0, sizeof(before_children));
+	memset(&after_self, 0, sizeof(after_self));
+	memset(&after_children, 0, sizeof(after_children));
 
 	ffsb_unbuffer_stdout();
 
 	if (argc < 2) {
-		fprintf(stderr,"usage: %s <config file>\n",
+		fprintf(stderr, "usage: %s <config file>\n",
 			argv[0]);
 		exit(1);
 	}
@@ -102,20 +101,20 @@ int main(int argc, char *argv[])
 	pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
 
 	for (i = 0; i < fc.num_threadgroups; i++)
-		tg_print_config( &fc.groups[i] );
+		tg_print_config(&fc.groups[i]);
 
 	fs_pts = ffsb_malloc(sizeof(pthread_t) * fc.num_filesys);
 
 	gettimeofday(&starttime, NULL);
 	for (i = 0; i < fc.num_filesys; i++) {
 		fs_print_config(&fc.filesystems[i]);
-		pthread_create(fs_pts + i,&attr, construct_ffsb_fs,
+		pthread_create(fs_pts + i, &attr, construct_ffsb_fs,
 			       &fc.filesystems[i]);
 	}
 
 	fflush(stdout);
 	for (i = 0; i < fc.num_filesys; i++)
-		pthread_join(fs_pts[i],NULL);
+		pthread_join(fs_pts[i], NULL);
 
 	gettimeofday(&endtime, NULL);
 	timersub(&endtime, &starttime, &difftime);
@@ -146,7 +145,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Spawn all of the threadgroup master threads */
-	for( i = 0 ; i < fc.num_threadgroups ; i++ ) {
+	for (i = 0; i < fc.num_threadgroups; i++) {
 		params[i].tg = &fc.groups[i];
 		params[i].fc = &fc;
 		params[i].poll_fn = ffsb_poll_fn;
@@ -155,20 +154,20 @@ int main(int argc, char *argv[])
 		params[i].tg_barrier = &tg_barrier;
 		params[i].thread_barrier = &thread_barrier;
 
-		pthread_create(&params[i].pt, &attr, tg_run, &params[i] );
+		pthread_create(&params[i].pt, &attr, tg_run, &params[i]);
 	}
 
-	ffsb_getrusage (&before_self, &before_children);
-	gettimeofday (&pdata.starttime, NULL );
+	ffsb_getrusage(&before_self, &before_children);
+	gettimeofday(&pdata.starttime, NULL);
 
 	ffsb_barrier_wait(&tg_barrier);  /* sync with tg's to start*/
- 	printf("Starting Actual Benchmark At: %s\n",
+	printf("Starting Actual Benchmark At: %s\n",
 	       ctime_r(&pdata.starttime.tv_sec, ctime_start_buf));
 	fflush(stdout);
 
 	/* Wait for all of the threadgroup master threads to finish */
 	for (i = 0; i < fc.num_threadgroups; i++)
-		pthread_join( params[i].pt, NULL );
+		pthread_join(params[i].pt, NULL);
 
 	ffsb_sync();
 	gettimeofday(&endtime, NULL);
@@ -217,7 +216,7 @@ int main(int argc, char *argv[])
 	if (fc.num_threadgroups > 1) {
 		printf("Total Results\n");
 		printf("===============\n");
-		print_results(&total_results,totaltime);
+		print_results(&total_results, totaltime);
 	}
 
 #define USEC_PER_SEC ((double)(1000000.0f))
@@ -226,7 +225,7 @@ int main(int argc, char *argv[])
 	usertime = (after_self.ru_utime.tv_sec +
 		    ((after_self.ru_utime.tv_usec)/USEC_PER_SEC)) +
 		((after_children.ru_utime.tv_sec +
-	          ((after_children.ru_utime.tv_usec)/USEC_PER_SEC)));
+		  ((after_children.ru_utime.tv_usec)/USEC_PER_SEC)));
 
 	/* subtract away the before */
 	usertime -= (before_self.ru_utime.tv_sec +

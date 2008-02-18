@@ -27,7 +27,7 @@
 #include "fh.h"
 
 /* First zero out struct, set num_dirs, and strdups basedir */
-void init_ffsb_fs(ffsb_fs_t * fs, char *basedir, uint32_t num_data_dirs,
+void init_ffsb_fs(ffsb_fs_t *fs, char *basedir, uint32_t num_data_dirs,
 		  uint32_t numstartfiles, unsigned flags)
 {
 	memset(fs, 0, sizeof(ffsb_fs_t));
@@ -77,7 +77,7 @@ void clone_ffsb_fs(ffsb_fs_t *target, ffsb_fs_t *orig)
 	target->create_blocksize = orig->create_blocksize;
 	target->age_blocksize = orig->age_blocksize;
 
-	memcpy(target->op_data,orig->op_data, sizeof(void*) * FFSB_NUMOPS);
+	memcpy(target->op_data, orig->op_data, sizeof(void *) * FFSB_NUMOPS);
 }
 
 static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
@@ -86,7 +86,7 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 	struct ffsb_file *cur;
 	int i, fd;
 	randdata_t rd;
-	char * buf = ffsb_malloc(blocksize);
+	char *buf = ffsb_malloc(blocksize);
 
 	assert(blocksize);
 
@@ -96,50 +96,50 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 		uint64_t size = minsize +
 			getllrandom(&rd, maxsize - minsize);
 
-		cur = add_file( bf,size,&rd);
-		fd = fhopencreate( cur->name, NULL,fs);
-		writefile_helper(fd, size , blocksize , buf, NULL,fs);
+		cur = add_file(bf, size, &rd);
+		fd = fhopencreate(cur->name, NULL, fs);
+		writefile_helper(fd, size, blocksize, buf, NULL, fs);
 		fhclose(fd, NULL, fs);
 		unlock_file_writer(cur);
 	}
 	free(buf);
 }
 
-static void age_fs (ffsb_fs_t *fs, double utilization);
-static ffsb_fs_t * construct_new_fileset (ffsb_fs_t * fs);
-static ffsb_fs_t * check_existing_fileset (ffsb_fs_t * fs);
+static void age_fs(ffsb_fs_t *fs, double utilization);
+static ffsb_fs_t *construct_new_fileset(ffsb_fs_t *fs);
+static ffsb_fs_t *check_existing_fileset(ffsb_fs_t *fs);
 
-void * construct_ffsb_fs(void * data)
+void *construct_ffsb_fs(void *data)
 {
-	ffsb_fs_t *fs  = (ffsb_fs_t*)data;
+	ffsb_fs_t *fs  = (ffsb_fs_t *)data;
 	ffsb_fs_t *ret = NULL;
 
 	if (fs_get_reuse_fs(fs)) {
-		printf("checking existing fs: %s\n",fs->basedir);
+		printf("checking existing fs: %s\n", fs->basedir);
 		ret = check_existing_fileset(fs);
 		if (ret == NULL) {
 			printf("recreating new fileset\n");
 			ret = construct_new_fileset(fs);
 		}
 	} else {
-		printf("creating new fileset %s\n",fs->basedir);
+		printf("creating new fileset %s\n", fs->basedir);
 		ret = construct_new_fileset(fs);
 	}
 	if (ret == NULL) {
-		printf("fs setup on %s failed\n",fs->basedir);
+		printf("fs setup on %s failed\n", fs->basedir);
 		exit(1);
 	}
 	return ret;
 }
 
-static int verify_file(struct benchfiles* bf, char * fname , void* fs_ptr)
+static int verify_file(struct benchfiles *bf, char *fname, void *fs_ptr)
 {
-	ffsb_fs_t * fs = (ffsb_fs_t*)fs_ptr;
+	ffsb_fs_t *fs = (ffsb_fs_t *)fs_ptr;
 	uint64_t minsize = fs->minfilesize;
 	uint64_t maxsize = fs->maxfilesize;
 	uint64_t filesize = 0;
 	int fd = 0;
-	DIR * dirptr = NULL;
+	DIR *dirptr = NULL;
 
 	/* If it is a directory and it passed the name verification we
 	 * don't need to do anything here
@@ -153,16 +153,16 @@ static int verify_file(struct benchfiles* bf, char * fname , void* fs_ptr)
 	fd = open(fname, O_RDONLY);
 	/* If we can't open it for read we're done */
 	if (fd < 0) {
-		printf("verify_file: error opening %s for readonly\n",fname);
+		printf("verify_file: error opening %s for readonly\n", fname);
 		perror(fname);
 		return 1;
 	}
 	close(fd);
 	filesize = ffsb_get_filesize(fname);
 
-	if( filesize < minsize || filesize > maxsize ) {
+	if (filesize < minsize || filesize > maxsize) {
 		printf("size %llu bytes for file %s is invalid\n",
-		       filesize,fname);
+		       filesize, fname);
 		return 1;
 	}
 
@@ -176,7 +176,7 @@ static int verify_file(struct benchfiles* bf, char * fname , void* fs_ptr)
  * the meta filelist is empty.  Set up the filelist for fill (aging)
  * and setup the ops for the benchmark.
 */
-static ffsb_fs_t * check_existing_fileset(ffsb_fs_t * fs)
+static ffsb_fs_t *check_existing_fileset(ffsb_fs_t *fs)
 {
 	char buf[FILENAME_MAX * 3];
 	int retval = 0;
@@ -184,16 +184,16 @@ static ffsb_fs_t * check_existing_fileset(ffsb_fs_t * fs)
 	uint32_t num_files = fs->num_start_files;
 
 	if (fs->age_fs) {
-		printf("Aging and reusing the fileset are mutually exclusive\n");
+		printf("Aging and reusing the fileset are mutually "
+		       "exclusive\n");
 		printf("aborting\n");
 		return NULL;
 	}
 
 	/* Set up bench/age dir */
-	if( FILENAME_MAX <=
-	    snprintf(buf,FILENAME_MAX,"%s/%s",fs->basedir,FILES_BASE)){
-		printf("pathname \"%s\" is too long, aborting\n",
-		       buf);
+	if (FILENAME_MAX <=
+	    snprintf(buf, FILENAME_MAX, "%s/%s", fs->basedir, FILES_BASE)) {
+		printf("pathname \"%s\" is too long, aborting\n", buf);
 		return NULL;
 	}
 
@@ -204,24 +204,25 @@ static ffsb_fs_t * check_existing_fileset(ffsb_fs_t * fs)
 
 	retval = grab_old_fileset(&fs->files, buf, verify_file, fs);
 
-	if (retval) return NULL;
+	if (retval)
+		return NULL;
 
 	if ((get_listsize(&fs->files) != num_files) ||
 	    (get_numsubdirs(&fs->files) != num_dirs)) {
 		printf("check_existing_fileset: number of files (%u)"
 		       " or directorys (%u) don't match up\n",
-		       get_listsize(&fs->files),get_numsubdirs(&fs->files));
+		       get_listsize(&fs->files), get_numsubdirs(&fs->files));
 		destroy_filelist(&fs->files);
 		return NULL;
 	}
 
 	if (FILENAME_MAX <=
-	    snprintf(buf,FILENAME_MAX,"%s/%s",fs->basedir,META_BASE)){
+	    snprintf(buf, FILENAME_MAX, "%s/%s", fs->basedir, META_BASE)) {
 		printf("pathname \"%s\" is too long, aborting\n", buf);
 		return NULL;
 	}
 
-	init_filelist(&fs->meta, buf, META_BASE, 0 ,1);
+	init_filelist(&fs->meta, buf, META_BASE, 0, 1);
 	retval = grab_old_fileset(&fs->meta, buf, verify_file, fs);
 
 	if (retval) {
@@ -257,21 +258,21 @@ static ffsb_fs_t * check_existing_fileset(ffsb_fs_t * fs)
  *  have ffsb_ops setup their data
  *  create starting files in files
  */
-static ffsb_fs_t * construct_new_fileset(ffsb_fs_t * fs )
+static ffsb_fs_t *construct_new_fileset(ffsb_fs_t *fs)
 {
 	char buf[FILENAME_MAX * 3];
 
 	/* TODO: Convert this quick and dirty rm -rf to a "real"
 	 * programmatic version, that doesn't rely on the rm command.
 	 */
-	if (FILENAME_MAX * 3 <= snprintf(buf,FILENAME_MAX * 3,
+	if (FILENAME_MAX * 3 <= snprintf(buf, FILENAME_MAX * 3,
 					 "rm -rf %s/data %s/meta",
 					 fs->basedir, fs->basedir)) {
 		printf("pathname too long for command \"%s\"\n", buf);
 		return NULL;
 	}
 
-	if (ffsb_system(buf) < 0){
+	if (ffsb_system(buf) < 0) {
 		perror(buf);
 		return NULL;
 	}
@@ -280,7 +281,7 @@ static ffsb_fs_t * construct_new_fileset(ffsb_fs_t * fs )
 
 	/* Set up bench/age dir */
 	if (FILENAME_MAX <=
-	    snprintf(buf, FILENAME_MAX,"%s/%s", fs->basedir,FILES_BASE)) {
+	    snprintf(buf, FILENAME_MAX, "%s/%s", fs->basedir, FILES_BASE)) {
 		printf("pathname \"%s\" is too long, aborting\n", buf);
 		return NULL;
 	}
@@ -299,11 +300,10 @@ static ffsb_fs_t * construct_new_fileset(ffsb_fs_t * fs )
 	init_filelist(&fs->meta, buf, META_BASE, 0, 1);
 
 	/* Do aging */
-	if (fs->age_fs) {
+	if (fs->age_fs)
 		age_fs(fs, fs->desired_fsutil);
-	}
 
-        /* Call back into ops, set for benchmark */
+	/* Call back into ops, set for benchmark */
 	ops_setup_bench(fs);
 
 	/* Create initial fileset */
@@ -318,14 +318,14 @@ struct poll_data {
 	double    util;
 };
 
-static int fs_get_util(void * data)
+static int fs_get_util(void *data)
 {
-	struct poll_data *pd = (struct poll_data*) data;
-	double fsutil = getfsutil( pd->fs->basedir);
+	struct poll_data *pd = (struct poll_data *) data;
+	double fsutil = getfsutil(pd->fs->basedir);
 
-	if (fsutil >= pd->util) {
+	if (fsutil >= pd->util)
 		return 1;
-	}
+
 	return 0;
 }
 
@@ -362,9 +362,8 @@ static void age_fs(ffsb_fs_t *fs, double utilization)
 	/* Throw in some files to start off, so there's something */
 	add_files(fs, &fs->fill, 10, 0, 0, fs->age_blocksize);
 
-	pthread_create(&thread,NULL,tg_run, &params);
-	pthread_join(thread,NULL);
-
+	pthread_create(&thread, NULL, tg_run, &params);
+	pthread_join(thread, NULL);
 }
 
 void fs_set_create_blocksize(ffsb_fs_t *fs, uint32_t blocksize)
@@ -387,7 +386,7 @@ uint32_t fs_get_age_blocksize(ffsb_fs_t *fs)
 	return fs->age_blocksize;
 }
 
-char * fs_get_basedir(ffsb_fs_t *fs)
+char *fs_get_basedir(ffsb_fs_t *fs)
 {
 	return fs->basedir;
 }
@@ -454,17 +453,17 @@ void fs_set_reuse_fs(ffsb_fs_t *fs, int rfs)
 		fs->flags &= ~0 & ~FFSB_FS_REUSE_FS;
 }
 
-struct benchfiles * fs_get_datafiles(ffsb_fs_t *fs)
+struct benchfiles *fs_get_datafiles(ffsb_fs_t *fs)
 {
 	return &fs->files;
 }
 
-struct benchfiles * fs_get_metafiles(ffsb_fs_t *fs)
+struct benchfiles *fs_get_metafiles(ffsb_fs_t *fs)
 {
 	return &fs->meta;
 }
 
-struct benchfiles * fs_get_agefiles(ffsb_fs_t *fs)
+struct benchfiles *fs_get_agefiles(ffsb_fs_t *fs)
 {
 	return &fs->fill;
 }
@@ -476,7 +475,7 @@ void fs_set_aging_tg(ffsb_fs_t *fs, struct ffsb_tg *tg, double util)
 	fs->desired_fsutil = util;
 }
 
-struct ffsb_tg * fs_get_aging_tg(ffsb_fs_t *fs)
+struct ffsb_tg *fs_get_aging_tg(ffsb_fs_t *fs)
 {
 	return fs->aging_tg;
 }
@@ -497,7 +496,7 @@ void fs_set_opdata(ffsb_fs_t *fs, void *data, unsigned opnum)
 	fs->op_data[opnum] = data;
 }
 
-void * fs_get_opdata(ffsb_fs_t *fs, unsigned opnum)
+void *fs_get_opdata(ffsb_fs_t *fs, unsigned opnum)
 {
 	return fs->op_data[opnum];
 }
@@ -547,9 +546,9 @@ void fs_print_config(ffsb_fs_t *fs)
 	printf("\t bufferedio       = %s\n", (fs->flags & FFSB_FS_LIBCIO) ?
 	       "on" : "off");
 	printf("\t\n");
-	printf("\t aging is %s\n", (fs->age_fs) ? "on" : "off" );
+	printf("\t aging is %s\n", (fs->age_fs) ? "on" : "off");
 	printf("\t current utilization = %.2f\n", getfsutil(fs->basedir));
-	if( fs->age_fs) {
+	if (fs->age_fs) {
 		printf("\t desired utilization = %.2lf\n", fs->desired_fsutil);
 		printf("\t \n");
 		tg_print_config_aging(fs->aging_tg, fs->basedir);
@@ -565,5 +564,5 @@ int fs_needs_stats(ffsb_fs_t *fs, syscall_t sys)
 void fs_add_stat(ffsb_fs_t *fs, syscall_t sys, uint32_t val)
 {
 	if (fs)
-		ffsb_add_data( &fs->fsd, sys, val);
+		ffsb_add_data(&fs->fsd, sys, val);
 }
