@@ -77,7 +77,7 @@ static int fhopenhelper(char *filename, char *bufflags, int flags,
 	flags |= O_LARGEFILE;
 
 	if (need_stats)
-		gettimeofday(&start,NULL);
+		gettimeofday(&start, NULL);
 
 	fd = open64(filename, flags, S_IRWXU);
 	if (fd < 0) {
@@ -87,7 +87,7 @@ static int fhopenhelper(char *filename, char *bufflags, int flags,
 
 	if (need_stats) {
 		gettimeofday(&end, NULL);
-		do_stats(&start, &end, ft,fs, SYS_OPEN);
+		do_stats(&start, &end, ft, fs, SYS_OPEN);
 	}
 
 	return fd;
@@ -142,7 +142,7 @@ void fhread(int fd, void *buf, uint64_t size, ffsb_thread_t *ft, ffsb_fs_t *fs)
 
 	assert(size <= SIZE_MAX);
 	if (need_stats)
-		gettimeofday(&start ,NULL);
+		gettimeofday(&start, NULL);
 	realsize = read(fd, buf, size);
 
 	if (need_stats) {
@@ -165,15 +165,15 @@ void fhwrite(int fd, void *buf, uint32_t size, ffsb_thread_t *ft, ffsb_fs_t *fs)
 	int need_stats = ft_needs_stats(ft, SYS_WRITE) ||
 		fs_needs_stats(fs, SYS_WRITE);
 
-	assert (size <= SIZE_MAX);
+	assert(size <= SIZE_MAX);
 	if (need_stats)
-		gettimeofday(&start ,NULL);
+		gettimeofday(&start, NULL);
 
 	realsize = write(fd, buf, size);
 
 	if (need_stats) {
 		gettimeofday(&end, NULL);
-		do_stats(&start,&end,ft,fs, SYS_WRITE);
+		do_stats(&start, &end, ft, fs, SYS_WRITE);
 	}
 
 	if (realsize != size) {
@@ -184,7 +184,8 @@ void fhwrite(int fd, void *buf, uint32_t size, ffsb_thread_t *ft, ffsb_fs_t *fs)
 	}
 }
 
-void fhseek(int fd, uint64_t offset, int whence, ffsb_thread_t *ft, ffsb_fs_t *fs )
+void fhseek(int fd, uint64_t offset, int whence, ffsb_thread_t *ft,
+	    ffsb_fs_t *fs)
 {
 	uint64_t res;
 	struct timeval start, end;
@@ -195,7 +196,7 @@ void fhseek(int fd, uint64_t offset, int whence, ffsb_thread_t *ft, ffsb_fs_t *f
 		return;
 
 	if (need_stats)
-		gettimeofday(&start ,NULL);
+		gettimeofday(&start, NULL);
 
 	res = lseek64(fd, offset, whence);
 
@@ -204,13 +205,13 @@ void fhseek(int fd, uint64_t offset, int whence, ffsb_thread_t *ft, ffsb_fs_t *f
 		do_stats(&start, &end, ft, fs, SYS_LSEEK);
 	}
 	if ((whence == SEEK_SET) && (res != offset))
-	        perror("seek");
+		perror("seek");
 
 	if (res == -1) {
 		if (whence == SEEK_SET)
-			fprintf(stderr,"tried to seek to %lld\n", offset);
+			fprintf(stderr, "tried to seek to %lld\n", offset);
 		else
-			fprintf(stderr,"tried to seek from current "
+			fprintf(stderr, "tried to seek from current "
 				"position to %lld\n", offset);
 
 		perror("seek");
@@ -220,7 +221,7 @@ void fhseek(int fd, uint64_t offset, int whence, ffsb_thread_t *ft, ffsb_fs_t *f
 
 void fhclose(int fd, ffsb_thread_t *ft, ffsb_fs_t *fs)
 {
-	struct timeval start,end;
+	struct timeval start, end;
 	int need_stats = ft_needs_stats(ft, SYS_CLOSE) ||
 		fs_needs_stats(fs, SYS_CLOSE);
 
@@ -230,7 +231,7 @@ void fhclose(int fd, ffsb_thread_t *ft, ffsb_fs_t *fs)
 	close(fd);
 
 	if (need_stats) {
-		gettimeofday(&end ,NULL);
+		gettimeofday(&end, NULL);
 		do_stats(&start, &end, ft, fs, SYS_CLOSE);
 	}
 }
@@ -238,7 +239,7 @@ void fhclose(int fd, ffsb_thread_t *ft, ffsb_fs_t *fs)
 int writefile_helper(int fd, uint64_t size, uint32_t blocksize, char *buf,
 		     struct ffsb_thread *ft, struct ffsb_fs *fs)
 {
-	uint64_t iterations,a;
+	uint64_t iterations, a;
 	uint64_t last;
 
 	iterations = size / blocksize;
