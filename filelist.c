@@ -90,8 +90,11 @@ void init_filelist(struct benchfiles *b, char *basedir, char *basename,
 	b->numsubdirs = numsubdirs;
 	init_rwlock(&b->fileslock);
 	b->files = rbtree_construct();
+	b->dirs = rbtree_construct();
 	b->holes = ffsb_malloc(sizeof(struct cirlist));
+	b->dholes = ffsb_malloc(sizeof(struct cirlist));
 	init_cirlist(b->holes);
+	init_cirlist(b->dholes);
 
 	if (builddirs)
 		build_dirs(b);
@@ -177,6 +180,52 @@ struct ffsb_file * add_file(struct benchfiles *b, uint64_t size, randdata_t *rd)
 	}
 }
 
+struct ffsb_file * add_dir(struct benchfiles *b, uint64_t size, randdata_t *rd)
+{
+	struct ffsb_file *newdir, *olddir = NULL;
+	int dirnum = 0;
+
+	newdir = ffsb_malloc(sizeof(struct ffsb_file));
+
+	init_rwlock(&newdir->lock);
+
+	/* write lock the filelist, beging critical section */
+	rw_lock_write(&b->fileslock);
+
+	/* First check "holes" for a file  */
+	if (!cl_empty(b->dholes)) {
+		olddir = cl_remove_head(b->dholes);
+		rbtree_insert(b->files, olddir);
+		rw_lock_write(&olddir->lock);
+	} else {
+		dirnum = b->numsubdirs;
+		b->numsubdirs++;
+		printf("dirnum: %d\n", dirnum);
+		newdir->num = dirnum;
+		rbtree_insert(b->dirs, newdir);
+
+		rw_lock_write(&newdir->lock);
+	}
+
+	/* unlock filelist */
+	rw_unlock_write(&b->fileslock);
+
+	if (olddir == NULL) {
+		char buf[FILENAME_MAX];
+		int namesize = 0;
+		namesize = snprintf(buf, FILENAME_MAX, "%s/%s%s%d",
+				    b->basedir, b->basename,
+				    SUBDIRNAME_BASE, dirnum);
+		if (namesize >= FILENAME_MAX)
+			printf("warning: filename \"%s\" too long\n", buf);
+			/* TODO: take action here... */
+		newdir->name = ffsb_strdup(buf);
+		return newdir;
+	} else {
+		free(newdir);
+		return olddir;
+	}
+}
 
 /* Private version of above function used only for reusing a
  * fileset.
