@@ -34,13 +34,6 @@ struct ffsb_file {
 	uint32_t num;
 };
 
-struct ffsb_dir {
-	char *name;
-	uint64_t pad;
-	struct rwlock lock;
-	uint32_t num;
-};
-
 struct cirlist;
 
 /* Tree of ffsb_file structs and associated state info struct must be

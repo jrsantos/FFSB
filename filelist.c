@@ -182,10 +182,10 @@ struct ffsb_file * add_file(struct benchfiles *b, uint64_t size, randdata_t *rd)
 
 struct ffsb_file * add_dir(struct benchfiles *b, uint64_t size, randdata_t *rd)
 {
-	struct ffsb_dir *newdir, *olddir = NULL;
+	struct ffsb_file *newdir, *olddir = NULL;
 	int dirnum = 0;
 
-	newdir = ffsb_malloc(sizeof(struct ffsb_dir));
+	newdir = ffsb_malloc(sizeof(struct ffsb_file));
 
 	init_rwlock(&newdir->lock);
 
