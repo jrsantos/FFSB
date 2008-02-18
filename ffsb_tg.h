@@ -87,7 +87,7 @@ typedef struct ffsb_tg {
 
 	/* these fields are calculated/set by tg_run() */
 	unsigned sum_weights;
- 	struct ffsb_config *fc;
+	struct ffsb_config *fc;
 	ffsb_barrier_t *start_barrier;
 
 	/* Used for stopping the threads */
@@ -105,8 +105,8 @@ typedef struct ffsb_tg {
 /* Init should be the very first thing called on the tg.  After that,
  * the user can call the set methods and finally run.
  */
-void init_ffsb_tg (ffsb_tg_t *tg, unsigned num_threads, unsigned tg_num);
-void destroy_ffsb_tg (ffsb_tg_t *tg);
+void init_ffsb_tg(ffsb_tg_t *tg, unsigned num_threads, unsigned tg_num);
+void destroy_ffsb_tg(ffsb_tg_t *tg);
 
 /* Parameters needed to fire off a thread group.  The main thread will
  * evaluate poll_fn(poll_data) until it gets a nonzero return value.
@@ -116,76 +116,78 @@ void destroy_ffsb_tg (ffsb_tg_t *tg);
  */
 typedef struct tg_run_params {
 	ffsb_tg_t *tg;
-	int (* poll_fn)(void *);
+	int (*poll_fn)(void *);
 	void *poll_data;
 	unsigned wait_time; /* in sec */
- 	struct ffsb_config *fc;
+	struct ffsb_config *fc;
 	ffsb_barrier_t *tg_barrier;
-	ffsb_barrier_t *thread_barrier; /* should be initialized by caller to tg_run() */
+
+	/* Should be initialized by caller to tg_run() */
+	ffsb_barrier_t *thread_barrier;
 	pthread_t  pt;
 } tg_run_params_t;
 
 /* This function is meant to be called as a parameter to
  * pthread_create()
  */
-void * tg_run (void *);
+void *tg_run(void *);
 
-void tg_print_config (ffsb_tg_t *tg);
-void tg_print_config_aging (ffsb_tg_t *tg, char *fsname);
+void tg_print_config(ffsb_tg_t *tg);
+void tg_print_config_aging(ffsb_tg_t *tg, char *fsname);
 
 /* Adds all of this tg's results to res */
-void tg_collect_results (ffsb_tg_t *tg, ffsb_op_results_t *res);
+void tg_collect_results(ffsb_tg_t *tg, ffsb_op_results_t *res);
 
 /* Adds up all this tg's stats to totals */
-void tg_collect_stats (ffsb_tg_t *tg, ffsb_statsd_t *totals);
+void tg_collect_stats(ffsb_tg_t *tg, ffsb_statsd_t *totals);
 
 /* getters/setters, setters should not be called after a run has begun */
 
-void tg_set_statsc (ffsb_tg_t *tg, ffsb_statsc_t *fsc);
+void tg_set_statsc(ffsb_tg_t *tg, ffsb_statsc_t *fsc);
 
-void tg_set_bindfs (ffsb_tg_t *tg, int fsnum);
-int  tg_get_bindfs (ffsb_tg_t *tg);
+void tg_set_bindfs(ffsb_tg_t *tg, int fsnum);
+int  tg_get_bindfs(ffsb_tg_t *tg);
 
-unsigned tg_get_numthreads (ffsb_tg_t *tg);
+unsigned tg_get_numthreads(ffsb_tg_t *tg);
 
-void tg_set_op_weight (ffsb_tg_t *tg, char *opname, unsigned weight);
-unsigned tg_get_op_weight (ffsb_tg_t *tg, char *opname);
+void tg_set_op_weight(ffsb_tg_t *tg, char *opname, unsigned weight);
+unsigned tg_get_op_weight(ffsb_tg_t *tg, char *opname);
 
-void tg_set_read_random (ffsb_tg_t *tg, int rr);
-void tg_set_write_random (ffsb_tg_t *tg, int wr);
-void tg_set_fsync_file (ffsb_tg_t *tg, int fsync);
+void tg_set_read_random(ffsb_tg_t *tg, int rr);
+void tg_set_write_random(ffsb_tg_t *tg, int wr);
+void tg_set_fsync_file(ffsb_tg_t *tg, int fsync);
 
-int tg_get_read_random (ffsb_tg_t *tg);
-int tg_get_write_random (ffsb_tg_t *tg);
-int tg_get_fsync_file (ffsb_tg_t *tg);
+int tg_get_read_random(ffsb_tg_t *tg);
+int tg_get_write_random(ffsb_tg_t *tg);
+int tg_get_fsync_file(ffsb_tg_t *tg);
 
-void tg_set_read_size (ffsb_tg_t *tg, uint64_t rs);
-void tg_set_read_blocksize (ffsb_tg_t *tg, uint32_t rs);
+void tg_set_read_size(ffsb_tg_t *tg, uint64_t rs);
+void tg_set_read_blocksize(ffsb_tg_t *tg, uint32_t rs);
 
-void tg_set_read_skipsize (ffsb_tg_t *tg, uint32_t rs);
-void tg_set_read_skip (ffsb_tg_t *tg, int rs);
+void tg_set_read_skipsize(ffsb_tg_t *tg, uint32_t rs);
+void tg_set_read_skip(ffsb_tg_t *tg, int rs);
 
-void tg_set_write_size (ffsb_tg_t *tg, uint64_t ws);
-void tg_set_write_blocksize (ffsb_tg_t *tg, uint32_t ws);
+void tg_set_write_size(ffsb_tg_t *tg, uint64_t ws);
+void tg_set_write_blocksize(ffsb_tg_t *tg, uint32_t ws);
 
-uint64_t tg_get_read_size (ffsb_tg_t *tg);
-uint32_t tg_get_read_blocksize (ffsb_tg_t *tg);
+uint64_t tg_get_read_size(ffsb_tg_t *tg);
+uint32_t tg_get_read_blocksize(ffsb_tg_t *tg);
 
-int tg_get_read_skip (ffsb_tg_t *tg);
-uint32_t tg_get_read_skipsize (ffsb_tg_t *tg);
+int tg_get_read_skip(ffsb_tg_t *tg);
+uint32_t tg_get_read_skipsize(ffsb_tg_t *tg);
 
-uint64_t tg_get_write_size (ffsb_tg_t *tg);
-uint32_t tg_get_write_blocksize (ffsb_tg_t *tg);
+uint64_t tg_get_write_size(ffsb_tg_t *tg);
+uint32_t tg_get_write_blocksize(ffsb_tg_t *tg);
 
-void tg_set_waittime (ffsb_tg_t *tg, unsigned time);
-unsigned tg_get_waittime (ffsb_tg_t *tg);
+void tg_set_waittime(ffsb_tg_t *tg, unsigned time);
+unsigned tg_get_waittime(ffsb_tg_t *tg);
 
 /* The threads in the tg should be the only ones using these (below)
  * funcs.
  */
-ffsb_barrier_t *tg_get_start_barrier (ffsb_tg_t *tg);
-int tg_get_stopval (ffsb_tg_t *tg);
-int tg_get_flagval (ffsb_tg_t *tg);
+ffsb_barrier_t *tg_get_start_barrier(ffsb_tg_t *tg);
+int tg_get_stopval(ffsb_tg_t *tg);
+int tg_get_flagval(ffsb_tg_t *tg);
 
 /* The threads in this tg will use this function to get an op to run,
  * so all configuration specific information is kept in this object.
@@ -196,9 +198,9 @@ typedef struct tg_op_params {
 } tg_op_params_t;
 
 /* tg and rd and in parameters, everything in params is out */
-void  tg_get_op (ffsb_tg_t *tg, randdata_t *rd, tg_op_params_t *params);
+void  tg_get_op(ffsb_tg_t *tg, randdata_t *rd, tg_op_params_t *params);
 
 /* want stats for this tg ? */
-int tg_needs_stats (ffsb_tg_t *tg);
+int tg_needs_stats(ffsb_tg_t *tg);
 
 #endif /* _FFSB_TG_H_ */
