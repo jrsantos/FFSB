@@ -58,43 +58,44 @@ typedef struct ffsb_config {
 
 	int num_totalthreads;		/* gets calculated after init() */
 
-	struct ffsb_tg * groups;
-	struct ffsb_fs * filesystems;
+	struct ffsb_tg *groups;
+	struct ffsb_fs *filesystems;
 
 	char *callout;			/* we will try and exec this */
 
 	struct results results;
 } ffsb_config_t;
 
-void init_ffsb_config (ffsb_config_t *fc, unsigned num_fs, unsigned num_tg);
+void init_ffsb_config(ffsb_config_t *fc, unsigned num_fs, unsigned num_tg);
 
 /*
  * this is kind of like a special case "constructor" which is only
  * used by fs-aging code to build a fake config for the aging tg
  */
-void init_ffsb_config_1fs (ffsb_config_t *fc, struct ffsb_fs *fs, struct ffsb_tg *tg);
+void init_ffsb_config_1fs(ffsb_config_t *fc, struct ffsb_fs *fs,
+			   struct ffsb_tg *tg);
 
-void destroy_ffsb_config (ffsb_config_t *fc);
+void destroy_ffsb_config(ffsb_config_t *fc);
 
 /* getters/setters, parser only should use setters */
 
-void fc_set_time (ffsb_config_t *fc, unsigned time);
+void fc_set_time(ffsb_config_t *fc, unsigned time);
 
-void fc_set_num_totalthreads (ffsb_config_t *fc, int num);
+void fc_set_num_totalthreads(ffsb_config_t *fc, int num);
 
-unsigned fc_get_num_filesys (ffsb_config_t *fc);
-unsigned fc_get_num_threadgroups (ffsb_config_t *fc);
+unsigned fc_get_num_filesys(ffsb_config_t *fc);
+unsigned fc_get_num_threadgroups(ffsb_config_t *fc);
 
-int fc_get_num_totalthreads (ffsb_config_t *fc);
+int fc_get_num_totalthreads(ffsb_config_t *fc);
 
 /* num is zero-based */
 /* get a particular threadgroup object */
-struct ffsb_tg * fc_get_tg (ffsb_config_t *fc, unsigned num);
+struct ffsb_tg *fc_get_tg(ffsb_config_t *fc, unsigned num);
 
 /* get a particular filesystem object */
-struct ffsb_fs * fc_get_fs (ffsb_config_t *fc, unsigned num);
+struct ffsb_fs *fc_get_fs(ffsb_config_t *fc, unsigned num);
 
-void fc_set_callout (ffsb_config_t *fc, char * callout);
-char * fc_get_callout (ffsb_config_t *fc);
+void fc_set_callout(ffsb_config_t *fc, char *callout);
+char *fc_get_callout(ffsb_config_t *fc);
 
 #endif
