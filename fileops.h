@@ -23,24 +23,24 @@
 #include "ffsb_op.h"
 #include "ffsb_fs.h"
 
-void ffsb_readfile (ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
-void ffsb_readall (ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
-void ffsb_writefile (ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
-void ffsb_writeall (ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
-void ffsb_rewritefsync (ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
-void ffsb_createfile (ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
-void ffsb_deletefile (ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
-void ffsb_appendfile (ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
+void ffsb_readfile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
+void ffsb_readall(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
+void ffsb_writefile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
+void ffsb_writeall(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
+void ffsb_rewritefsync(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
+void ffsb_createfile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
+void ffsb_deletefile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
+void ffsb_appendfile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
 
 struct ffsb_op_results;
 
-void ffsb_read_print_exl (struct ffsb_op_results *, double secs, unsigned op_num);
-void ffsb_write_print_exl (struct ffsb_op_results *, double secs, unsigned op_num);
-void ffsb_create_print_exl (struct ffsb_op_results *, double secs, unsigned op_num);
-void ffsb_append_print_exl (struct ffsb_op_results *, double secs, unsigned op_num);
+void ffsb_read_print_exl(struct ffsb_op_results *, double secs, unsigned op_num);
+void ffsb_write_print_exl(struct ffsb_op_results *, double secs, unsigned op_num);
+void ffsb_create_print_exl(struct ffsb_op_results *, double secs, unsigned op_num);
+void ffsb_append_print_exl(struct ffsb_op_results *, double secs, unsigned op_num);
 
 /* Set up ops for either aging or benchmarking */
-void fop_bench (ffsb_fs_t * fs, unsigned opnum);
-void fop_age (ffsb_fs_t * fs, unsigned opnum);
+void fop_bench(ffsb_fs_t *fs, unsigned opnum);
+void fop_age(ffsb_fs_t *fs, unsigned opnum);
 
 #endif /* _FILEOPS_H_ */
