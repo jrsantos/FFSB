@@ -96,13 +96,13 @@ static char *parse_globals(ffsb_config_t *fc, FILE *f, unsigned *fs_flags)
 		time = temp32;
 		buf = get_next_line(f);
 	}
-/* #if 0 */
+
 	if (1 == sscanf(buf, "callout=%4087s\n", callout_buf)) {
 		callout_flag = 1;
 		strncpy(callout_buf, buf + strlen("callout="), 4096);
 		buf = get_next_line(f);
 	}
-/* #endif */
+
 	if (numfs < 1 || numtg < 1) {
 		fprintf(stderr, "possible parse error or invalid settings\n");
 		fprintf(stderr, "ffsb config must have at least 1 filesystem "
@@ -214,8 +214,6 @@ static int verify_tg(ffsb_tg_t *tg)
 	uint32_t read_weight    = tg_get_op_weight(tg, "read");
 	uint32_t readall_weight = tg_get_op_weight(tg, "readall");
 	uint32_t write_weight   = tg_get_op_weight(tg, "write");
-/* 	uint32_t writeall_weight= tg_get_op_weight(tg,"writeall"); */
-/* 	uint32_t rewritefsync_weight = tg_get_op_weight(tg,"rewritefsync"); */
 	uint32_t create_weight  = tg_get_op_weight(tg, "create");
 	uint32_t append_weight  = tg_get_op_weight(tg, "append");
 	uint32_t metaop_weight    = tg_get_op_weight(tg, "metaop");
@@ -225,7 +223,6 @@ static int verify_tg(ffsb_tg_t *tg)
 	uint32_t sum_weight = read_weight +
 		readall_weight +
 		write_weight +
-/* 	                          rewritefsync_weight + */
 		create_weight +
 		append_weight +
 		metaop_weight +
@@ -286,8 +283,6 @@ static char *parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,
 	uint32_t rwgt = 0;   /* read weight */
 	uint32_t rawgt = 0;  /* readall weight */
 	uint32_t wwgt = 0;   /* write weight */
-	/* uint32_t wawgt = 0; */  /* writeall weight */
-/* 	uint32_t rwfwgt = 0; */ /* rewritefsync weight */
 	uint32_t cwgt = 0;   /* create weight */
 	uint32_t awgt = 0;   /* append weight  */
 	uint32_t dwgt = 0;   /* delete weight */
@@ -368,16 +363,6 @@ static char *parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,
 			buf = get_next_line(f);
 			continue;
 		}
-/* 		if( 1 == sscanf(buf,"writeall_weight=%u\n",&temp32)){ */
-/* 			wawgt = temp32; */
-/* 			buf = get_next_line(f); */
-/* 			continue; */
-/* 		} */
-/* 		if( 1 == sscanf(buf,"rewritefsync_weight=%u\n",&temp32)){ */
-/* 			rwfwgt = temp32; */
-/* 			buf = get_next_line(f); */
-/* 			continue; */
-/* 		} */
 		if (1 == sscanf(buf, "write_random=%u\n", &temp32)) {
 			wr = temp32;
 			buf = get_next_line(f);
@@ -479,8 +464,6 @@ static char *parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,
 	tg_set_op_weight(tg, "read", rwgt);
 	tg_set_op_weight(tg, "readall", rawgt);
 	tg_set_op_weight(tg, "write", wwgt);
-/* 	tg_set_op_weight(tg,"writeall",wawgt); */
-/* 	tg_set_op_weight(tg,"rewritefsync" ,rwfwgt); */
 	tg_set_op_weight(tg, "append", awgt);
 	tg_set_op_weight(tg, "create", cwgt);
 	tg_set_op_weight(tg, "delete", dwgt);
