@@ -66,6 +66,13 @@ typedef struct ffsb_config {
 	struct results results;
 } ffsb_config_t;
 
+struct config_t {
+	struct config_options_t *global;
+	struct container_t *fs_container;
+	struct container_t *tg_container;
+};
+
+
 void init_ffsb_config(ffsb_config_t *fc, unsigned num_fs, unsigned num_tg);
 
 /*
@@ -84,7 +91,7 @@ void fc_set_time(ffsb_config_t *fc, unsigned time);
 void fc_set_num_totalthreads(ffsb_config_t *fc, int num);
 
 unsigned fc_get_num_filesys(ffsb_config_t *fc);
-unsigned fc_get_num_threadgroups(ffsb_config_t *fc);
+unsigned fc_get_num_threadgroups(struct config_t *);
 
 int fc_get_num_totalthreads(ffsb_config_t *fc);
 

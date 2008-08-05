@@ -29,12 +29,12 @@
 
 #define BUFSIZE 1024
 
+/* strips out whitespace and comments, returns NULL on eof */
 void parseerror(char *msg) {
 	fprintf(stderr, "Error parsing %s\n", msg);
 	exit(1);
 }
 
-/* strips out whitespace and comments, returns NULL on eof */
 static char *get_next_line(FILE *f)
 {
 	static char buf[BUFSIZE];
@@ -55,84 +55,350 @@ static char *get_next_line(FILE *f)
 	return ret;
 }
 
+static uint64_t *get_opt64(char *buf, char string[])
+{
+	char search_str[256];
+	uint64_t temp;
+	uint64_t *ret;
+	
+	sprintf(search_str, "%s=%%llu\\n", string);
+	if (1 == sscanf(buf, search_str, &temp)) {
+		ret = malloc(sizeof(uint64_t));
+		*ret = temp;
+		return ret;
+	}
+	return NULL;
+}
+
+static uint32_t *get_opt32(char *buf, char string[])
+{
+	uint32_t *ret;
+	uint64_t *res;
+	res = get_opt64(buf, string);
+	if (res) {
+		ret = malloc(sizeof(uint32_t));
+		*ret = *res;
+		free(res);
+		return ret;
+	}
+	return NULL;
+}
+
+static uint8_t *get_optbool(char *buf, char string[])
+{
+	uint8_t *ret;
+	uint64_t *res;
+	res = get_opt64(buf, string);
+	if (res) {
+		if ((int)*res < 0 || (int)*res > 1) {
+			printf("Error in: %s", buf);
+			printf("%llu not boolean\n", (long long unsigned) *res);
+			exit(1);
+		}
+		ret = malloc(sizeof(uint64_t));
+		*ret = *res;
+		free(res);
+		return ret;
+	}
+	return NULL;
+}
+
+static char *get_optstr(char *buf, char string[])
+{
+	char search_str[256];
+	char *ret_buf; 
+	char temp[BUFSIZE];
+	int len;
+		
+	len = strnlen(string, BUFSIZE);
+	sprintf(search_str, "%s=%%%ds\\n", string, BUFSIZE - len -1);
+	if (1 == sscanf(buf, search_str, &temp)) {
+		len = strnlen(temp, 4096);
+		ret_buf = malloc(len);
+		strncpy(ret_buf, temp, len);
+		return ret_buf;
+		}
+	return NULL;
+}
+
+struct config_options_t global_options[] = {
+	{"num_filesystems", NULL, TYPE_U32},
+	{"num_threadgroups", NULL, TYPE_U32},
+	{"verbose", NULL, TYPE_BOOLEAN},
+	{"time", NULL, TYPE_U32},
+	{"directio", NULL, TYPE_BOOLEAN},
+	{"bufferio", NULL, TYPE_BOOLEAN},
+	{"alignio", NULL, TYPE_BOOLEAN},
+	{"callout", NULL, TYPE_STRING},
+	{NULL, NULL, 0}};
+	
+struct config_options_t tg_options[] = {
+	{"bindfs", NULL, TYPE_U32},
+	{"num_threads", NULL, TYPE_U32},
+	{"read_weight", NULL, TYPE_U32},
+	{"readall_weight", NULL, TYPE_U32},
+	{"read_random", NULL, TYPE_U32},
+	{"read_skip", NULL, TYPE_U32},
+	{"read_size", NULL, TYPE_U64},
+	{"read_blocksize", NULL, TYPE_U32},
+	{"read_skipsize", NULL, TYPE_U32},
+	{"write_weight", NULL, TYPE_U32},
+	{"write_random", NULL, TYPE_U32},
+	{"fsync_file", NULL, TYPE_U32},
+	{"write_size", NULL, TYPE_U64},
+	{"write_blocksize", NULL, TYPE_U32},
+	{"create_weight", NULL, TYPE_U32},
+	{"delete_weight", NULL, TYPE_U32},
+	{"append_weight", NULL, TYPE_U32},
+	{"meta_weight", NULL, TYPE_U32},
+	{"createdir_weight", NULL, TYPE_U32},
+	{"op_delay", NULL, TYPE_U32},
+	{NULL, NULL, 0}};
+	
+struct config_options_t fs_options[] = {
+	{"location", NULL, TYPE_STRING},
+	{"num_files", NULL, TYPE_U32},
+	{"num_dirs", NULL, TYPE_U32},
+	{"reuse", NULL, TYPE_BOOLEAN},
+	{"min_filesize", NULL, TYPE_U64},
+	{"max_filesize", NULL, TYPE_U64},
+	{"create_blocksize", NULL, TYPE_U32},
+	{"age_blocksize", NULL, TYPE_U32},
+	{"desired_util", NULL, TYPE_U32},
+	{NULL, NULL, 0}};
+
+struct container_desc_t container_desc[] = {
+	{"filesystem", FILESYSTEM, 10},
+	{"threadgroup", THREAD_GROUP, 11},
+	{"end", END, 3},
+	{NULL, 0, 0}};
+
+static struct container_t *init_container(void)
+{
+	struct container_t *container;
+	container = malloc(sizeof(struct container_t));
+	container->config = NULL;
+	container->type = 0;
+	container->next = NULL;
+	return container;
+}
+
+static int set_option(char *buf, struct config_options_t *options)
+{
+	while (options->name) {
+		switch (options->type) {
+		case TYPE_U32:
+			if (get_opt32(buf, options->name)) {
+				options->value = get_opt32(buf, options->name);
+				return 1;
+			}
+			break;
+		case TYPE_U64:
+			if (get_opt64(buf, options->name)) {
+				options->value = get_opt64(buf, options->name);
+				return 1;
+			}
+			break;
+		case TYPE_STRING:
+			if (get_optstr(buf, options->name)) {
+				options->value = get_optstr(buf, options->name);
+				return 1;
+			}
+			break;
+		case TYPE_BOOLEAN:
+			if (get_optbool(buf, options->name)) {
+				options->value = get_optbool(buf, options->name);
+				return 1;
+			}
+			break;
+		default:
+			printf("Unknown type\n");
+			break;
+		}
+		options++;
+	}
+	return 0;
+}
+
+void insert_container(struct container_t *container,
+		      struct container_t *new_container)
+{
+	while (container->next)
+		container = container->next;
+	container->next = new_container;
+}
+
+struct container_t *search_group(char *, FILE *);
+
+struct container_t *handle_container(char *buf, FILE *f, uint32_t type,
+				     struct config_options_t *options)
+{
+	struct container_desc_t *desc = container_desc;
+	struct container_t *ret_container;
+	struct container_t *tmp_container, *tmp2_container;
+	struct container_t *child = NULL;
+	
+	while (desc->name) 
+		if (desc->type == type)
+			break;
+		else
+			desc++;
+	
+	if (!desc->name)
+		return NULL;
+		
+	buf = get_next_line(f);
+	while (buf) {
+		set_option(buf, options);
+		tmp_container = search_group(buf, f);
+		if (tmp_container) {
+			if (tmp_container->type == END) {
+				free(tmp_container);
+				break;
+			} else {
+				if (child == NULL)
+					child = tmp_container;
+				else {
+					tmp2_container = child;
+					while (tmp2_container->next)
+						tmp2_container = tmp2_container->next;
+					tmp2_container->next = tmp_container;
+				}
+					
+			}
+		}
+		buf = get_next_line(f);
+	}
+	ret_container = init_container();
+	ret_container->config = options;
+	ret_container->type = type;
+	if (child)
+		ret_container->child = child;
+	/*printf("\n");
+	  while (ret_container->config->name){
+	  printf ("%s\n", ret_container->config->name);
+	  ret_container->config++;
+	  }
+	  printf("\n");*/
+	return ret_container;
+}
+
+struct container_t *search_group(char *buf, FILE *f)
+{
+	char temp[BUFSIZE];
+	char *ptr;
+	struct config_options_t *options;
+	struct container_desc_t *desc = container_desc;
+	struct container_t *ret_container;
+
+	if (1 == sscanf(buf, "[%s]\n",(char *) &temp))
+		while (desc->name) {
+			if ((ptr = strstr(buf, desc->name)))
+				switch(desc->type){
+				case FILESYSTEM:
+					options = malloc(sizeof(fs_options));
+					memcpy(options, fs_options,
+					       sizeof(fs_options));
+					return handle_container(buf, f,
+								desc->type,
+								options);
+					break;
+				case THREAD_GROUP:
+					options = malloc(sizeof(tg_options));
+					memcpy(options, tg_options,
+					       sizeof(tg_options));
+					return handle_container(buf, f,
+								desc->type,
+								options);
+					break;
+				case END:
+					ret_container = init_container();
+					ret_container->type = END;
+					return ret_container;
+					break;
+				}
+			desc++;
+		}
+	return NULL;
+}
+
+static void print_config(struct config_t *config)
+{
+	uint32_t tmp, *tmp2;
+start:
+	while(config->fs_container->config->name) {
+		if (config->fs_container->config->value)
+			if (config->fs_container->config->type != TYPE_STRING){
+				tmp2 = (uint32_t *)config->fs_container->config->value;
+				tmp = *tmp2;}
+			else
+				tmp = 0;
+			printf("%s=%lu ", config->fs_container->config->name, tmp);
+		config->fs_container->config++;
+	}
+	if (config->fs_container->next) {
+		config->fs_container = config->fs_container->next;
+		printf("\n");
+		goto start;
+	}
+
+	printf("\n");
+	while(config->tg_container->config->name) {
+		if (config->tg_container->config->value)
+			printf("%s\n", config->tg_container->config->name);
+		config->tg_container->config++;
+	}
+}
+
+struct config_t *parse(FILE *f)
+{
+	char *buf;
+	struct config_t *ffsb_config;
+	struct container_t *tmp_container;
+	
+	ffsb_config = malloc(sizeof(struct config_t));
+	ffsb_config->global = malloc(sizeof(global_options));
+	memcpy(ffsb_config->global, global_options, sizeof(global_options));
+	ffsb_config->fs_container = NULL;
+	ffsb_config->tg_container = NULL;
+	
+	buf = get_next_line(f);
+	
+	while (buf) {
+		set_option(buf, ffsb_config->global);
+		tmp_container = search_group(buf, f);
+		if(tmp_container)
+			switch (tmp_container->type) {
+			case FILESYSTEM:
+				if (ffsb_config->fs_container == NULL)
+					ffsb_config->fs_container = tmp_container;
+				else
+					insert_container(ffsb_config->fs_container,
+							 tmp_container);
+				break;
+			case THREAD_GROUP:
+				if (ffsb_config->tg_container == NULL)
+					ffsb_config->tg_container = tmp_container;
+				else
+					insert_container(ffsb_config->tg_container,
+							 tmp_container);
+				break;
+			default:
+				break;
+			}
+		buf = get_next_line(f);
+	}
+//	print_config(ffsb_config);
+	return ffsb_config;
+}
+
 static char *parse_globals(ffsb_config_t *fc, FILE *f, unsigned *fs_flags)
 {
-	char *buf = get_next_line(f);
-	uint32_t numfs = 0, numtg = 0, dio = 0, verbose = 0, time = 0, bio = 0,
-	    aio = 0, callout_flag = 0;
-	uint32_t temp32;
-	char callout_buf[4096];
-
-	if (1 == sscanf(buf, "num_filesystems=%u\n", &temp32)) {
-		numfs = temp32;
-		buf = get_next_line(f);
-	}
-
-	if (1 == sscanf(buf, "num_threadgroups=%u\n", &temp32)) {
-		numtg = temp32;
-		buf = get_next_line(f);
-	}
-
-	if (1 == sscanf(buf, "verbose=%u\n", &temp32)) {
-		verbose = temp32;
-		buf = get_next_line(f);
-	}
-
-	if (1 == sscanf(buf, "directio=%u\n", &temp32)) {
-		dio = temp32;
-		buf = get_next_line(f);
-	}
-	if (1 == sscanf(buf, "bufferedio=%u\n", &temp32)) {
-		bio = temp32;
-		buf = get_next_line(f);
-	}
-
-	if (1 == sscanf(buf, "alignio=%u\n", &temp32)) {
-		aio = temp32;
-		buf = get_next_line(f);
-	}
-
-	if (1 == sscanf(buf, "time=%u\n", &temp32)) {
-		time = temp32;
-		buf = get_next_line(f);
-	}
-
-	if (1 == sscanf(buf, "callout=%4087s\n", callout_buf)) {
-		callout_flag = 1;
-		strncpy(callout_buf, buf + strlen("callout="), 4096);
-		buf = get_next_line(f);
-	}
-
-	if (numfs < 1 || numtg < 1) {
-		fprintf(stderr, "possible parse error or invalid settings\n");
-		fprintf(stderr, "ffsb config must have at least 1 filesystem "
-			"and 1 threadconfig, aborting \n");
-		fclose(f);
-		exit(1);
-	}
-	if (time < 0) {
-		fprintf(stderr, "possible parse error or invalid settings\n");
-		fprintf(stderr, "ffsb must run for at least 1 second :), "
-			"aborting time = %u\n", time);
-		fclose(f);
-		exit(1);
-	}
-
-	if (dio)
-		*fs_flags |= FFSB_FS_DIRECTIO | FFSB_FS_ALIGNIO4K;
-	if (bio)
-		*fs_flags |= FFSB_FS_LIBCIO;
-	if (aio)
-		*fs_flags |= FFSB_FS_ALIGNIO4K;
-
-	init_ffsb_config(fc, numfs, numtg);
-	fc_set_time(fc, time);
-	if (callout_flag) {
-		printf("parser: callout found \"%s\"\n", callout_buf);
-		fc_set_callout(fc, callout_buf);
-	}
-
-	return buf;
+	
+	//parse(f);
+	exit(1);
+	
+	return NULL;
 }
 
 static char *parse_stats_config(ffsb_statsc_t *fsc, FILE *f, char *buf,
@@ -142,8 +408,6 @@ static char *parse_stats_config(ffsb_statsc_t *fsc, FILE *f, char *buf,
 	uint32_t temp32 = 0;
 	double tempdouble1;
 	double tempdouble2;
-	/* unsigned num_buckets = 0; */
-	/* unsigned cur_bucket = 0; */
 
 	ffsb_statsc_init(fsc);
 
@@ -271,367 +535,16 @@ static int verify_tg(ffsb_tg_t *tg)
 	return 0;
 }
 
-static char *parse_tg(ffsb_tg_t *tg, int tgnum, FILE *f, char *buf,
-		      ffsb_tg_t *dft)
-{
-	int flag = 1;
-	int bindfs = -1;
-	uint32_t temp32 = 0;
-	uint64_t temp64 = 0;
-	uint32_t numthreads = tg_get_numthreads(dft);
-
-	uint32_t rwgt = 0;   /* read weight */
-	uint32_t rawgt = 0;  /* readall weight */
-	uint32_t wwgt = 0;   /* write weight */
-	uint32_t cwgt = 0;   /* create weight */
-	uint32_t awgt = 0;   /* append weight  */
-	uint32_t dwgt = 0;   /* delete weight */
-	uint32_t mwgt = 0;   /* meta weight */
-	uint32_t cdwgt = 0;  /* createdir weight */
-
-	uint64_t rsize  = tg_get_read_size(dft);
-	uint32_t rbsize = tg_get_read_blocksize(dft);
-	uint64_t wsize  = tg_get_write_size(dft);
-	uint32_t wbsize = tg_get_write_blocksize(dft);
-	uint32_t rr     = tg_get_read_random(dft);
-	uint32_t wr     = tg_get_write_random(dft);
-	uint32_t fsync  = tg_get_fsync_file(dft);
-
-	uint32_t rskip  = tg_get_read_skip(dft);
-	uint32_t rskipsize = tg_get_read_skipsize(dft);
-
-	unsigned waittime = tg_get_waittime(dft);
-
-	ffsb_statsc_t fsc = { 0, };
-	int need_stats = 0;
-
-	while (flag) {
-		if ((buf == NULL) || (0 == ffsb_strnlen(buf, BUFSIZE))) {
-			printf("parse error, nothing left to parse "
-			       "for threadgroup %u\n", tgnum);
-			exit(1);
-		}
-
-		if (1 == sscanf(buf, "bindfs=%d\n", &temp32)) {
-			bindfs = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "num_threads=%u\n", &temp32)) {
-			numthreads = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "read_weight=%u\n", &temp32)) {
-			rwgt = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "readall_weight=%u\n", &temp32)) {
-			rawgt = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "read_random=%u\n", &temp32)) {
-			rr = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "read_skip=%u\n", &temp32)) {
-			rskip = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "read_size=%llu\n", &temp64)) {
-			rsize = temp64;
-			buf = get_next_line(f);
-			continue;
-		}
-
-		if (1 == sscanf(buf, "read_blocksize=%u\n", &temp32)) {
-			rbsize = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "read_skipsize=%u\n", &temp32)) {
-			rskipsize = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "write_weight=%u\n", &temp32)) {
-			wwgt = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "write_random=%u\n", &temp32)) {
-			wr = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "fsync_file=%u\n", &temp32)) {
-			fsync = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "write_size=%llu\n", &temp64)) {
-			wsize = temp64;
-			buf = get_next_line(f);
-			continue;
-		}
-
-		if (1 == sscanf(buf, "write_blocksize=%u\n", &temp32)) {
-			wbsize = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-
-		if (1 == sscanf(buf, "create_weight=%u\n", &temp32)) {
-			cwgt = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "delete_weight=%u\n", &temp32)) {
-			dwgt = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "append_weight=%u\n", &temp32)) {
-			awgt = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "meta_weight=%u\n", &temp32)) {
-			mwgt = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-
-		if (1 == sscanf(buf, "createdir_weight=%u\n", &temp32)) {
-			cdwgt = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-
-		if (1 == sscanf(buf, "op_delay=%u\n", &temp32)) {
-			waittime = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-
-		if (0 == strncmp(buf, "[stats]", strlen("[stats]"))) {
-			buf = parse_stats_config(&fsc, f, buf, &need_stats);
-			continue;
-		}
-
-		if (1 == sscanf(buf, "[end%u]\n", &temp32)) {
-			if (temp32 != tgnum)
-				fprintf(stderr, "parse_tg: tgnum isn't %u!!!\n",
-					tgnum);
-			flag = 0;
-			buf = get_next_line(f);
-			continue;
-		}
-		fprintf(stderr, "parse error, unknown line: %s\n", buf);
-		buf = get_next_line(f);
-	}
-	if (numthreads < 1) {
-		fprintf(stderr, "thread group configuration is invalid "
-			"(0 threads), aborting\n");
-		fclose(f);
-		exit(1);
-	}
-
-	init_ffsb_tg(tg, numthreads, tgnum);
-
-	if (need_stats)
-		tg_set_statsc(tg, &fsc);
-
-	tg_set_bindfs(tg, bindfs);
-
-	tg_set_read_random(tg, rr);
-	tg_set_write_random(tg, wr);
-	tg_set_fsync_file(tg, fsync);
-
-	tg_set_read_size(tg, rsize);
-	tg_set_read_blocksize(tg, rbsize);
-
-	tg_set_read_skip(tg, rskip);
-	tg_set_read_skipsize(tg, rskipsize);
-
-	tg_set_write_size(tg, wsize);
-	tg_set_write_blocksize(tg, wbsize);
-
-	tg_set_op_weight(tg, "read", rwgt);
-	tg_set_op_weight(tg, "readall", rawgt);
-	tg_set_op_weight(tg, "write", wwgt);
-	tg_set_op_weight(tg, "append", awgt);
-	tg_set_op_weight(tg, "create", cwgt);
-	tg_set_op_weight(tg, "delete", dwgt);
-	tg_set_op_weight(tg, "metaop", mwgt);
-	tg_set_op_weight(tg, "createdir", cdwgt);
-
-	tg_set_waittime(tg, waittime);
-
-	if (verify_tg(tg)) {
-		printf("threadgroup %d verification failed\n", tgnum);
-		exit(1);
-	}
-
-	return buf;
-}
-
-static char *parse_fs(ffsb_fs_t *fs, int fsnum, FILE *f, char *buf,
-		      unsigned fs_flags, ffsb_fs_t *def_fs)
-{
-	char tempbuf[256];
-
-	int flag = 1;
-	uint64_t temp64;
-	uint32_t temp32;
-
-	int reuse            = fs_get_reuse_fs(def_fs);
-	int agefs            = fs_get_agefs(def_fs);
-	uint32_t numfiles    = fs_get_numstartfiles(def_fs);
-	uint32_t numdirs     = fs_get_numdirs(def_fs);
-	uint64_t minfilesize = fs_get_min_filesize(def_fs);
-	uint64_t maxfilesize = fs_get_max_filesize(def_fs);
-
-	uint32_t create_blksize = fs_get_create_blocksize(def_fs);
-	uint32_t age_blksize    = fs_get_age_blocksize(def_fs);
-
-	double tempdouble;
-	double fsutil = fs_get_desired_fsutil(def_fs);
-	ffsb_tg_t *atg = fs_get_aging_tg(def_fs);
-
-	ffsb_statsc_t fsc = { 0, };
-	int need_stats = 0;
-
-	memset(tempbuf, 0, 256);
-
-	while (flag) {
-		if ((buf == NULL) || (0 == ffsb_strnlen(buf, BUFSIZE))) {
-			printf("parse error, nothing left to parse "
-			       "for filesystem %u\n", fsnum);
-			exit(1);
-		}
-		if (1 == sscanf(buf, "location=%256s\n", tempbuf)) {
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "num_files=%u\n", &temp32)) {
-			numfiles = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "num_dirs=%u\n", &temp32)) {
-			numdirs = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "reuse=%u\n", &temp32)) {
-			reuse = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "max_filesize=%llu\n", &temp64)) {
-			maxfilesize = temp64;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "min_filesize=%llu\n", &temp64)) {
-			minfilesize = temp64;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "create_blocksize=%u\n", &temp32)) {
-			create_blksize = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "age_blocksize=%u\n", &temp32)) {
-			age_blksize = temp32;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "desired_util=%lf\n", &tempdouble)) {
-			fsutil = tempdouble;
-			buf = get_next_line(f);
-			continue;
-		}
-		if (1 == sscanf(buf, "agefs=%u\n", &temp32)) {
-			agefs = temp32;
-			buf = get_next_line(f);
-			if (agefs != 0) {
-				ffsb_tg_t dft;
-				memset(&dft, 0, sizeof(dft));
-				if (1 != sscanf(buf, "[threadgroup%u]\n",
-						&temp32)) {
-					fprintf(stderr, "Error, [threadgroup0] "
-						"must follow agefs parameter: "
-						"buf was %s\n", buf);
-					agefs = 0;
-					continue;
-				}
-				atg = ffsb_malloc(sizeof(ffsb_tg_t));
-				buf = get_next_line(f);
-				buf = parse_tg(atg, 0, f, buf, &dft);
-			}
-			continue;
-		}
-
-		if (0 == strncmp(buf, "[stats]", strlen("[stats]"))) {
-			buf = parse_stats_config(&fsc, f, buf, &need_stats);
-			continue;
-		}
-
-		if (1 == sscanf(buf, "[end%u]\n", &temp32)) {
-			if (temp32 != fsnum)
-				fprintf(stderr,
-					"parse_fs: %d fsnum isn't %u!\n",
-					temp32, fsnum);
-			flag = 0;
-			buf = get_next_line(f);
-			continue;
-		}
-		fprintf(stderr, "parse error, unexpected line: %s\n", buf);
-		buf = get_next_line(f);
-	}
-
-	if (strlen(tempbuf) == 0) {
-		fprintf(stderr, "filesystems must have a location, aborting\n");
-		fclose(f);
-		exit(1);
-	}
-
-	init_ffsb_fs(fs, tempbuf, numdirs, numfiles, fs_flags);
-
-	fs_set_min_filesize(fs, minfilesize);
-	fs_set_max_filesize(fs, maxfilesize);
-	fs_set_reuse_fs(fs, reuse);
-
-	if (create_blksize)
-		fs_set_create_blocksize(fs, create_blksize);
-	if (age_blksize)
-		fs_set_age_blocksize(fs, age_blksize);
-	if (agefs)
-		fs_set_aging_tg(fs, atg, fsutil);
-
-	if (need_stats)
-		fprintf(stderr, "warning, per filsystem statistics not "
-			"implemented yet\n");
-
-	return buf;
-}
-
 static char *parse_all_fs(ffsb_config_t *fc, FILE *f, char *buf,
 			  unsigned fs_flags)
 {
 	unsigned numfs = fc_get_num_filesys(fc);
 	int i;
-	uint32_t temp32;
+	//uint32_t temp32;
 	ffsb_fs_t zero_default;
-	ffsb_fs_t *dft = &zero_default;
-
+	//ffsb_fs_t *dft = &zero_default;
+	char search_str[256];
+	
 	memset(&zero_default, 0, sizeof(zero_default));
 
 	for (i = 0; i < numfs; i++) {
@@ -640,42 +553,15 @@ static char *parse_all_fs(ffsb_config_t *fc, FILE *f, char *buf,
 			printf("filesystem clause appears to be missing\n");
 			exit(1);
 		}
-		if (1 == sscanf(buf, "[filesystem%u] ", &temp32)) {
+		sprintf(search_str,	"[filesystem%u]", i);
+		/*if (search_group(f, search_str) != -1) {
 			buf = get_next_line(f);
-			buf = parse_fs(fc_get_fs(fc, i), temp32, f, buf,
+			buf = parse_fs(fc_get_fs(fc, i), i, f, buf,
 				       fs_flags, dft);
 			dft = fc_get_fs(fc, i);
 		} else {
 			fprintf(stderr, "wtf ??: %s\n", buf);
-		}
-	}
-	return buf;
-}
-
-static char *parse_all_tgs(ffsb_config_t *fc, FILE *f, char *buf)
-{
-	unsigned numtg = fc_get_num_threadgroups(fc);
-	int i;
-	uint32_t temp32;
-	ffsb_tg_t zero_default;
-	ffsb_tg_t *dft = &zero_default;
-
-	memset(&zero_default, 0, sizeof(zero_default));
-
-	for (i = 0; i < numtg; i++) {
-		if ((buf == NULL) || (0 == ffsb_strnlen(buf, BUFSIZE))) {
-			printf("parse error before threadgroup %u\n", i);
-			printf("threadgroup clause appears to be missing\n");
-			exit(1);
-		}
-		if (1 == sscanf(buf, "[threadgroup%u] ", &temp32)) {
-			buf = get_next_line(f);
-			buf = parse_tg(fc_get_tg(fc, i), temp32, f, buf, dft);
-			dft = fc_get_tg(fc, i);
-		} else {
-			fprintf(stderr, "parser: expecting [threadgroup%u] "
-				"got : %s\n", i, buf);
-		}
+		}*/
 	}
 	return buf;
 }
@@ -683,23 +569,20 @@ static char *parse_all_tgs(ffsb_config_t *fc, FILE *f, char *buf)
 void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename)
 {
 	FILE *f;
-	char *buf;
+
 	int i, numtg, num_threads = 0;
-	unsigned fs_flags = 0;
+	struct config_t *ffsb_config;
 
 	f = fopen(filename, "r");
 	if (f == NULL) {
 		perror(filename);
 		exit(1);
 	}
-	buf  = parse_globals(fc, f, &fs_flags);
-	buf  = parse_all_fs(fc, f, buf, fs_flags);
-	buf  = parse_all_tgs(fc, f, buf);
-
-	if (buf != NULL)
-		fprintf(stderr, "extra stuff at end of config file: %s\n", buf);
-
-	numtg = fc_get_num_threadgroups(fc);
+	ffsb_config = parse(f);
+	print_config(ffsb_config);
+	
+	numtg = fc_get_num_threadgroups(ffsb_config);
+	printf("Threadgroup count = %d\n", numtg);
 	for (i = 0; i < numtg; i++)
 		num_threads += tg_get_numthreads(fc_get_tg(fc, i));
 
