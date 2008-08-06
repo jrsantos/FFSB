@@ -332,7 +332,7 @@ static void print_value_string(struct config_options_t *config)
 			printf("%llu", *(uint64_t *)config->value);
 			break;
 		case TYPE_STRING:
-			printf("%s", config->value);
+			printf("%s", (char *)config->value);
 			break;
 		case TYPE_BOOLEAN:
 			break;
@@ -341,7 +341,6 @@ static void print_value_string(struct config_options_t *config)
 
 static void print_config(struct config_t *config)
 {
-	uint32_t tmp;
 	int count = 0;
 
 	struct config_options_t *tmp_config;
@@ -422,15 +421,7 @@ struct config_t *parse(FILE *f)
 	return ffsb_config;
 }
 
-static char *parse_globals(ffsb_config_t *fc, FILE *f, unsigned *fs_flags)
-{
-	
-	//parse(f);
-	exit(1);
-	
-	return NULL;
-}
-
+#if 0
 static char *parse_stats_config(ffsb_statsc_t *fsc, FILE *f, char *buf,
 				int *need_stats)
 {
@@ -503,6 +494,7 @@ out:
 /* require tg->read_blocksize:  read, readall */
 /* require tg->write_blocksize: write, create, append, rewritefsync */
 /* */
+
 static int verify_tg(ffsb_tg_t *tg)
 {
 	uint32_t read_weight    = tg_get_op_weight(tg, "read");
@@ -564,43 +556,70 @@ static int verify_tg(ffsb_tg_t *tg)
 
 	return 0;
 }
+#endif
 
-static char *parse_all_fs(ffsb_config_t *fc, FILE *f, char *buf,
-			  unsigned fs_flags)
+static unsigned get_num_threadgroups(struct config_t *ffsb_config)
 {
-	unsigned numfs = fc_get_num_filesys(fc);
-	int i;
-	//uint32_t temp32;
-	ffsb_fs_t zero_default;
-	//ffsb_fs_t *dft = &zero_default;
-	char search_str[256];
-	
-	memset(&zero_default, 0, sizeof(zero_default));
+	int numtg = 0;
+	struct container_t *tgroups = ffsb_config->tg_container;
 
-	for (i = 0; i < numfs; i++) {
-		if ((buf == NULL) || (0 == ffsb_strnlen(buf, BUFSIZE))) {
-			printf("parse error before filesystem %u\n", i);
-			printf("filesystem clause appears to be missing\n");
-			exit(1);
-		}
-		sprintf(search_str,	"[filesystem%u]", i);
-		/*if (search_group(f, search_str) != -1) {
-			buf = get_next_line(f);
-			buf = parse_fs(fc_get_fs(fc, i), i, f, buf,
-				       fs_flags, dft);
-			dft = fc_get_fs(fc, i);
-		} else {
-			fprintf(stderr, "wtf ??: %s\n", buf);
-		}*/
+	while(tgroups) {
+		numtg++;
+		tgroups = tgroups->next;
 	}
-	return buf;
+	return numtg;
 }
 
+static unsigned get_num_filesystems(struct config_t *ffsb_config)
+{
+	int numfs = 0;
+	struct container_t *fs = ffsb_config->fs_container;
+
+	while(fs) {
+		numfs++;
+		fs = fs->next;
+	}
+	return numfs;
+}
+
+static int get_num_totalthreads(struct config_t *ffsb_config)
+{
+	int num_threads = 0;
+	struct container_t *tg = ffsb_config->tg_container;
+	struct config_options_t *tg_config;
+
+	while(tg) {
+		num_threads++;
+		tg_config = tg->config;
+		while(tg_config->name) {
+			if (!strcmp(tg_config->name, "num_threads")) {
+				num_threads += *(uint32_t *) tg_config->value;
+				}
+			tg_config++;
+		}
+		if (tg->next)
+			tg = tg->next;
+		else
+			break;
+	}
+
+	return num_threads;
+}
+
+char * get_config_str(struct config_options_t *config, char *name)
+{
+	while(config->name) {
+		if (!strcmp(config->name, name))
+			return config->value;
+		config++;
+	}
+	return NULL;
+}
+ 
 void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename)
 {
 	FILE *f;
 
-	int i, numtg, num_threads = 0;
 	struct config_t *ffsb_config;
 
 	f = fopen(filename, "r");
@@ -610,13 +629,12 @@ void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename)
 	}
 	ffsb_config = parse(f);
 	print_config(ffsb_config);
-	
-	numtg = fc_get_num_threadgroups(ffsb_config);
-	printf("Threadgroup count = %d\n", numtg);
-	num_threads = fc_get_num_totalthreads(ffsb_config);
-	printf("Total Threads = %d\n", num_threads);
 
-	fc_set_num_totalthreads(fc, num_threads);
+	fc->num_filesys = get_num_filesystems(ffsb_config);
+	fc->num_threadgroups = get_num_threadgroups(ffsb_config);
+	fc->num_totalthreads = get_num_totalthreads(ffsb_config);
+	fc->config = ffsb_config;
+	fc->callout = get_config_str(ffsb_config->global, "callout");
 
 	fclose(f);
 }

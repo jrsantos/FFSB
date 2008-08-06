@@ -50,6 +50,12 @@ struct results {
 struct ffsb_tg;
 struct ffsb_fs;
 
+struct config_t {
+	struct config_options_t *global;
+	struct container_t *fs_container;
+	struct container_t *tg_container;
+};
+
 typedef struct ffsb_config {
 	unsigned time;
 
@@ -61,16 +67,11 @@ typedef struct ffsb_config {
 	struct ffsb_tg *groups;
 	struct ffsb_fs *filesystems;
 
+	struct config_t *config;
 	char *callout;			/* we will try and exec this */
 
 	struct results results;
 } ffsb_config_t;
-
-struct config_t {
-	struct config_options_t *global;
-	struct container_t *fs_container;
-	struct container_t *tg_container;
-};
 
 void init_ffsb_config(ffsb_config_t *fc, unsigned num_fs, unsigned num_tg);
 
@@ -88,11 +89,6 @@ void destroy_ffsb_config(ffsb_config_t *fc);
 void fc_set_time(ffsb_config_t *fc, unsigned time);
 
 void fc_set_num_totalthreads(ffsb_config_t *fc, int num);
-
-unsigned fc_get_num_filesys(ffsb_config_t *fc);
-unsigned fc_get_num_threadgroups(struct config_t *);
-
-int fc_get_num_totalthreads(struct config_t *);
 
 /* num is zero-based */
 /* get a particular threadgroup object */
