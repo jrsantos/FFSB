@@ -82,19 +82,41 @@ unsigned fc_get_num_filesys(ffsb_config_t *fc)
 unsigned fc_get_num_threadgroups(struct config_t *ffsb_config)
 {
 	int numtg = 0;
-	while(ffsb_config->tg_container) {
+	struct container_t *tgroups = ffsb_config->tg_container;
+
+	while(tgroups) {
 		numtg++;
-		if (ffsb_config->tg_container->next)
-			ffsb_config->tg_container = ffsb_config->tg_container->next;
+		if (tgroups->next)
+			tgroups = tgroups->next;
 		else
 			break;
 	}
 	return numtg;
 }
 
-int fc_get_num_totalthreads(ffsb_config_t *fc)
+int fc_get_num_totalthreads(struct config_t *ffsb_config)
 {
-	return fc->num_totalthreads;
+	int num_threads = 0;
+	uint32_t tmp, *tmp2;
+	struct container_t *tg = ffsb_config->tg_container;
+	struct config_options_t *tg_config;
+
+	while(tg) {
+		num_threads++;
+		tg_config = tg->config;
+		while(tg_config->name) {
+			if (!strcmp(tg_config->name, "num_threads")) {
+				num_threads += *(uint32_t *) tg_config->value;
+				}
+			tg_config++;
+		}
+		if (tg->next)
+			tg = tg->next;
+		else
+			break;
+	}
+
+	return num_threads;
 }
 
 struct ffsb_tg *fc_get_tg(ffsb_config_t *fc, unsigned num)

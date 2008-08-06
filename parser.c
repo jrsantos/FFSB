@@ -322,31 +322,62 @@ struct container_t *search_group(char *buf, FILE *f)
 	return NULL;
 }
 
+static void print_value_string(struct config_options_t *config)
+{
+	switch (config->type) {
+		case TYPE_U32:
+			printf("%d", *(uint32_t *)config->value);
+			break;
+		case TYPE_U64:
+			printf("%llu", *(uint64_t *)config->value);
+			break;
+		case TYPE_STRING:
+			printf("%s", config->value);
+			break;
+		case TYPE_BOOLEAN:
+			break;
+	}
+}
+
 static void print_config(struct config_t *config)
 {
-	uint32_t tmp, *tmp2;
-start:
-	while(config->fs_container->config->name) {
-		if (config->fs_container->config->value)
-			if (config->fs_container->config->type != TYPE_STRING){
-				tmp2 = (uint32_t *)config->fs_container->config->value;
-				tmp = *tmp2;}
-			else
-				tmp = 0;
-			printf("%s=%lu ", config->fs_container->config->name, tmp);
-		config->fs_container->config++;
-	}
-	if (config->fs_container->next) {
-		config->fs_container = config->fs_container->next;
-		printf("\n");
-		goto start;
-	}
+	uint32_t tmp;
+	int count = 0;
 
+	struct config_options_t *tmp_config;
+	struct container_t *tmp_cont;
+
+	tmp_cont = config->fs_container;
+	while(tmp_cont) {
+		tmp_config = tmp_cont->config;
+		printf ("Filesystem #%d\n", count);
+		while(tmp_config->name) {
+			if (tmp_config->value) {
+				printf("\t%s=",tmp_config->name);
+				print_value_string(tmp_config);
+				printf("\n");
+			}
+			tmp_config++;
+		}
+		tmp_cont = tmp_cont->next;
+		count++;
+	}
 	printf("\n");
-	while(config->tg_container->config->name) {
-		if (config->tg_container->config->value)
-			printf("%s\n", config->tg_container->config->name);
-		config->tg_container->config++;
+	count = 0;
+	tmp_cont = config->tg_container;
+	while(tmp_cont) {
+		tmp_config = tmp_cont->config;
+		printf("Threadgroup #%d\n", count);
+		while(tmp_config->name) {
+			if (tmp_config->value) {
+			printf("\t%s=",tmp_config->name);
+				print_value_string(tmp_config);
+				printf("\n");
+			}
+			tmp_config++;
+		}
+		tmp_cont = tmp_cont->next;
+		count++;
 	}
 }
 
@@ -388,7 +419,6 @@ struct config_t *parse(FILE *f)
 			}
 		buf = get_next_line(f);
 	}
-//	print_config(ffsb_config);
 	return ffsb_config;
 }
 
@@ -583,8 +613,8 @@ void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename)
 	
 	numtg = fc_get_num_threadgroups(ffsb_config);
 	printf("Threadgroup count = %d\n", numtg);
-	for (i = 0; i < numtg; i++)
-		num_threads += tg_get_numthreads(fc_get_tg(fc, i));
+	num_threads = fc_get_num_totalthreads(ffsb_config);
+	printf("Total Threads = %d\n", num_threads);
 
 	fc_set_num_totalthreads(fc, num_threads);
 
