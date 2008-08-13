@@ -492,6 +492,7 @@ out:
 	/* printf("fsc->ignore_stats = 0x%x\n",fsc->ignore_stats); */
 	return buf;
 }
+#endif
 
 /* !!! hackish verification function, we should somehow roll this into the */
 /* op descriptions/struct themselves at some point with a callback verify */
@@ -561,7 +562,6 @@ static int verify_tg(ffsb_tg_t *tg)
 
 	return 0;
 }
-#endif
 
 static unsigned get_num_threadgroups(struct config_t *ffsb_config)
 {
@@ -784,6 +784,11 @@ static void init_groups(ffsb_config_t *fc, struct config_t *ffsb_config)
 		tg_set_op_weight(tg, "delete", get_config_u32(config, "delete_weight"));
 		tg_set_op_weight(tg, "metaop", get_config_u32(config, "meta_weight"));
 		tg_set_op_weight(tg, "createdir", get_config_u32(config, "createdir_weight"));
+		if (verify_tg(tg)) {
+			printf("threadgroup %d verification failed\n", i);
+			exit(1);
+		}
+
 	}
 }
 
