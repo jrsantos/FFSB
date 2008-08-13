@@ -116,7 +116,7 @@ void tg_get_op(ffsb_tg_t *tg, randdata_t *rd, tg_op_params_t *params)
 	 */
 	fsnum = tg->bindfs;
 	if (fsnum < 0)
-		fsnum = getrandom(rd, fc_get_num_filesys(tg->fc));
+		fsnum = getrandom(rd, tg->fc->num_filesys);
 
 	params->fs = fc_get_fs(tg->fc, fsnum);
 }
