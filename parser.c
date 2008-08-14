@@ -594,7 +594,6 @@ static int get_num_totalthreads(struct config_t *ffsb_config)
 	struct config_options_t *tg_config;
 
 	while(tg) {
-		num_threads++;
 		tg_config = tg->config;
 		while(tg_config->name) {
 			if (!strcmp(tg_config->name, "num_threads")) {
