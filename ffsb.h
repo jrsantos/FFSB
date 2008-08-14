@@ -37,7 +37,7 @@
 
 #define FFSB_TG_WAIT_TIME (1)
 
-#define MARK printf("MARK @ %s:%d\n", __FUNCTION__, __LINE__);
+#define MARK printf("MARK FUNC: %s() @ %s:%d\n", __FUNCTION__, __FILE__, __LINE__);
 
 struct results {
 	struct rusage before;
