@@ -752,14 +752,16 @@ static void init_groups(ffsb_config_t *fc, struct config_t *ffsb_config)
 	struct config_options_t * config;
 	ffsb_tg_t *tg;
 	int i;
+	int num_threads;
 
 	for (i=0; i < fc->num_threadgroups; i++) {
 		tg = &fc->groups[i];
 		memset(tg, 0, sizeof(ffsb_tg_t));
 		config = get_tg_config(fc, i);
 
-		tg->tg_num = i;
-		tg->num_threads = get_config_u32(config, "num_threads");
+		num_threads = get_config_u32(config, "num_threads");
+
+		init_ffsb_tg(tg, num_threads, i);
 
 		tg->bindfs = get_config_bool(config, "bindfs");
 
