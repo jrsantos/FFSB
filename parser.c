@@ -330,6 +330,7 @@ static void print_value_string(struct config_options_t *config)
 			printf("%s", (char *)config->value);
 			break;
 		case TYPE_BOOLEAN:
+			printf("%d", *(uint8_t *)config->value);
 			break;
 	}
 }
