@@ -28,9 +28,8 @@ void init_ffsb_thread(ffsb_thread_t *ft, struct ffsb_tg *tg, unsigned bufsize,
 	ft->tg = tg;
 	ft->tg_num = tg_num;
 	ft->thread_num = thread_num;
-
-	if (bufsize)
-		ft_alter_bufsize(ft, bufsize);
+	
+	ft_alter_bufsize(ft, bufsize);
 	init_random(&ft->rd, MAX_RANDBUF_SIZE);
 }
 
