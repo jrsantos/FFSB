@@ -726,13 +726,13 @@ static void init_filesys(ffsb_config_t *fc, struct config_t *ffsb_config)
 		if (get_config_bool(config, "reuse"))
 			fs->flags |= FFSB_FS_REUSE_FS;
 
-		if (get_config_bool(config, "directio"))
+		if (get_config_bool(ffsb_config->global, "directio"))
 			fs->flags |= FFSB_FS_DIRECTIO | FFSB_FS_ALIGNIO4K;
 
-		if (get_config_bool(config, "bufferio"))
+		if (get_config_bool(ffsb_config->global, "bufferio"))
 			fs->flags |= FFSB_FS_LIBCIO;
 
-		if (get_config_bool(config, "alignio"))
+		if (get_config_bool(ffsb_config->global, "alignio"))
 			fs->flags |= FFSB_FS_ALIGNIO4K;
 
 		if (get_config_u32(config, "create_blocksize"))
