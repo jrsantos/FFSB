@@ -613,11 +613,14 @@ static int get_num_totalthreads(struct config_t *ffsb_config)
 
 char * get_config_str(struct config_options_t *config, char *name)
 {
-	struct config_options_t *conf= config;
-	while(conf->name) {
-		if (!strcmp(conf->name, name))
-			return conf->value;
-		conf++;
+	while(config->name) {
+		if (!strcmp(config->name, name)) {
+			if (config->value)
+				return config->value;
+			else
+				return NULL;
+		}
+		config++;
 	}
 	return NULL;
 }
