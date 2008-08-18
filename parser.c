@@ -121,6 +121,21 @@ static char *get_optstr(char *buf, char string[])
 	return NULL;
 }
 
+static double *get_optdouble(char *buf, char string[])
+{
+	char search_str[256];
+	double temp;
+	double *ret;
+	
+	sprintf(search_str, "%s=%%lf\\n", string);
+	if (1 == sscanf(buf, search_str, &temp)) {
+		ret = malloc(sizeof(double));
+		*ret = temp;
+		return ret;
+	}
+	return NULL;
+}
+
 struct config_options_t global_options[] = {
 	{"num_filesystems", NULL, TYPE_U32},
 	{"num_threadgroups", NULL, TYPE_U32},
@@ -164,7 +179,8 @@ struct config_options_t fs_options[] = {
 	{"max_filesize", NULL, TYPE_U64},
 	{"create_blocksize", NULL, TYPE_U32},
 	{"age_blocksize", NULL, TYPE_U32},
-	{"desired_util", NULL, TYPE_U32},
+	{"desired_util", NULL, TYPE_DOUBLE},
+	{"agefs", NULL, TYPE_BOOLEAN},
 	{NULL, NULL, 0}};
 
 struct container_desc_t container_desc[] = {
@@ -208,6 +224,12 @@ static int set_option(char *buf, struct config_options_t *options)
 		case TYPE_BOOLEAN:
 			if (get_optbool(buf, options->name)) {
 				options->value = get_optbool(buf, options->name);
+				return 1;
+			}
+			break;
+		case TYPE_DOUBLE:
+			if (get_optdouble(buf, options->name)) {
+				options->value = get_optdouble(buf, options->name);
 				return 1;
 			}
 			break;
@@ -331,6 +353,9 @@ static void print_value_string(struct config_options_t *config)
 			break;
 		case TYPE_BOOLEAN:
 			printf("%d", *(uint8_t *)config->value);
+			break;
+		case TYPE_DOUBLE:
+			printf("%lf", *(double *)config->value);
 			break;
 	}
 }
@@ -667,6 +692,20 @@ uint32_t get_config_u64(struct config_options_t *config, char *name)
 	return 0;
 }
 
+double get_config_double(struct config_options_t *config, char *name)
+{
+	while (config->name) {
+		if (!strcmp(config->name, name)) {
+			if (config->value)
+				return *(double *)config->value;
+			else
+				return 0;
+		}
+		config++;
+	}
+	return 0;
+}
+
 struct config_options_t * get_fs_config(ffsb_config_t *fc, int pos)
 {
 	struct config_options_t *tmp_config;
@@ -680,6 +719,23 @@ struct config_options_t * get_fs_config(ffsb_config_t *fc, int pos)
 		tmp_config = tmp_cont->config;
 		if (count == pos)
 			return tmp_config;
+		tmp_cont = tmp_cont->next;
+		count++;
+	}
+	return NULL;
+}
+
+struct container_t * get_fs_container(ffsb_config_t *fc, int pos)
+{
+	struct container_t *tmp_cont;
+	int count = 0;
+
+	assert(pos < fc->num_filesys);
+
+	tmp_cont = fc->config->fs_container;
+	while(tmp_cont) {
+		if (count == pos)
+			return tmp_cont->child;
 		tmp_cont = tmp_cont->next;
 		count++;
 	}
@@ -705,100 +761,98 @@ struct config_options_t * get_tg_config(ffsb_config_t *fc, int pos)
 	return NULL;
 }
 
-static void init_filesys(ffsb_config_t *fc, struct config_t *ffsb_config)
+static void init_threadgroup(struct config_options_t *config, 
+			     ffsb_tg_t *tg, int tg_num)
 {
-	struct config_options_t * config;
-	ffsb_fs_t *fs;
-	int i;
+	int num_threads;
 
-	for (i = 0; i < fc->num_filesys; i++) {
-		fs = &fc->filesystems[i];
-		memset(fs, 0, sizeof(ffsb_fs_t));
-		config = get_fs_config(fc, i);
+	memset(tg, 0, sizeof(ffsb_tg_t));
 
-		fs->basedir = get_config_str(config, "location");
-		fs->num_dirs = get_config_u32(config, "num_dirs");
-		fs->num_start_files = get_config_u32(config, "num_files");
-		fs->minfilesize = get_config_u64(config, "min_filesize");
-		fs->maxfilesize = get_config_u64(config, "max_filesize");
-		
-		fs->flags = 0;
-		if (get_config_bool(config, "reuse"))
-			fs->flags |= FFSB_FS_REUSE_FS;
+	num_threads = get_config_u32(config, "num_threads");
 
-		if (get_config_bool(ffsb_config->global, "directio"))
-			fs->flags |= FFSB_FS_DIRECTIO | FFSB_FS_ALIGNIO4K;
+	init_ffsb_tg(tg, num_threads, tg_num);
 
-		if (get_config_bool(ffsb_config->global, "bufferio"))
-			fs->flags |= FFSB_FS_LIBCIO;
+	tg->bindfs = get_config_bool(config, "bindfs");
 
-		if (get_config_bool(ffsb_config->global, "alignio"))
-			fs->flags |= FFSB_FS_ALIGNIO4K;
+	tg->read_random = get_config_bool(config, "read_random");
+	tg->read_size = get_config_u64(config, "read_size");
+	tg->read_blocksize = get_config_u32(config, "read_blocksize");
+	tg->read_skip = get_config_bool(config, "read_skip");
+	tg->read_skipsize = get_config_u32(config, "read_skipsize");
 
-		if (get_config_u32(config, "create_blocksize"))
-			fs->create_blocksize = get_config_u32(config,
-							      "create_blocksize");
-		else
-			fs->create_blocksize = FFSB_FS_DEFAULT_CREATE_BLOCKSIZE;
+	tg->write_random = get_config_bool(config, "write_random");
+	tg->write_size = get_config_u64(config, "write_size");
+	tg->write_blocksize = get_config_u32(config, "write_blocksize");
+	tg->fsync_file = get_config_bool(config, "fsync_file");
 
-		if (get_config_u32(config, "age_blocksize"))
-			fs->age_blocksize = get_config_u32(config, "age_blocksize");
-		else
-			fs->age_blocksize = FFSB_FS_DEFAULT_AGE_BLOCKSIZE;
-		
-		fs->age_fs = 0;
+	tg->wait_time = get_config_u32(config, "op_delay");
+
+	tg_set_op_weight(tg, "read", get_config_u32(config, "read_weight"));
+	tg_set_op_weight(tg, "readall", get_config_u32(config, "readall_weight"));
+	tg_set_op_weight(tg, "write", get_config_u32(config, "write_weight"));
+	tg_set_op_weight(tg, "append", get_config_u32(config, "append_weight"));
+	tg_set_op_weight(tg, "create", get_config_u32(config, "create_weight"));
+	tg_set_op_weight(tg, "delete", get_config_u32(config, "delete_weight"));
+	tg_set_op_weight(tg, "metaop", get_config_u32(config, "meta_weight"));
+	tg_set_op_weight(tg, "createdir", get_config_u32(config, "createdir_weight"));
+	if (verify_tg(tg)) {
+		printf("threadgroup %d verification failed\n", tg_num);
+		exit(1);
 	}
 }
 
-static void init_groups(ffsb_config_t *fc, struct config_t *ffsb_config)
+static void init_filesys(ffsb_config_t *fc, struct config_t *ffsb_config,
+			 struct config_options_t *config, ffsb_fs_t *fs)
 {
-	struct config_options_t * config;
-	ffsb_tg_t *tg;
-	int i;
-	int num_threads;
+	memset(fs, 0, sizeof(ffsb_fs_t));
 
-	for (i=0; i < fc->num_threadgroups; i++) {
-		tg = &fc->groups[i];
-		memset(tg, 0, sizeof(ffsb_tg_t));
-		config = get_tg_config(fc, i);
+	fs->basedir = get_config_str(config, "location");
+	fs->num_dirs = get_config_u32(config, "num_dirs");
+	fs->num_start_files = get_config_u32(config, "num_files");
+	fs->minfilesize = get_config_u64(config, "min_filesize");
+	fs->maxfilesize = get_config_u64(config, "max_filesize");
+	fs->desired_fsutil = get_config_double(config, "desired_util");
 
-		num_threads = get_config_u32(config, "num_threads");
+	fs->flags = 0;
+	if (get_config_bool(config, "reuse"))
+		fs->flags |= FFSB_FS_REUSE_FS;
 
-		init_ffsb_tg(tg, num_threads, i);
+	if (get_config_bool(ffsb_config->global, "directio"))
+		fs->flags |= FFSB_FS_DIRECTIO | FFSB_FS_ALIGNIO4K;
 
-		tg->bindfs = get_config_bool(config, "bindfs");
+	if (get_config_bool(ffsb_config->global, "bufferio"))
+		fs->flags |= FFSB_FS_LIBCIO;
 
-		tg->read_random = get_config_bool(config, "read_random");
-		tg->read_size = get_config_u64(config, "read_size");
-		tg->read_blocksize = get_config_u32(config, "read_blocksize");
-		tg->read_skip = get_config_bool(config, "read_skip");
-		tg->read_skipsize = get_config_u32(config, "read_skipsize");
+	if (get_config_bool(ffsb_config->global, "alignio"))
+		fs->flags |= FFSB_FS_ALIGNIO4K;
 
-		tg->write_random = get_config_bool(config, "write_random");
-		tg->write_size = get_config_u64(config, "write_size");
-		tg->write_blocksize = get_config_u32(config, "write_blocksize");
-		tg->fsync_file = get_config_bool(config, "fsync_file");
-
-		tg->wait_time = get_config_u32(config, "op_delay");
-
-		tg_set_op_weight(tg, "read", get_config_u32(config, "read_weight"));
-		tg_set_op_weight(tg, "readall", get_config_u32(config, "readall_weight"));
-		tg_set_op_weight(tg, "write", get_config_u32(config, "write_weight"));
-		tg_set_op_weight(tg, "append", get_config_u32(config, "append_weight"));
-		tg_set_op_weight(tg, "create", get_config_u32(config, "create_weight"));
-		tg_set_op_weight(tg, "delete", get_config_u32(config, "delete_weight"));
-		tg_set_op_weight(tg, "metaop", get_config_u32(config, "meta_weight"));
-		tg_set_op_weight(tg, "createdir", get_config_u32(config, "createdir_weight"));
-		if (verify_tg(tg)) {
-			printf("threadgroup %d verification failed\n", i);
-			exit(1);
-		}
-
+	if (get_config_bool(config, "agefs")) {
+		struct container_t *age_cont = get_fs_container(fc, 0);
+		ffsb_tg_t *age_tg = ffsb_malloc(sizeof(ffsb_tg_t));
+		assert(age_cont);
+		
+		init_threadgroup(age_cont->config, age_tg, fs->desired_fsutil);
+		fs->aging_tg = age_tg;
+		fs->age_fs = 1;	
 	}
+
+	if (get_config_u32(config, "create_blocksize"))
+		fs->create_blocksize = get_config_u32(config,
+							"create_blocksize");
+	else
+		fs->create_blocksize = FFSB_FS_DEFAULT_CREATE_BLOCKSIZE;
+
+	if (get_config_u32(config, "age_blocksize"))
+		fs->age_blocksize = get_config_u32(config, "age_blocksize");
+	else
+		fs->age_blocksize = FFSB_FS_DEFAULT_AGE_BLOCKSIZE;	
 }
 
 static void init_config(ffsb_config_t *fc, struct config_t *ffsb_config)
 {
+	struct config_options_t * config;
+	int i;
+
 	fc->time = get_config_u32(ffsb_config->global, "time");
 	fc->num_filesys = get_num_filesystems(ffsb_config);
 	fc->num_threadgroups = get_num_threadgroups(ffsb_config);
@@ -807,10 +861,17 @@ static void init_config(ffsb_config_t *fc, struct config_t *ffsb_config)
 	fc->callout = get_config_str(ffsb_config->global, "callout");
 
 	fc->filesystems = ffsb_malloc(sizeof(ffsb_fs_t) * fc->num_filesys);
-	init_filesys(fc, ffsb_config);
+	for (i = 0; i < fc->num_filesys; i++){
+		config = get_fs_config(fc, i);
+
+		init_filesys(fc, ffsb_config, config, &fc->filesystems[i]);
+	}
 
 	fc->groups = ffsb_malloc(sizeof(ffsb_tg_t) * fc->num_threadgroups);
-	init_groups(fc, ffsb_config);
+	for (i=0; i < fc->num_threadgroups; i++) {
+		config = get_tg_config(fc, i);
+		init_threadgroup(config, &fc->groups[i], i);
+	}
 }
 
 void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename)

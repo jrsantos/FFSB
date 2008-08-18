@@ -555,7 +555,7 @@ void fs_print_config(ffsb_fs_t *fs)
 	printf("\t aging is %s\n", (fs->age_fs) ? "on" : "off");
 	printf("\t current utilization = %.2f\%\n", getfsutil(fs->basedir)*100);
 	if (fs->age_fs) {
-		printf("\t desired utilization = %.2lf\n", fs->desired_fsutil);
+		printf("\t desired utilization = %.2lf%\n", fs->desired_fsutil * 100);
 		printf("\t \n");
 		tg_print_config_aging(fs->aging_tg, fs->basedir);
 	}

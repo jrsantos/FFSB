@@ -26,6 +26,7 @@
 #define	TYPE_U64		0x0002
 #define TYPE_STRING		0x0004
 #define TYPE_BOOLEAN	0x0008
+#define TYPE_DOUBLE		0x0010
 
 #define ROOT			0x0001
 #define THREAD_GROUP	0x0002
