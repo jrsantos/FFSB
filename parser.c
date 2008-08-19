@@ -187,6 +187,7 @@ container_desc_t container_desc[] = {
 	{"filesystem", FILESYSTEM, 10},
 	{"threadgroup", THREAD_GROUP, 11},
 	{"end", END, 3},
+	{"stats", STATS, 5},
 	{NULL, 0, 0}};
 
 static container_t *init_container(void)
