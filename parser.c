@@ -136,7 +136,7 @@ static double *get_optdouble(char *buf, char string[])
 	return NULL;
 }
 
-struct config_options_t global_options[] = {
+config_options_t global_options[] = {
 	{"num_filesystems", NULL, TYPE_U32},
 	{"num_threadgroups", NULL, TYPE_U32},
 	{"verbose", NULL, TYPE_BOOLEAN},
@@ -147,7 +147,7 @@ struct config_options_t global_options[] = {
 	{"callout", NULL, TYPE_STRING},
 	{NULL, NULL, 0}};
 	
-struct config_options_t tg_options[] = {
+config_options_t tg_options[] = {
 	{"bindfs", NULL, TYPE_U32},
 	{"num_threads", NULL, TYPE_U32},
 	{"read_weight", NULL, TYPE_U32},
@@ -170,7 +170,7 @@ struct config_options_t tg_options[] = {
 	{"op_delay", NULL, TYPE_U32},
 	{NULL, NULL, 0}};
 	
-struct config_options_t fs_options[] = {
+config_options_t fs_options[] = {
 	{"location", NULL, TYPE_STRING},
 	{"num_files", NULL, TYPE_U32},
 	{"num_dirs", NULL, TYPE_U32},
@@ -183,23 +183,23 @@ struct config_options_t fs_options[] = {
 	{"agefs", NULL, TYPE_BOOLEAN},
 	{NULL, NULL, 0}};
 
-struct container_desc_t container_desc[] = {
+container_desc_t container_desc[] = {
 	{"filesystem", FILESYSTEM, 10},
 	{"threadgroup", THREAD_GROUP, 11},
 	{"end", END, 3},
 	{NULL, 0, 0}};
 
-static struct container_t *init_container(void)
+static container_t *init_container(void)
 {
-	struct container_t *container;
-	container = malloc(sizeof(struct container_t));
+	container_t *container;
+	container = malloc(sizeof(container_t));
 	container->config = NULL;
 	container->type = 0;
 	container->next = NULL;
 	return container;
 }
 
-static int set_option(char *buf, struct config_options_t *options)
+static int set_option(char *buf, config_options_t *options)
 {
 	while (options->name) {
 		switch (options->type) {
@@ -242,23 +242,22 @@ static int set_option(char *buf, struct config_options_t *options)
 	return 0;
 }
 
-void insert_container(struct container_t *container,
-		      struct container_t *new_container)
+void insert_container(container_t *container, container_t *new_container)
 {
 	while (container->next)
 		container = container->next;
 	container->next = new_container;
 }
 
-struct container_t *search_group(char *, FILE *);
+container_t *search_group(char *, FILE *);
 
-struct container_t *handle_container(char *buf, FILE *f, uint32_t type,
-				     struct config_options_t *options)
+container_t *handle_container(char *buf, FILE *f, uint32_t type,
+			      config_options_t *options)
 {
-	struct container_desc_t *desc = container_desc;
-	struct container_t *ret_container;
-	struct container_t *tmp_container, *tmp2_container;
-	struct container_t *child = NULL;
+	container_desc_t *desc = container_desc;
+	container_t *ret_container;
+	container_t *tmp_container, *tmp2_container;
+	container_t *child = NULL;
 	
 	while (desc->name) 
 		if (desc->type == type)
@@ -300,13 +299,13 @@ struct container_t *handle_container(char *buf, FILE *f, uint32_t type,
 	return ret_container;
 }
 
-struct container_t *search_group(char *buf, FILE *f)
+container_t *search_group(char *buf, FILE *f)
 {
 	char temp[BUFSIZE];
 	char *ptr;
-	struct config_options_t *options;
-	struct container_desc_t *desc = container_desc;
-	struct container_t *ret_container;
+	config_options_t *options;
+	container_desc_t *desc = container_desc;
+	container_t *ret_container;
 
 	if (1 == sscanf(buf, "[%s]\n",(char *) &temp))
 		while (desc->name) {
@@ -339,7 +338,7 @@ struct container_t *search_group(char *buf, FILE *f)
 	return NULL;
 }
 
-static void print_value_string(struct config_options_t *config)
+static void print_value_string(config_options_t *config)
 {
 	switch (config->type) {
 		case TYPE_U32:
@@ -360,14 +359,14 @@ static void print_value_string(struct config_options_t *config)
 	}
 }
 
-static void print_config(struct config_t *config)
+static void print_config(profile_config_t *profile_conf)
 {
 	int count = 0;
 
-	struct config_options_t *tmp_config;
-	struct container_t *tmp_cont;
+	config_options_t *tmp_config;
+	container_t *tmp_cont;
 
-	tmp_config = config->global;
+	tmp_config = profile_conf->global;
 	while (tmp_config->name) {
 		if (tmp_config->value) {
 			printf("\t%s=",tmp_config->name);
@@ -377,7 +376,7 @@ static void print_config(struct config_t *config)
 		tmp_config++;
 	}
 
-	tmp_cont = config->fs_container;
+	tmp_cont = profile_conf->fs_container;
 	while(tmp_cont) {
 		tmp_config = tmp_cont->config;
 		printf ("Filesystem #%d\n", count);
@@ -394,7 +393,7 @@ static void print_config(struct config_t *config)
 	}
 	printf("\n");
 	count = 0;
-	tmp_cont = config->tg_container;
+	tmp_cont = profile_conf->tg_container;
 	while(tmp_cont) {
 		tmp_config = tmp_cont->config;
 		printf("Threadgroup #%d\n", count);
@@ -411,37 +410,37 @@ static void print_config(struct config_t *config)
 	}
 }
 
-struct config_t *parse(FILE *f)
+static profile_config_t *parse(FILE *f)
 {
 	char *buf;
-	struct config_t *ffsb_config;
-	struct container_t *tmp_container;
+	profile_config_t *profile_conf;
+	container_t *tmp_container;
 	
-	ffsb_config = malloc(sizeof(struct config_t));
-	ffsb_config->global = malloc(sizeof(global_options));
-	memcpy(ffsb_config->global, global_options, sizeof(global_options));
-	ffsb_config->fs_container = NULL;
-	ffsb_config->tg_container = NULL;
+	profile_conf = malloc(sizeof(profile_config_t));
+	profile_conf->global = malloc(sizeof(global_options));
+	memcpy(profile_conf->global, global_options, sizeof(global_options));
+	profile_conf->fs_container = NULL;
+	profile_conf->tg_container = NULL;
 	
 	buf = get_next_line(f);
 	
 	while (buf) {
-		set_option(buf, ffsb_config->global);
+		set_option(buf, profile_conf->global);
 		tmp_container = search_group(buf, f);
 		if(tmp_container)
 			switch (tmp_container->type) {
 			case FILESYSTEM:
-				if (ffsb_config->fs_container == NULL)
-					ffsb_config->fs_container = tmp_container;
+				if (profile_conf->fs_container == NULL)
+					profile_conf->fs_container = tmp_container;
 				else
-					insert_container(ffsb_config->fs_container,
+					insert_container(profile_conf->fs_container,
 							 tmp_container);
 				break;
 			case THREAD_GROUP:
-				if (ffsb_config->tg_container == NULL)
-					ffsb_config->tg_container = tmp_container;
+				if (profile_conf->tg_container == NULL)
+					profile_conf->tg_container = tmp_container;
 				else
-					insert_container(ffsb_config->tg_container,
+					insert_container(profile_conf->tg_container,
 							 tmp_container);
 				break;
 			default:
@@ -449,7 +448,7 @@ struct config_t *parse(FILE *f)
 			}
 		buf = get_next_line(f);
 	}
-	return ffsb_config;
+	return profile_conf;
 }
 
 #if 0
@@ -589,10 +588,10 @@ static int verify_tg(ffsb_tg_t *tg)
 	return 0;
 }
 
-static unsigned get_num_threadgroups(struct config_t *ffsb_config)
+static unsigned get_num_threadgroups(profile_config_t *profile_conf)
 {
 	int numtg = 0;
-	struct container_t *tgroups = ffsb_config->tg_container;
+	container_t *tgroups = profile_conf->tg_container;
 
 	while(tgroups) {
 		numtg++;
@@ -601,10 +600,10 @@ static unsigned get_num_threadgroups(struct config_t *ffsb_config)
 	return numtg;
 }
 
-static unsigned get_num_filesystems(struct config_t *ffsb_config)
+static unsigned get_num_filesystems(profile_config_t *profile_conf)
 {
 	int numfs = 0;
-	struct container_t *fs = ffsb_config->fs_container;
+	container_t *fs = profile_conf->fs_container;
 
 	while(fs) {
 		numfs++;
@@ -613,11 +612,11 @@ static unsigned get_num_filesystems(struct config_t *ffsb_config)
 	return numfs;
 }
 
-static int get_num_totalthreads(struct config_t *ffsb_config)
+static int get_num_totalthreads(profile_config_t *profile_conf)
 {
 	int num_threads = 0;
-	struct container_t *tg = ffsb_config->tg_container;
-	struct config_options_t *tg_config;
+	container_t *tg = profile_conf->tg_container;
+	config_options_t *tg_config;
 
 	while(tg) {
 		tg_config = tg->config;
@@ -636,7 +635,7 @@ static int get_num_totalthreads(struct config_t *ffsb_config)
 	return num_threads;
 }
 
-char * get_config_str(struct config_options_t *config, char *name)
+char * get_config_str(config_options_t *config, char *name)
 {
 	while(config->name) {
 		if (!strcmp(config->name, name)) {
@@ -650,7 +649,7 @@ char * get_config_str(struct config_options_t *config, char *name)
 	return NULL;
 }
 
-uint32_t get_config_u32(struct config_options_t *config, char *name)
+uint32_t get_config_u32(config_options_t *config, char *name)
 {
 	while(config->name) {
 		if (!strcmp(config->name, name)) {
@@ -664,7 +663,7 @@ uint32_t get_config_u32(struct config_options_t *config, char *name)
 	return 0;
 }
 
-uint8_t get_config_bool(struct config_options_t *config, char *name)
+uint8_t get_config_bool(config_options_t *config, char *name)
 {
 	while(config->name) {
 		if (!strcmp(config->name, name)) {
@@ -678,7 +677,7 @@ uint8_t get_config_bool(struct config_options_t *config, char *name)
 	return 0;
 }
 
-uint32_t get_config_u64(struct config_options_t *config, char *name)
+uint32_t get_config_u64(config_options_t *config, char *name)
 {
 	while(config->name) {
 		if (!strcmp(config->name, name)) {
@@ -692,7 +691,7 @@ uint32_t get_config_u64(struct config_options_t *config, char *name)
 	return 0;
 }
 
-double get_config_double(struct config_options_t *config, char *name)
+double get_config_double(config_options_t *config, char *name)
 {
 	while (config->name) {
 		if (!strcmp(config->name, name)) {
@@ -706,15 +705,15 @@ double get_config_double(struct config_options_t *config, char *name)
 	return 0;
 }
 
-struct config_options_t * get_fs_config(ffsb_config_t *fc, int pos)
+config_options_t * get_fs_config(ffsb_config_t *fc, int pos)
 {
-	struct config_options_t *tmp_config;
-	struct container_t *tmp_cont;
+	config_options_t *tmp_config;
+	container_t *tmp_cont;
 	int count = 0;
 
 	assert(pos < fc->num_filesys);
 
-	tmp_cont = fc->config->fs_container;
+	tmp_cont = fc->profile_conf->fs_container;
 	while(tmp_cont) {
 		tmp_config = tmp_cont->config;
 		if (count == pos)
@@ -725,14 +724,14 @@ struct config_options_t * get_fs_config(ffsb_config_t *fc, int pos)
 	return NULL;
 }
 
-struct container_t * get_fs_container(ffsb_config_t *fc, int pos)
+container_t * get_fs_container(ffsb_config_t *fc, int pos)
 {
-	struct container_t *tmp_cont;
+	container_t *tmp_cont;
 	int count = 0;
 
 	assert(pos < fc->num_filesys);
 
-	tmp_cont = fc->config->fs_container;
+	tmp_cont = fc->profile_conf->fs_container;
 	while(tmp_cont) {
 		if (count == pos)
 			return tmp_cont->child;
@@ -742,15 +741,15 @@ struct container_t * get_fs_container(ffsb_config_t *fc, int pos)
 	return NULL;
 }
 
-struct config_options_t * get_tg_config(ffsb_config_t *fc, int pos)
+config_options_t * get_tg_config(ffsb_config_t *fc, int pos)
 {
-	struct config_options_t *tmp_config;
-	struct container_t *tmp_cont;
+	config_options_t *tmp_config;
+	container_t *tmp_cont;
 	int count = 0;
 
 	assert(pos < fc->num_filesys);
 
-	tmp_cont = fc->config->tg_container;
+	tmp_cont = fc->profile_conf->tg_container;
 	while(tmp_cont) {
 		tmp_config = tmp_cont->config;
 		if (count == pos)
@@ -761,7 +760,7 @@ struct config_options_t * get_tg_config(ffsb_config_t *fc, int pos)
 	return NULL;
 }
 
-static void init_threadgroup(struct config_options_t *config, 
+static void init_threadgroup(config_options_t *config, 
 			     ffsb_tg_t *tg, int tg_num)
 {
 	int num_threads;
@@ -801,8 +800,8 @@ static void init_threadgroup(struct config_options_t *config,
 	}
 }
 
-static void init_filesys(ffsb_config_t *fc, struct config_t *ffsb_config,
-			 struct config_options_t *config, ffsb_fs_t *fs)
+static void init_filesys(ffsb_config_t *fc, profile_config_t *profile_conf,
+			 config_options_t *config, ffsb_fs_t *fs)
 {
 	memset(fs, 0, sizeof(ffsb_fs_t));
 
@@ -817,17 +816,17 @@ static void init_filesys(ffsb_config_t *fc, struct config_t *ffsb_config,
 	if (get_config_bool(config, "reuse"))
 		fs->flags |= FFSB_FS_REUSE_FS;
 
-	if (get_config_bool(ffsb_config->global, "directio"))
+	if (get_config_bool(profile_conf->global, "directio"))
 		fs->flags |= FFSB_FS_DIRECTIO | FFSB_FS_ALIGNIO4K;
 
-	if (get_config_bool(ffsb_config->global, "bufferio"))
+	if (get_config_bool(profile_conf->global, "bufferio"))
 		fs->flags |= FFSB_FS_LIBCIO;
 
-	if (get_config_bool(ffsb_config->global, "alignio"))
+	if (get_config_bool(profile_conf->global, "alignio"))
 		fs->flags |= FFSB_FS_ALIGNIO4K;
 
 	if (get_config_bool(config, "agefs")) {
-		struct container_t *age_cont = get_fs_container(fc, 0);
+		container_t *age_cont = get_fs_container(fc, 0);
 		ffsb_tg_t *age_tg = ffsb_malloc(sizeof(ffsb_tg_t));
 		assert(age_cont);
 		
@@ -848,23 +847,23 @@ static void init_filesys(ffsb_config_t *fc, struct config_t *ffsb_config,
 		fs->age_blocksize = FFSB_FS_DEFAULT_AGE_BLOCKSIZE;	
 }
 
-static void init_config(ffsb_config_t *fc, struct config_t *ffsb_config)
+static void init_config(ffsb_config_t *fc, profile_config_t *profile_conf)
 {
-	struct config_options_t * config;
+	config_options_t * config;
 	int i;
 
-	fc->time = get_config_u32(ffsb_config->global, "time");
-	fc->num_filesys = get_num_filesystems(ffsb_config);
-	fc->num_threadgroups = get_num_threadgroups(ffsb_config);
-	fc->num_totalthreads = get_num_totalthreads(ffsb_config);
-	fc->config = ffsb_config;
-	fc->callout = get_config_str(ffsb_config->global, "callout");
+	fc->time = get_config_u32(profile_conf->global, "time");
+	fc->num_filesys = get_num_filesystems(profile_conf);
+	fc->num_threadgroups = get_num_threadgroups(profile_conf);
+	fc->num_totalthreads = get_num_totalthreads(profile_conf);
+	fc->profile_conf = profile_conf;
+	fc->callout = get_config_str(profile_conf->global, "callout");
 
 	fc->filesystems = ffsb_malloc(sizeof(ffsb_fs_t) * fc->num_filesys);
 	for (i = 0; i < fc->num_filesys; i++){
 		config = get_fs_config(fc, i);
 
-		init_filesys(fc, ffsb_config, config, &fc->filesystems[i]);
+		init_filesys(fc, profile_conf, config, &fc->filesystems[i]);
 	}
 
 	fc->groups = ffsb_malloc(sizeof(ffsb_tg_t) * fc->num_threadgroups);
@@ -878,17 +877,17 @@ void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename)
 {
 	FILE *f;
 
-	struct config_t *ffsb_config;
+	profile_config_t *profile_conf;
 
 	f = fopen(filename, "r");
 	if (f == NULL) {
 		perror(filename);
 		exit(1);
 	}
-	ffsb_config = parse(f);
+	profile_conf = parse(f);
 	fclose(f);
 
-	init_config(fc, ffsb_config);
+	init_config(fc, profile_conf);
 
-	print_config(ffsb_config);
+	print_config(profile_conf);
 }

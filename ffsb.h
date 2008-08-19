@@ -52,11 +52,11 @@ struct results {
 struct ffsb_tg;
 struct ffsb_fs;
 
-struct config_t {
-	struct config_options_t *global;
-	struct container_t *fs_container;
-	struct container_t *tg_container;
-};
+typedef struct profile_config {
+	struct config_options *global;
+	struct container *fs_container;
+	struct container *tg_container;
+} profile_config_t;
 
 typedef struct ffsb_config {
 	unsigned time;
@@ -69,7 +69,7 @@ typedef struct ffsb_config {
 	struct ffsb_tg *groups;
 	struct ffsb_fs *filesystems;
 
-	struct config_t *config;
+	struct profile_config *profile_conf;
 	char *callout;			/* we will try and exec this */
 
 	struct results results;

@@ -34,24 +34,24 @@
 #define END				0x0008
 #define STATS			0x0010
 
-struct container_t {
-	struct config_options_t *config;
+typedef struct container {
+	struct config_options *config;
 	uint32_t type;
-	struct container_t *child;
-	struct container_t *next;
-};
+	struct container *child;
+	struct container *next;
+} container_t;
 
-struct config_options_t {
+typedef struct config_options {
 	char *name;
 	void *value;
 	int type;
-};
+} config_options_t;
 
-struct container_desc_t {
+typedef struct container_desc {
 	char *name;
 	uint16_t type;
 	uint16_t size;
-};
+} container_desc_t;
 
 void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename);
 
