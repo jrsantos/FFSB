@@ -27,6 +27,7 @@
 #define TYPE_STRING		0x0004
 #define TYPE_BOOLEAN		0x0008
 #define TYPE_DOUBLE		0x0010
+#define TYPE_RANGE		0x0020
 
 #define ROOT			0x0001
 #define THREAD_GROUP		0x0002
@@ -52,6 +53,11 @@ typedef struct container_desc {
 	uint16_t type;
 	uint16_t size;
 } container_desc_t;
+
+typedef struct range {
+	double a;
+	double b;
+} range_t;
 
 void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename);
 

@@ -136,6 +136,22 @@ static double *get_optdouble(char *buf, char string[])
 	return NULL;
 }
 
+static range_t *get_optrange(char *buf, char string[])
+{
+	char search_str[256];
+	double a, b;
+	range_t *ret;
+
+	sprintf(search_str, "%s %%lf %%lf\\n",string);
+	if (2 == sscanf(buf, search_str, &a, &b)) {
+		ret = malloc(sizeof(struct range));
+		ret->a = a;
+		ret->b = b;
+		return ret;
+	}
+	return NULL;
+}
+
 config_options_t global_options[] = {
 	{"num_filesystems", NULL, TYPE_U32},
 	{"num_threadgroups", NULL, TYPE_U32},
@@ -181,6 +197,12 @@ config_options_t fs_options[] = {
 	{"age_blocksize", NULL, TYPE_U32},
 	{"desired_util", NULL, TYPE_DOUBLE},
 	{"agefs", NULL, TYPE_BOOLEAN},
+	{NULL, NULL, 0}};
+
+config_options_t stats_options[] = {
+	{"enable_stats", NULL, TYPE_BOOLEAN},
+	{"ignore", NULL, TYPE_STRING},
+	{"bucket", NULL, TYPE_RANGE},
 	{NULL, NULL, 0}};
 
 container_desc_t container_desc[] = {
@@ -231,6 +253,12 @@ static int set_option(char *buf, config_options_t *options)
 		case TYPE_DOUBLE:
 			if (get_optdouble(buf, options->name)) {
 				options->value = get_optdouble(buf, options->name);
+				return 1;
+			}
+			break;
+		case TYPE_RANGE:
+			if (get_optrange(buf, options->name)) {
+				options->value = get_optrange(buf, options->name);
 				return 1;
 			}
 			break;
@@ -324,6 +352,14 @@ container_t *search_group(char *buf, FILE *f)
 					options = malloc(sizeof(tg_options));
 					memcpy(options, tg_options,
 					       sizeof(tg_options));
+					return handle_container(buf, f,
+								desc->type,
+								options);
+					break;
+				case STATS:
+					options = malloc(sizeof(stats_options));
+					memcpy(options, stats_options,
+					       sizeof(stats_options));
 					return handle_container(buf, f,
 								desc->type,
 								options);
