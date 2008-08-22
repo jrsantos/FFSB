@@ -705,7 +705,7 @@ container_t * get_fs_container(ffsb_config_t *fc, int pos)
 	tmp_cont = fc->profile_conf->fs_container;
 	while(tmp_cont) {
 		if (count == pos)
-			return tmp_cont->child;
+			return tmp_cont;
 		tmp_cont = tmp_cont->next;
 		count++;
 	}
@@ -788,9 +788,12 @@ static void init_threadgroup(config_options_t *config,
 	}
 }
 
-static void init_filesys(ffsb_config_t *fc, profile_config_t *profile_conf,
-			 config_options_t *config, ffsb_fs_t *fs)
+static void init_filesys(ffsb_config_t *fc, int num)
 {
+	config_options_t *config = get_fs_config(fc, num);
+	profile_config_t *profile_conf = fc->profile_conf;
+	ffsb_fs_t *fs = &fc->filesystems[num];
+
 	memset(fs, 0, sizeof(ffsb_fs_t));
 
 	fs->basedir = get_config_str(config, "location");
@@ -814,10 +817,14 @@ static void init_filesys(ffsb_config_t *fc, profile_config_t *profile_conf,
 		fs->flags |= FFSB_FS_ALIGNIO4K;
 
 	if (get_config_bool(config, "agefs")) {
-		container_t *age_cont = get_fs_container(fc, 0);
+		container_t *age_cont = get_fs_container(fc, num);
+		if (!age_cont->child) {
+			printf ("No age threaggroup in profile");
+			exit(1);
+		}
+
+		age_cont = age_cont->child;		
 		ffsb_tg_t *age_tg = ffsb_malloc(sizeof(ffsb_tg_t));
-		assert(age_cont);
-		
 		init_threadgroup(age_cont->config, age_tg, fs->desired_fsutil);
 		fs->aging_tg = age_tg;
 		fs->age_fs = 1;	
@@ -893,10 +900,8 @@ static void init_config(ffsb_config_t *fc, profile_config_t *profile_conf)
 	fc->callout = get_config_str(profile_conf->global, "callout");
 
 	fc->filesystems = ffsb_malloc(sizeof(ffsb_fs_t) * fc->num_filesys);
-	for (i = 0; i < fc->num_filesys; i++){
-		config = get_fs_config(fc, i);
-		init_filesys(fc, profile_conf, config, &fc->filesystems[i]);
-	}
+	for (i = 0; i < fc->num_filesys; i++)
+		init_filesys(fc, i);
 
 	fc->groups = ffsb_malloc(sizeof(ffsb_tg_t) * fc->num_threadgroups);
 	for (i=0; i < fc->num_threadgroups; i++) {
