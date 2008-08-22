@@ -825,7 +825,7 @@ static void init_filesys(ffsb_config_t *fc, int num)
 
 		age_cont = age_cont->child;		
 		ffsb_tg_t *age_tg = ffsb_malloc(sizeof(ffsb_tg_t));
-		init_threadgroup(age_cont->config, age_tg, fs->desired_fsutil);
+		init_threadgroup(age_cont->config, age_tg, 0);
 		fs->aging_tg = age_tg;
 		fs->age_fs = 1;	
 	}
