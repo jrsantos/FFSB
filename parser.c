@@ -852,20 +852,25 @@ static void init_tg_stats(ffsb_config_t *fc, int num)
 		if (tmp_cont->type == STATS) {
 			config = tmp_cont->config;
 			if (get_config_bool(config, "enable_stats")) {
+
 				list_head = (value_list_t *) get_value(config, "ignore");
-				list_for_each_entry(tmp_list, &list_head->list, list) {
-					sys_name = (char *)tmp_list->value;
-					ffsb_stats_str2syscall(sys_name, &sys);
-					ffsb_statsc_ignore_sys(&fsc, sys);
-				}
+				if (list_head)
+					list_for_each_entry(tmp_list,
+							    &list_head->list, list) {
+						sys_name = (char *)tmp_list->value;
+						ffsb_stats_str2syscall(sys_name, &sys);
+						ffsb_statsc_ignore_sys(&fsc, sys);
+					}
 
 				list_head = (value_list_t *) get_value(config, "bucket");
-				list_for_each_entry(tmp_list, &list_head->list, list) {
-					bucket_range = (range_t *)tmp_list->value;
-					min = (uint32_t)(bucket_range->a * 1000.0f);
-					max = (uint32_t)(bucket_range->b * 1000.0f);
-					ffsb_statsc_addbucket(&fsc, min, max);
-				}
+				if (list_head)
+					list_for_each_entry(tmp_list,
+							    &list_head->list, list) {
+						bucket_range = (range_t *)tmp_list->value;
+						min = (uint32_t)(bucket_range->a * 1000.0f);
+						max = (uint32_t)(bucket_range->b * 1000.0f);
+						ffsb_statsc_addbucket(&fsc, min, max);
+					}
 
 				tg_set_statsc(&fc->groups[num], &fsc);
 			}
