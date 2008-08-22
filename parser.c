@@ -676,76 +676,50 @@ static int get_num_totalthreads(profile_config_t *profile_conf)
 	return num_threads;
 }
 
-config_options_t * get_fs_config(ffsb_config_t *fc, int pos)
+container_t *get_container(container_t *head_cont, int pos)
 {
-	config_options_t *tmp_config;
-	container_t *tmp_cont;
 	int count = 0;
-
-	assert(pos < fc->num_filesys);
-
-	tmp_cont = fc->profile_conf->fs_container;
-	while(tmp_cont) {
-		tmp_config = tmp_cont->config;
+	while(head_cont) {
 		if (count == pos)
-			return tmp_config;
-		tmp_cont = tmp_cont->next;
+			return head_cont;
+		head_cont = head_cont->next;
 		count++;
 	}
+	return NULL;
+}
+
+config_options_t * get_fs_config(ffsb_config_t *fc, int pos)
+{
+	container_t *tmp_cont;
+
+	assert(pos < fc->num_filesys);
+	tmp_cont = get_container(fc->profile_conf->fs_container, pos);
+	if (tmp_cont)
+		return tmp_cont->config;
 	return NULL;
 }
 
 container_t * get_fs_container(ffsb_config_t *fc, int pos)
 {
-	container_t *tmp_cont;
-	int count = 0;
-
 	assert(pos < fc->num_filesys);
-
-	tmp_cont = fc->profile_conf->fs_container;
-	while(tmp_cont) {
-		if (count == pos)
-			return tmp_cont;
-		tmp_cont = tmp_cont->next;
-		count++;
-	}
-	return NULL;
+	return get_container(fc->profile_conf->fs_container, pos);
 }
 
 config_options_t * get_tg_config(ffsb_config_t *fc, int pos)
 {
-	config_options_t *tmp_config;
 	container_t *tmp_cont;
-	int count = 0;
 
-	assert(pos < fc->num_threadgroups);
-
-	tmp_cont = fc->profile_conf->tg_container;
-	while(tmp_cont) {
-		tmp_config = tmp_cont->config;
-		if (count == pos)
-			return tmp_config;
-		tmp_cont = tmp_cont->next;
-		count++;
-	}
+	assert(pos < fc->num_filesys);
+	tmp_cont = get_container(fc->profile_conf->tg_container, pos);
+	if (tmp_cont)
+		return tmp_cont->config;
 	return NULL;
 }
 
 container_t * get_tg_container(ffsb_config_t *fc, int pos)
 {
-	container_t *tmp_cont;
-	int count = 0;
-
-	assert(pos < fc->num_threadgroups);
-
-	tmp_cont = fc->profile_conf->tg_container;
-	while(tmp_cont) {
-		if (count == pos)
-			return tmp_cont;
-		tmp_cont = tmp_cont->next;
-		count++;
-	}
-	return NULL;
+	assert(pos < fc->num_filesys);
+	return get_container(fc->profile_conf->tg_container, pos);
 }
 
 static void init_threadgroup(config_options_t *config, 
