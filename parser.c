@@ -554,28 +554,24 @@ static int verify_tg(ffsb_tg_t *tg)
 	return 0;
 }
 
-static unsigned get_num_threadgroups(profile_config_t *profile_conf)
+static unsigned get_num_containers(container_t *container)
 {
 	int numtg = 0;
-	container_t *tgroups = profile_conf->tg_container;
-
-	while(tgroups) {
+	while (container) {
 		numtg++;
-		tgroups = tgroups->next;
+		container = container->next;
 	}
 	return numtg;
 }
 
+static unsigned get_num_threadgroups(profile_config_t *profile_conf)
+{
+	return get_num_containers(profile_conf->tg_container);
+}
+
 static unsigned get_num_filesystems(profile_config_t *profile_conf)
 {
-	int numfs = 0;
-	container_t *fs = profile_conf->fs_container;
-
-	while(fs) {
-		numfs++;
-		fs = fs->next;
-	}
-	return numfs;
+	return get_num_containers(profile_conf->fs_container);
 }
 
 static int get_num_totalthreads(profile_config_t *profile_conf)
