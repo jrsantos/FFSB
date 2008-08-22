@@ -965,7 +965,6 @@ static void init_tg_stats(ffsb_config_t *fc, int num)
 					bucket_range = (range_t *)tmp_list->value;
 					min = (uint32_t)(bucket_range->a * 1000.0f);
 					max = (uint32_t)(bucket_range->b * 1000.0f);
-					printf("%d %d\n", min, max);
 					ffsb_statsc_addbucket(&fsc, min, max);
 				}
 
