@@ -444,81 +444,6 @@ double get_config_double(config_options_t *config, char *name)
 	return 0;
 }
 
-static void print_value_string(void *value, int type)
-{
-	switch (type) {
-		case TYPE_U32:
-			printf("%d", *(uint32_t *)value);
-			break;
-		case TYPE_U64:
-			printf("%llu", *(uint64_t *)value);
-			break;
-		case TYPE_STRING:
-			printf("%s", (char *)value);
-			break;
-		case TYPE_BOOLEAN:
-			printf("%d", *(uint8_t *)value);
-			break;
-		case TYPE_DOUBLE:
-			printf("%lf", *(double *)value);
-			break;
-	}
-}
-
-static void print_config(profile_config_t *profile_conf)
-{
-	int count = 0;
-
-	config_options_t *tmp_config;
-	container_t *tmp_cont;
-
-	tmp_config = profile_conf->global;
-	while (tmp_config->name) {
-		if (tmp_config->value) {
-			printf("\t%s=",tmp_config->name);
-			print_value_string(tmp_config->value,
-					   tmp_config->type);
-			printf("\n");
-		}
-		tmp_config++;
-	}
-
-	tmp_cont = profile_conf->fs_container;
-	while(tmp_cont) {
-		tmp_config = tmp_cont->config;
-		printf ("Filesystem #%d\n", count);
-		while(tmp_config->name) {
-			if (tmp_config->value) {
-				printf("\t%s=",tmp_config->name);
-				print_value_string(tmp_config->value,
-						   tmp_config->type);
-				printf("\n");
-			}
-			tmp_config++;
-		}
-		tmp_cont = tmp_cont->next;
-		count++;
-	}
-	printf("\n");
-	count = 0;
-	tmp_cont = profile_conf->tg_container;
-	while(tmp_cont) {
-		tmp_config = tmp_cont->config;
-		printf("Threadgroup #%d\n", count);
-		while(tmp_config->name) {
-			if (tmp_config->value) {
-			printf("\t%s=",tmp_config->name);
-				print_value_string(tmp_config->value,
-						   tmp_config->type);
-				printf("\n");
-			}
-			tmp_config++;
-		}
-		tmp_cont = tmp_cont->next;
-		count++;
-	}
-}
-
 static profile_config_t *parse(FILE *f)
 {
 	char *buf;
@@ -900,6 +825,4 @@ void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename)
 	fclose(f);
 
 	init_config(fc, profile_conf);
-
-	print_config(profile_conf);
 }
