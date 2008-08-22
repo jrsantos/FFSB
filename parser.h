@@ -19,8 +19,12 @@
 #define _PARSER_H_
 
 #include "ffsb.h"
+#include "list.h"
 
 #define COMMENT_CHAR	'#'
+
+#define STORE_SINGLE		0x0001
+#define STORE_LIST		0x0002
 
 #define TYPE_U32		0x0001
 #define	TYPE_U64		0x0002
@@ -46,6 +50,7 @@ typedef struct config_options {
 	char *name;
 	void *value;
 	int type;
+	int storage_type;
 } config_options_t;
 
 typedef struct container_desc {
@@ -58,6 +63,11 @@ typedef struct range {
 	double a;
 	double b;
 } range_t;
+
+typedef struct value_list {
+	void *value;
+	struct list_head list;
+} value_list_t;
 
 void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename);
 

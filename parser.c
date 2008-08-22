@@ -26,6 +26,7 @@
 #include "ffsb_tg.h"
 #include "ffsb_stats.h"
 #include "util.h"
+#include "list.h"
 
 #define BUFSIZE 1024
 
@@ -153,56 +154,56 @@ static range_t *get_optrange(char *buf, char string[])
 }
 
 config_options_t global_options[] = {
-	{"num_filesystems", NULL, TYPE_U32},
-	{"num_threadgroups", NULL, TYPE_U32},
-	{"verbose", NULL, TYPE_BOOLEAN},
-	{"time", NULL, TYPE_U32},
-	{"directio", NULL, TYPE_BOOLEAN},
-	{"bufferio", NULL, TYPE_BOOLEAN},
-	{"alignio", NULL, TYPE_BOOLEAN},
-	{"callout", NULL, TYPE_STRING},
-	{NULL, NULL, 0}};
+	{"num_filesystems", NULL, TYPE_U32, STORE_SINGLE},
+	{"num_threadgroups", NULL, TYPE_U32, STORE_SINGLE},
+	{"verbose", NULL, TYPE_BOOLEAN, STORE_SINGLE},
+	{"time", NULL, TYPE_U32, STORE_SINGLE},
+	{"directio", NULL, TYPE_BOOLEAN, STORE_SINGLE},
+	{"bufferio", NULL, TYPE_BOOLEAN, STORE_SINGLE},
+	{"alignio", NULL, TYPE_BOOLEAN, STORE_SINGLE},
+	{"callout", NULL, TYPE_STRING, STORE_SINGLE},
+	{NULL, NULL, 0, 0}};
 	
 config_options_t tg_options[] = {
-	{"bindfs", NULL, TYPE_U32},
-	{"num_threads", NULL, TYPE_U32},
-	{"read_weight", NULL, TYPE_U32},
-	{"readall_weight", NULL, TYPE_U32},
-	{"read_random", NULL, TYPE_U32},
-	{"read_skip", NULL, TYPE_U32},
-	{"read_size", NULL, TYPE_U64},
-	{"read_blocksize", NULL, TYPE_U32},
-	{"read_skipsize", NULL, TYPE_U32},
-	{"write_weight", NULL, TYPE_U32},
-	{"write_random", NULL, TYPE_U32},
-	{"fsync_file", NULL, TYPE_U32},
-	{"write_size", NULL, TYPE_U64},
-	{"write_blocksize", NULL, TYPE_U32},
-	{"create_weight", NULL, TYPE_U32},
-	{"delete_weight", NULL, TYPE_U32},
-	{"append_weight", NULL, TYPE_U32},
-	{"meta_weight", NULL, TYPE_U32},
-	{"createdir_weight", NULL, TYPE_U32},
-	{"op_delay", NULL, TYPE_U32},
+	{"bindfs", NULL, TYPE_U32, STORE_SINGLE},
+	{"num_threads", NULL, TYPE_U32, STORE_SINGLE},
+	{"read_weight", NULL, TYPE_U32, STORE_SINGLE},
+	{"readall_weight", NULL, TYPE_U32, STORE_SINGLE},
+	{"read_random", NULL, TYPE_U32, STORE_SINGLE},
+	{"read_skip", NULL, TYPE_U32, STORE_SINGLE},
+	{"read_size", NULL, TYPE_U64, STORE_SINGLE},
+	{"read_blocksize", NULL, TYPE_U32, STORE_SINGLE},
+	{"read_skipsize", NULL, TYPE_U32, STORE_SINGLE},
+	{"write_weight", NULL, TYPE_U32, STORE_SINGLE},
+	{"write_random", NULL, TYPE_U32, STORE_SINGLE},
+	{"fsync_file", NULL, TYPE_U32, STORE_SINGLE},
+	{"write_size", NULL, TYPE_U64, STORE_SINGLE},
+	{"write_blocksize", NULL, TYPE_U32, STORE_SINGLE},
+	{"create_weight", NULL, TYPE_U32, STORE_SINGLE},
+	{"delete_weight", NULL, TYPE_U32, STORE_SINGLE},
+	{"append_weight", NULL, TYPE_U32, STORE_SINGLE},
+	{"meta_weight", NULL, TYPE_U32, STORE_SINGLE},
+	{"createdir_weight", NULL, TYPE_U32, STORE_SINGLE},
+	{"op_delay", NULL, TYPE_U32, STORE_SINGLE},
 	{NULL, NULL, 0}};
 	
 config_options_t fs_options[] = {
-	{"location", NULL, TYPE_STRING},
-	{"num_files", NULL, TYPE_U32},
-	{"num_dirs", NULL, TYPE_U32},
-	{"reuse", NULL, TYPE_BOOLEAN},
-	{"min_filesize", NULL, TYPE_U64},
-	{"max_filesize", NULL, TYPE_U64},
-	{"create_blocksize", NULL, TYPE_U32},
-	{"age_blocksize", NULL, TYPE_U32},
-	{"desired_util", NULL, TYPE_DOUBLE},
-	{"agefs", NULL, TYPE_BOOLEAN},
+	{"location", NULL, TYPE_STRING, STORE_SINGLE},
+	{"num_files", NULL, TYPE_U32, STORE_SINGLE},
+	{"num_dirs", NULL, TYPE_U32, STORE_SINGLE},
+	{"reuse", NULL, TYPE_BOOLEAN, STORE_SINGLE},
+	{"min_filesize", NULL, TYPE_U64, STORE_SINGLE},
+	{"max_filesize", NULL, TYPE_U64, STORE_SINGLE},
+	{"create_blocksize", NULL, TYPE_U32, STORE_SINGLE},
+	{"age_blocksize", NULL, TYPE_U32, STORE_SINGLE},
+	{"desired_util", NULL, TYPE_DOUBLE, STORE_SINGLE},
+	{"agefs", NULL, TYPE_BOOLEAN, STORE_SINGLE},
 	{NULL, NULL, 0}};
 
 config_options_t stats_options[] = {
-	{"enable_stats", NULL, TYPE_BOOLEAN},
-	{"ignore", NULL, TYPE_STRING},
-	{"bucket", NULL, TYPE_RANGE},
+	{"enable_stats", NULL, TYPE_BOOLEAN, STORE_SINGLE},
+	{"ignore", NULL, TYPE_STRING, STORE_LIST},
+	{"bucket", NULL, TYPE_RANGE, STORE_LIST},
 	{NULL, NULL, 0}};
 
 container_desc_t container_desc[] = {
@@ -224,43 +225,39 @@ static container_t *init_container(void)
 
 static int set_option(char *buf, config_options_t *options)
 {
+	void *value;
+
 	while (options->name) {
 		switch (options->type) {
 		case TYPE_U32:
-			if (get_opt32(buf, options->name)) {
-				options->value = get_opt32(buf, options->name);
-				return 1;
-			}
+			value = get_opt32(buf, options->name);
+			if (value)
+				goto out;
 			break;
 		case TYPE_U64:
-			if (get_opt64(buf, options->name)) {
-				options->value = get_opt64(buf, options->name);
-				return 1;
-			}
+			value = get_opt64(buf, options->name);
+			if (value)
+				goto out;
 			break;
 		case TYPE_STRING:
-			if (get_optstr(buf, options->name)) {
-				options->value = get_optstr(buf, options->name);
-				return 1;
-			}
+			value = get_optstr(buf, options->name);
+			if (value)
+				goto out;
 			break;
 		case TYPE_BOOLEAN:
-			if (get_optbool(buf, options->name)) {
-				options->value = get_optbool(buf, options->name);
-				return 1;
-			}
+			value = get_optbool(buf, options->name);
+			if (value)
+				goto out;
 			break;
 		case TYPE_DOUBLE:
-			if (get_optdouble(buf, options->name)) {
-				options->value = get_optdouble(buf, options->name);
-				return 1;
-			}
+			value = get_optdouble(buf, options->name);
+			if (value)
+				goto out;
 			break;
 		case TYPE_RANGE:
-			if (get_optrange(buf, options->name)) {
-				options->value = get_optrange(buf, options->name);
-				return 1;
-			}
+			value = get_optrange(buf, options->name);
+			if (value)
+				goto out;
 			break;
 		default:
 			printf("Unknown type\n");
@@ -269,6 +266,27 @@ static int set_option(char *buf, config_options_t *options)
 		options++;
 	}
 	return 0;
+
+out:
+	if (options->storage_type == STORE_SINGLE)
+		options->value = value;
+	if (options->storage_type == STORE_LIST) {
+		if (!options->value) {
+			value_list_t *lhead;
+			lhead = malloc(sizeof(struct value_list));
+			INIT_LIST_HEAD(&lhead->list);
+			options->value = lhead;
+		}
+		value_list_t *tmp_list, *tmp_list2;
+		tmp_list = malloc(sizeof(struct value_list));
+		INIT_LIST_HEAD(&tmp_list->list);
+		tmp_list->value = value;
+		tmp_list2 = (struct value_list *)options->value;
+		list_add(&(tmp_list->list), &(tmp_list2->list));
+
+	}
+
+	return 1;
 }
 
 void insert_container(container_t *container, container_t *new_container)
@@ -375,23 +393,23 @@ container_t *search_group(char *buf, FILE *f)
 	return NULL;
 }
 
-static void print_value_string(config_options_t *config)
+static void print_value_string(void *value, int type)
 {
-	switch (config->type) {
+	switch (type) {
 		case TYPE_U32:
-			printf("%d", *(uint32_t *)config->value);
+			printf("%d", *(uint32_t *)value);
 			break;
 		case TYPE_U64:
-			printf("%llu", *(uint64_t *)config->value);
+			printf("%llu", *(uint64_t *)value);
 			break;
 		case TYPE_STRING:
-			printf("%s", (char *)config->value);
+			printf("%s", (char *)value);
 			break;
 		case TYPE_BOOLEAN:
-			printf("%d", *(uint8_t *)config->value);
+			printf("%d", *(uint8_t *)value);
 			break;
 		case TYPE_DOUBLE:
-			printf("%lf", *(double *)config->value);
+			printf("%lf", *(double *)value);
 			break;
 	}
 }
@@ -407,7 +425,8 @@ static void print_config(profile_config_t *profile_conf)
 	while (tmp_config->name) {
 		if (tmp_config->value) {
 			printf("\t%s=",tmp_config->name);
-			print_value_string(tmp_config);
+			print_value_string(tmp_config->value,
+					   tmp_config->type);
 			printf("\n");
 		}
 		tmp_config++;
@@ -420,7 +439,8 @@ static void print_config(profile_config_t *profile_conf)
 		while(tmp_config->name) {
 			if (tmp_config->value) {
 				printf("\t%s=",tmp_config->name);
-				print_value_string(tmp_config);
+				print_value_string(tmp_config->value,
+						   tmp_config->type);
 				printf("\n");
 			}
 			tmp_config++;
@@ -437,7 +457,8 @@ static void print_config(profile_config_t *profile_conf)
 		while(tmp_config->name) {
 			if (tmp_config->value) {
 			printf("\t%s=",tmp_config->name);
-				print_value_string(tmp_config);
+				print_value_string(tmp_config->value,
+						   tmp_config->type);
 				printf("\n");
 			}
 			tmp_config++;
@@ -742,6 +763,20 @@ double get_config_double(config_options_t *config, char *name)
 	return 0;
 }
 
+void * get_value(config_options_t *config, char *name)
+{
+	while (config->name) {
+		if (!strcmp(config->name, name)) {
+			if (config->value)
+				return config->value;
+			else
+				return NULL;
+		}
+		config++;
+	}
+	return 0;
+}
+
 config_options_t * get_fs_config(ffsb_config_t *fc, int pos)
 {
 	config_options_t *tmp_config;
@@ -784,13 +819,30 @@ config_options_t * get_tg_config(ffsb_config_t *fc, int pos)
 	container_t *tmp_cont;
 	int count = 0;
 
-	assert(pos < fc->num_filesys);
+	assert(pos < fc->num_threadgroups);
 
 	tmp_cont = fc->profile_conf->tg_container;
 	while(tmp_cont) {
 		tmp_config = tmp_cont->config;
 		if (count == pos)
 			return tmp_config;
+		tmp_cont = tmp_cont->next;
+		count++;
+	}
+	return NULL;
+}
+
+container_t * get_tg_container(ffsb_config_t *fc, int pos)
+{
+	container_t *tmp_cont;
+	int count = 0;
+
+	assert(pos < fc->num_threadgroups);
+
+	tmp_cont = fc->profile_conf->tg_container;
+	while(tmp_cont) {
+		if (count == pos)
+			return tmp_cont;
 		tmp_cont = tmp_cont->next;
 		count++;
 	}
@@ -884,9 +936,50 @@ static void init_filesys(ffsb_config_t *fc, profile_config_t *profile_conf,
 		fs->age_blocksize = FFSB_FS_DEFAULT_AGE_BLOCKSIZE;	
 }
 
+static void init_tg_stats(ffsb_config_t *fc, int num)
+{
+	config_options_t * config;
+	container_t *tmp_cont;
+	value_list_t *tmp_list, *list_head;
+	syscall_t sys;
+	ffsb_statsc_t fsc = { 0, };
+	char *sys_name;
+	range_t *bucket_range;
+	uint32_t min, max;
+
+	tmp_cont = get_tg_container(fc, num);
+	if (tmp_cont->child) {
+		tmp_cont = tmp_cont->child;
+		if (tmp_cont->type == STATS) {
+			config = tmp_cont->config;
+			if (get_config_bool(config, "enable_stats")) {
+				list_head = (value_list_t *) get_value(config, "ignore");
+				list_for_each_entry(tmp_list, &list_head->list, list) {
+					sys_name = (char *)tmp_list->value;
+					ffsb_stats_str2syscall(sys_name, &sys);
+					ffsb_statsc_ignore_sys(&fsc, sys);
+				}
+
+				list_head = (value_list_t *) get_value(config, "bucket");
+				list_for_each_entry(tmp_list, &list_head->list, list) {
+					bucket_range = (range_t *)tmp_list->value;
+					min = (uint32_t)(bucket_range->a * 1000.0f);
+					max = (uint32_t)(bucket_range->b * 1000.0f);
+					printf("%d %d\n", min, max);
+					ffsb_statsc_addbucket(&fsc, min, max);
+				}
+
+				tg_set_statsc(&fc->groups[num], &fsc);
+			}
+		}
+}	
+
+}
+
 static void init_config(ffsb_config_t *fc, profile_config_t *profile_conf)
 {
 	config_options_t * config;
+	container_t *tmp_cont;
 	int i;
 
 	fc->time = get_config_u32(profile_conf->global, "time");
@@ -899,7 +992,6 @@ static void init_config(ffsb_config_t *fc, profile_config_t *profile_conf)
 	fc->filesystems = ffsb_malloc(sizeof(ffsb_fs_t) * fc->num_filesys);
 	for (i = 0; i < fc->num_filesys; i++){
 		config = get_fs_config(fc, i);
-
 		init_filesys(fc, profile_conf, config, &fc->filesystems[i]);
 	}
 
@@ -907,6 +999,7 @@ static void init_config(ffsb_config_t *fc, profile_config_t *profile_conf)
 	for (i=0; i < fc->num_threadgroups; i++) {
 		config = get_tg_config(fc, i);
 		init_threadgroup(config, &fc->groups[i], i);
+		init_tg_stats(fc, i);
 	}
 }
 
