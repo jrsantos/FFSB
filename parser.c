@@ -393,6 +393,57 @@ container_t *search_group(char *buf, FILE *f)
 	return NULL;
 }
 
+void * get_value(config_options_t *config, char *name)
+{
+	while (config->name) {
+		if (!strcmp(config->name, name)) {
+			if (config->value)
+				return config->value;
+			else
+				return NULL;
+		}
+		config++;
+	}
+	return 0;
+}
+
+char * get_config_str(config_options_t *config, char *name)
+{
+	return get_value(config, name);
+}
+
+uint32_t get_config_u32(config_options_t *config, char *name)
+{
+	void *value = get_value(config, name);
+	if (value)
+		return *(uint32_t *)value;
+	return 0;
+}
+
+uint8_t get_config_bool(config_options_t *config, char *name)
+{
+	void *value = get_value(config, name);
+	if (value)
+		return *(uint8_t *)value;
+	return 0;
+}
+
+uint32_t get_config_u64(config_options_t *config, char *name)
+{
+	void *value = get_value(config, name);
+	if (value)
+		return *(uint64_t *)value;
+	return 0;
+}
+
+double get_config_double(config_options_t *config, char *name)
+{
+	void *value = get_value(config, name);
+	if (value)
+		return *(double *)value;
+	return 0;
+}
+
 static void print_value_string(void *value, int type)
 {
 	switch (type) {
@@ -623,90 +674,6 @@ static int get_num_totalthreads(profile_config_t *profile_conf)
 	}
 
 	return num_threads;
-}
-
-char * get_config_str(config_options_t *config, char *name)
-{
-	while(config->name) {
-		if (!strcmp(config->name, name)) {
-			if (config->value)
-				return config->value;
-			else
-				return NULL;
-		}
-		config++;
-	}
-	return NULL;
-}
-
-uint32_t get_config_u32(config_options_t *config, char *name)
-{
-	while(config->name) {
-		if (!strcmp(config->name, name)) {
-			if (config->value)
-				return *(uint32_t *)config->value;
-			else
-				return 0;
-		}
-		config++;
-	}
-	return 0;
-}
-
-uint8_t get_config_bool(config_options_t *config, char *name)
-{
-	while(config->name) {
-		if (!strcmp(config->name, name)) {
-			if (config->value)
-				return *(uint8_t *)config->value;
-			else
-				return 0;
-		}
-		config++;
-	}
-	return 0;
-}
-
-uint32_t get_config_u64(config_options_t *config, char *name)
-{
-	while(config->name) {
-		if (!strcmp(config->name, name)) {
-			if (config->value)
-				return *(uint64_t *)config->value;
-			else
-				return 0;
-		}
-		config++;
-	}
-	return 0;
-}
-
-double get_config_double(config_options_t *config, char *name)
-{
-	while (config->name) {
-		if (!strcmp(config->name, name)) {
-			if (config->value)
-				return *(double *)config->value;
-			else
-				return 0;
-		}
-		config++;
-	}
-	return 0;
-}
-
-void * get_value(config_options_t *config, char *name)
-{
-	while (config->name) {
-		if (!strcmp(config->name, name)) {
-			if (config->value)
-				return config->value;
-			else
-				return NULL;
-		}
-		config++;
-	}
-	return 0;
 }
 
 config_options_t * get_fs_config(ffsb_config_t *fc, int pos)
