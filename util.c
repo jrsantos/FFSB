@@ -202,7 +202,7 @@ float getfsutil(char *dirname)
 
 int ffsb_system(char *command)
 {
-	int pid, status;
+	int pid=0, status;
 	extern char **environ;
 
 	if (command == NULL)
@@ -220,9 +220,10 @@ int ffsb_system(char *command)
 		exit(127);
 	}
 	do {
-		if (waitpid(pid, &status, 0) == -1)
+		if (waitpid(pid, &status, 0) == -1) {
 			if (errno != EINTR)
 				return -1;
+		}
 		else
 			return status;
 	} while (1);

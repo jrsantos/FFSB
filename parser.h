@@ -19,8 +19,55 @@
 #define _PARSER_H_
 
 #include "ffsb.h"
+#include "list.h"
 
-#define COMMENT_CHAR '#'
+#define COMMENT_CHAR	'#'
+
+#define STORE_SINGLE		0x0001
+#define STORE_LIST		0x0002
+
+#define TYPE_U32		0x0001
+#define	TYPE_U64		0x0002
+#define TYPE_STRING		0x0004
+#define TYPE_BOOLEAN		0x0008
+#define TYPE_DOUBLE		0x0010
+#define TYPE_RANGE		0x0020
+
+#define ROOT			0x0001
+#define THREAD_GROUP		0x0002
+#define FILESYSTEM		0x0004
+#define END			0x0008
+#define STATS			0x0010
+
+typedef struct container {
+	struct config_options *config;
+	uint32_t type;
+	struct container *child;
+	struct container *next;
+} container_t;
+
+typedef struct config_options {
+	char *name;
+	void *value;
+	int type;
+	int storage_type;
+} config_options_t;
+
+typedef struct container_desc {
+	char *name;
+	uint16_t type;
+	uint16_t size;
+} container_desc_t;
+
+typedef struct range {
+	double a;
+	double b;
+} range_t;
+
+typedef struct value_list {
+	void *value;
+	struct list_head list;
+} value_list_t;
 
 void ffsb_parse_newconfig(ffsb_config_t *fc, char *filename);
 

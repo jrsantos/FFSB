@@ -37,6 +37,8 @@
 
 #define FFSB_TG_WAIT_TIME (1)
 
+#define MARK printf("MARK FUNC: %s() @ %s:%d\n", __FUNCTION__, __FILE__, __LINE__);
+
 struct results {
 	struct rusage before;
 	struct rusage after;
@@ -50,6 +52,12 @@ struct results {
 struct ffsb_tg;
 struct ffsb_fs;
 
+typedef struct profile_config {
+	struct config_options *global;
+	struct container *fs_container;
+	struct container *tg_container;
+} profile_config_t;
+
 typedef struct ffsb_config {
 	unsigned time;
 
@@ -61,6 +69,7 @@ typedef struct ffsb_config {
 	struct ffsb_tg *groups;
 	struct ffsb_fs *filesystems;
 
+	struct profile_config *profile_conf;
 	char *callout;			/* we will try and exec this */
 
 	struct results results;
@@ -82,11 +91,6 @@ void destroy_ffsb_config(ffsb_config_t *fc);
 void fc_set_time(ffsb_config_t *fc, unsigned time);
 
 void fc_set_num_totalthreads(ffsb_config_t *fc, int num);
-
-unsigned fc_get_num_filesys(ffsb_config_t *fc);
-unsigned fc_get_num_threadgroups(ffsb_config_t *fc);
-
-int fc_get_num_totalthreads(ffsb_config_t *fc);
 
 /* num is zero-based */
 /* get a particular threadgroup object */

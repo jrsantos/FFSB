@@ -32,7 +32,8 @@ ffsb_SOURCES = \
 	parser.c \
 	parser.h \
 	ffsb_fc.c \
-	ffsb_stats.c
+	ffsb_stats.c \
+	list.c
 
 #ffsb_test_SOURCES = config.h     fileops.h     ffsb.h  rand.h   fh.h filelist.h metaops.h rwlock.h cirlist.h rbt.h ffsb_tg.h ffsb_fs.h ffsb_thread.h ffsb_op.h util.h parser.c parser.h ffsb_test.c  
 

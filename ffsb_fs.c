@@ -87,6 +87,12 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 	int i, fd;
 	randdata_t rd;
 	char *buf = ffsb_malloc(blocksize);
+	char *buf2;
+
+	if (fs_get_directio(fs))
+		buf2 = ffsb_align_4k(buf+ (4096 -1));
+	else
+		buf2 = buf;
 
 	assert(blocksize);
 
@@ -98,7 +104,7 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 
 		cur = add_file(bf, size, &rd);
 		fd = fhopencreate(cur->name, NULL, fs);
-		writefile_helper(fd, size, blocksize, buf, NULL, fs);
+		writefile_helper(fd, size, blocksize, buf2, NULL, fs);
 		fhclose(fd, NULL, fs);
 		unlock_file_writer(cur);
 	}
@@ -547,9 +553,9 @@ void fs_print_config(ffsb_fs_t *fs)
 	       "on" : "off");
 	printf("\t\n");
 	printf("\t aging is %s\n", (fs->age_fs) ? "on" : "off");
-	printf("\t current utilization = %.2f\n", getfsutil(fs->basedir));
+	printf("\t current utilization = %.2f\%\n", getfsutil(fs->basedir)*100);
 	if (fs->age_fs) {
-		printf("\t desired utilization = %.2lf\n", fs->desired_fsutil);
+		printf("\t desired utilization = %.2lf%\n", fs->desired_fsutil * 100);
 		printf("\t \n");
 		tg_print_config_aging(fs->aging_tg, fs->basedir);
 	}
