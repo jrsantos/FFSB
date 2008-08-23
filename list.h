@@ -26,16 +26,16 @@ void list_replace(struct list_head *old, struct list_head *new);
 #define list_for_each(pos, head) \
 	for (pos = (head)->next; pos->next, pos != (head); pos = pos->next)
 
-#define offsetof(type, member) ( (int) & ((type*)0) -> member )
+#define offsetof(type, member) ((int) &((type *)0)->member)
 
-#define container_of(ptr, type, member) ({			\
-        const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
-        (type *)( (char *)__mptr - offsetof(type,member) );})
+#define container_of(ptr, type, member) ({ \
+	const typeof(((type *)0)->member) *__mptr = (ptr); \
+	(type *)((char *)__mptr - offsetof(type, member)); })
 
 #define list_entry(ptr, type, member) \
 	container_of(ptr, type, member)
 
-#define list_for_each_entry(pos, head, member)				\
+#define list_for_each_entry(pos, head, member) \
 	for (pos = list_entry((head)->next, typeof(*pos), member);	\
 	     pos->member.next, &pos->member != (head); 	\
 	     pos = list_entry(pos->member.next, typeof(*pos), member))
