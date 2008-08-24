@@ -154,6 +154,23 @@ static range_t *get_optrange(char *buf, char string[])
 	return NULL;
 }
 
+static size_weight_t *get_optsizeweight(char *buf, char string[])
+{
+	char search_str[256];
+	uint64_t size;
+	int weight;
+	size_weight_t *ret;
+
+	sprintf(search_str, "%s %%llu %%d\\n", string);
+	if (2 == sscanf(buf, search_str, &size, &weight)) {
+		ret = malloc(sizeof(struct size_weight));
+		ret->size = size;
+		ret->weight = weight;
+		return ret;
+	}
+	return NULL;
+}
+
 config_options_t global_options[] = {
 	{"num_filesystems", NULL, TYPE_U32, STORE_SINGLE},
 	{"num_threadgroups", NULL, TYPE_U32, STORE_SINGLE},
@@ -199,6 +216,7 @@ config_options_t fs_options[] = {
 	{"age_blocksize", NULL, TYPE_U32, STORE_SINGLE},
 	{"desired_util", NULL, TYPE_DOUBLE, STORE_SINGLE},
 	{"agefs", NULL, TYPE_BOOLEAN, STORE_SINGLE},
+	{"size_weight", NULL, TYPE_SIZEWEIGHT, STORE_LIST},
 	{NULL, NULL, 0} };
 
 config_options_t stats_options[] = {
@@ -260,6 +278,11 @@ static int set_option(char *buf, config_options_t *options)
 			if (value)
 				goto out;
 			break;
+		case TYPE_SIZEWEIGHT:
+			value = get_optsizeweight(buf, options->name);
+			if (value)
+				goto out;
+			break;
 		default:
 			printf("Unknown type\n");
 			break;
@@ -284,7 +307,6 @@ out:
 		tmp_list->value = value;
 		tmp_list2 = (struct value_list *)options->value;
 		list_add(&(tmp_list->list), &(tmp_list2->list));
-
 	}
 
 	return 1;
@@ -689,6 +711,8 @@ static void init_filesys(ffsb_config_t *fc, int num)
 	config_options_t *config = get_fs_config(fc, num);
 	profile_config_t *profile_conf = fc->profile_conf;
 	ffsb_fs_t *fs = &fc->filesystems[num];
+	value_list_t *tmp_list, *list_head;
+	int *i, j;
 
 	memset(fs, 0, sizeof(ffsb_fs_t));
 
@@ -736,6 +760,26 @@ static void init_filesys(ffsb_config_t *fc, int num)
 		fs->age_blocksize = get_config_u32(config, "age_blocksize");
 	else
 		fs->age_blocksize = FFSB_FS_DEFAULT_AGE_BLOCKSIZE;
+
+	list_head = (value_list_t *) get_value(config, "size_weight");
+	if (list_head) {
+		int count = 0;
+		size_weight_t *sizew;
+		list_for_each_entry(tmp_list, &list_head->list, list)
+			count++;
+
+		fs->num_weights=count;
+		fs->size_weights = malloc(sizeof(size_weight_t) * fs->num_weights);
+
+		count = 0;
+		list_for_each_entry(tmp_list, &list_head->list, list) {
+			sizew = (size_weight_t *)tmp_list->value;
+			fs->size_weights[count].size = sizew->size;
+			fs->size_weights[count].weight = sizew->weight;
+			fs->sum_weights += sizew->weight;
+			count++;
+		}
+	}
 }
 
 static void init_tg_stats(ffsb_config_t *fc, int num)

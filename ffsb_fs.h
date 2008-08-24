@@ -32,6 +32,11 @@
 
 struct ffsb_tg;
 
+typedef struct size_weight {
+	uint64_t size;
+	int weight;
+} size_weight_t;
+
 /* A filesystem object
  * --
  * represents a filesystem on disk, and maintains access to the different
@@ -102,6 +107,10 @@ typedef struct ffsb_fs {
 	/* per-fs stats */
 	ffsb_statsc_t fsc;
 	ffsb_statsd_t fsd;
+
+	size_weight_t *size_weights;
+	unsigned num_weights;
+	unsigned sum_weights;
 
 } ffsb_fs_t;
 

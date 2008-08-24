@@ -360,16 +360,29 @@ void ffsb_createfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	struct ffsb_file *newfile = NULL;
 
 	int fd;
-	uint64_t range = fs_get_max_filesize(fs) - fs_get_min_filesize(fs);
-	uint64_t size = fs_get_min_filesize(fs);
+	uint64_t size;
 
 	char *buf = ft_getbuf(ft);
 	uint32_t write_blocksize = ft_get_write_blocksize(ft);
 	struct randdata *rd = ft_get_randdata(ft);
 	unsigned iterations = 0;
 
-	if (range != 0)
-		size += getllrandom(rd, range);
+	if (fs->num_weights) {
+		int num = 1 + getrandom(rd, fs->sum_weights);
+		int curop = 0;
+
+		while (fs->size_weights[curop].weight < num) {
+			num -= fs->size_weights[curop].weight;
+			curop++;
+		}
+		size = fs->size_weights[curop].size;
+	}
+	else {
+		uint64_t range = fs_get_max_filesize(fs) - fs_get_min_filesize(fs);
+		size = fs_get_min_filesize(fs);
+		if (range != 0)
+			size += getllrandom(rd, range);
+	}
 
 	newfile = add_file(bf, size, rd);
 	fd = fhopencreate(newfile->name, ft, fs);

@@ -99,8 +99,19 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 	init_random(&rd, 0);
 
 	for (i = 0; i < num; i++) {
-		uint64_t size = minsize +
-			getllrandom(&rd, maxsize - minsize);
+		uint64_t size;
+		if (fs->num_weights) {
+			int num = 1 + getrandom(&rd, fs->sum_weights);
+			int curop = 0;
+
+			while (fs->size_weights[curop].weight < num) {
+				num -= fs->size_weights[curop].weight;
+				curop++;
+			}
+			size = fs->size_weights[curop].size;
+		}
+		else
+			size = minsize + getllrandom(&rd, maxsize - minsize);
 
 		cur = add_file(bf, size, &rd);
 		fd = fhopencreate(cur->name, NULL, fs);
