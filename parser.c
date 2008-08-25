@@ -171,9 +171,23 @@ static size_weight_t *get_optsizeweight(char *buf, char string[])
 	return NULL;
 }
 
+static uint64_t *get_deprecated(char *buf, char string[])
+{
+	char search_str[256];
+	char temp[BUFSIZE];
+	int len;
+
+	len = strnlen(string, BUFSIZE);
+	sprintf(search_str, "%s%%%ds\\n", string, BUFSIZE - len-1);
+	if (1 == sscanf(buf, search_str, &temp))
+		printf("WARNING: The \"%s\" option is deprecated!!!\n", string);
+
+	return NULL;
+}
+
 config_options_t global_options[] = {
-	{"num_filesystems", NULL, TYPE_U32, STORE_SINGLE},
-	{"num_threadgroups", NULL, TYPE_U32, STORE_SINGLE},
+	{"num_filesystems", NULL, TYPE_DEPRECATED, STORE_SINGLE},
+	{"num_threadgroups", NULL, TYPE_DEPRECATED, STORE_SINGLE},
 	{"verbose", NULL, TYPE_BOOLEAN, STORE_SINGLE},
 	{"time", NULL, TYPE_U32, STORE_SINGLE},
 	{"directio", NULL, TYPE_BOOLEAN, STORE_SINGLE},
@@ -282,6 +296,11 @@ static int set_option(char *buf, config_options_t *options)
 			break;
 		case TYPE_SIZEWEIGHT:
 			value = get_optsizeweight(buf, options->name);
+			if (value)
+				goto out;
+			break;
+		case TYPE_DEPRECATED:
+			value = get_deprecated(buf, options->name);
 			if (value)
 				goto out;
 			break;

@@ -33,6 +33,7 @@
 #define TYPE_DOUBLE		0x0010
 #define TYPE_RANGE		0x0020
 #define TYPE_SIZEWEIGHT		0x0040
+#define TYPE_DEPRECATED		0x0080
 
 #define ROOT			0x0001
 #define THREAD_GROUP		0x0002
