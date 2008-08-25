@@ -69,6 +69,7 @@ double cpu_so_far(void);
 double time_so_far(void);
 double cpu_so_far_children(void);
 float getfsutil(char *dirname);
+uint64_t getfsutil_size(char *dirname);
 
 struct timeval tvsub(struct timeval t1, struct timeval t0);
 struct timeval tvadd(struct timeval t1, struct timeval t0);

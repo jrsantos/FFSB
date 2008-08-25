@@ -84,10 +84,11 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 		      uint64_t minsize, uint64_t maxsize, unsigned blocksize)
 {
 	struct ffsb_file *cur;
-	int i, fd;
+	int i, fd, condition = 0;
 	randdata_t rd;
 	char *buf = ffsb_malloc(blocksize);
 	char *buf2;
+	uint64_t initial_free = getfsutil_size(fs->basedir);
 
 	if (fs_get_directio(fs))
 		buf2 = ffsb_align_4k(buf+ (4096 -1));
@@ -98,7 +99,23 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 
 	init_random(&rd, 0);
 
-	for (i = 0; i < num; i++) {
+	if (num)
+		condition = num;
+	else if (fs->init_size) {
+		if (fs->init_size >= getfsutil_size(fs->basedir) -
+		    initial_free)
+			condition = 1;
+		else
+			condition = 0;
+	}
+	else if (fs->init_fsutil) {
+		if (fs->init_fsutil >= getfsutil(fs->basedir))
+			condition = 1;
+		else
+			condition = 0;
+	}
+
+	while (condition) {
 		uint64_t size;
 		if (fs->num_weights) {
 			int num = 1 + getrandom(&rd, fs->sum_weights);
@@ -118,6 +135,23 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 		writefile_helper(fd, size, blocksize, buf2, NULL, fs);
 		fhclose(fd, NULL, fs);
 		unlock_file_writer(cur);
+
+		if (num)
+			condition--;
+		else if (fs->init_size) {
+			if (fs->init_size >= getfsutil_size(fs->basedir) -
+			    initial_free)
+				condition = 1;
+			else
+				condition = 0;
+		}
+		else if (fs->init_fsutil) {
+			if (fs->init_fsutil >= getfsutil(fs->basedir))
+				condition = 1;
+			else
+				condition = 0;
+		}
+		
 	}
 	free(buf);
 }

@@ -217,6 +217,8 @@ config_options_t fs_options[] = {
 	{"desired_util", NULL, TYPE_DOUBLE, STORE_SINGLE},
 	{"agefs", NULL, TYPE_BOOLEAN, STORE_SINGLE},
 	{"size_weight", NULL, TYPE_SIZEWEIGHT, STORE_LIST},
+	{"init_util", NULL, TYPE_DOUBLE, STORE_SINGLE},
+	{"init_size", NULL, TYPE_U64, STORE_SINGLE},
 	{NULL, NULL, 0} };
 
 config_options_t stats_options[] = {
@@ -722,6 +724,8 @@ static void init_filesys(ffsb_config_t *fc, int num)
 	fs->minfilesize = get_config_u64(config, "min_filesize");
 	fs->maxfilesize = get_config_u64(config, "max_filesize");
 	fs->desired_fsutil = get_config_double(config, "desired_util");
+	fs->init_fsutil = get_config_double(config, "init_util");
+	fs->init_size = get_config_u64(config, "init_size");
 
 	fs->flags = 0;
 	if (get_config_bool(config, "reuse"))

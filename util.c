@@ -200,6 +200,14 @@ float getfsutil(char *dirname)
 			((float)fsdata.f_blocks));
 }
 
+uint64_t getfsutil_size(char *dirname)
+{
+	struct statvfs fsdata;
+	statvfs(dirname, &fsdata);
+
+	return (fsdata.f_blocks - fsdata.f_bfree) * fsdata.f_bsize;
+}
+
 int ffsb_system(char *command)
 {
 	int pid=0, status;

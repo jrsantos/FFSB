@@ -78,6 +78,8 @@ typedef struct ffsb_fs {
 	uint32_t num_dirs;
 	uint32_t num_start_files;
 	uint64_t minfilesize, maxfilesize;
+	double init_fsutil;
+	uint64_t init_size;
 
 	/* These two parameters specify the blocksize to use for
 	 * writes when creating and aging the fs.
