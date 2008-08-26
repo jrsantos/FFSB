@@ -57,18 +57,42 @@ static char *get_next_line(FILE *f)
 	return ret;
 }
 
+static char *strip_space(char *buf)
+{
+	int len;
+	char *tmp, *tmp2;
+	int flag = 1;
+
+	len = strnlen(buf, BUFSIZE);
+	tmp = malloc(sizeof(char) * len);
+	tmp2 = tmp;
+	while (flag) {
+		if (!isspace(*buf)) {
+			*tmp = *buf;
+			tmp++;
+		}
+		buf++;
+		if (*buf != '\0')
+			continue;
+		flag = 0;
+	}
+	return tmp2;
+}
+
 static uint64_t *get_opt64(char *buf, char string[])
 {
 	char search_str[256];
+	char *line = strip_space(buf);
 	uint64_t temp;
 	uint64_t *ret;
 
 	sprintf(search_str, "%s=%%llu\\n", string);
-	if (1 == sscanf(buf, search_str, &temp)) {
+	if (1 == sscanf(line, search_str, &temp)) {
 		ret = malloc(sizeof(uint64_t));
 		*ret = temp;
 		return ret;
 	}
+	free(line);
 	return NULL;
 }
 
@@ -108,33 +132,37 @@ static uint8_t *get_optbool(char *buf, char string[])
 static char *get_optstr(char *buf, char string[])
 {
 	char search_str[256];
+	char *line = strip_space(buf);
 	char *ret_buf;
 	char temp[BUFSIZE];
 	int len;
 
 	len = strnlen(string, BUFSIZE);
 	sprintf(search_str, "%s=%%%ds\\n", string, BUFSIZE - len-1);
-	if (1 == sscanf(buf, search_str, &temp)) {
+	if (1 == sscanf(line, search_str, &temp)) {
 		len = strnlen(temp, 4096);
 		ret_buf = malloc(len);
 		strncpy(ret_buf, temp, len);
 		return ret_buf;
 		}
+	free(line);
 	return NULL;
 }
 
 static double *get_optdouble(char *buf, char string[])
 {
 	char search_str[256];
+	char *line = strip_space(buf);
 	double temp;
 	double *ret;
 
 	sprintf(search_str, "%s=%%lf\\n", string);
-	if (1 == sscanf(buf, search_str, &temp)) {
+	if (1 == sscanf(line, search_str, &temp)) {
 		ret = malloc(sizeof(double));
 		*ret = temp;
 		return ret;
 	}
+	free(line);
 	return NULL;
 }
 
