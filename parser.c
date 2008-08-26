@@ -349,6 +349,7 @@ container_t *handle_container(char *buf, FILE *f, uint32_t type,
 	container_t *ret_container;
 	container_t *tmp_container, *tmp2_container;
 	container_t *child = NULL;
+	int is_option;
 
 	while (desc->name)
 		if (desc->type == type)
@@ -361,7 +362,7 @@ container_t *handle_container(char *buf, FILE *f, uint32_t type,
 
 	buf = get_next_line(f);
 	while (buf) {
-		set_option(buf, options);
+		is_option = set_option(buf, options);
 		tmp_container = search_group(buf, f);
 		if (tmp_container) {
 			if (tmp_container->type == END) {
@@ -378,6 +379,10 @@ container_t *handle_container(char *buf, FILE *f, uint32_t type,
 				}
 
 			}
+		}
+		if (!is_option && !tmp_container) {
+			printf("ERROR!!! Unknow option: %s", buf);
+			exit(1);
 		}
 		buf = get_next_line(f);
 	}
@@ -500,11 +505,11 @@ static profile_config_t *parse(FILE *f)
 	memcpy(profile_conf->global, global_options, sizeof(global_options));
 	profile_conf->fs_container = NULL;
 	profile_conf->tg_container = NULL;
-
+	int is_option;
 	buf = get_next_line(f);
 
 	while (buf) {
-		set_option(buf, profile_conf->global);
+		is_option = set_option(buf, profile_conf->global);
 		tmp_container = search_group(buf, f);
 		if (tmp_container)
 			switch (tmp_container->type) {
@@ -525,6 +530,10 @@ static profile_config_t *parse(FILE *f)
 			default:
 				break;
 			}
+		if (!is_option && !tmp_container) {
+			printf("ERROR!!! Unknow option: %s", buf);
+			exit(1);
+		}
 		buf = get_next_line(f);
 	}
 	return profile_conf;
