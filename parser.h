@@ -73,6 +73,7 @@
 	{"meta_weight", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"createdir_weight", NULL, TYPE_U32, STORE_SINGLE},		\
 	{"op_delay", NULL, TYPE_U32, STORE_SINGLE},			\
+	{"stat_weight", NULL, TYPE_U32, STORE_SINGLE},			\
 	{NULL, NULL, 0} }
 
 #define FILESYSTEM_OPTIONS {						\

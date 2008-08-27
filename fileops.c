@@ -414,6 +414,19 @@ void ffsb_deletefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	ft_incr_op(ft, opnum, 1);
 }
 
+void ffsb_stat(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
+	struct ffsb_file *curfile = NULL;
+	randdata_t *rd = ft_get_randdata(ft);
+
+	curfile = choose_file_reader(bf, rd);
+	fhstat(curfile->name, ft, fs); 
+	unlock_file_reader(curfile);
+
+	ft_incr_op(ft, opnum, 1);
+}
+
 void ffsb_read_print_exl(struct ffsb_op_results *results, double secs,
 			 unsigned int op_num)
 {

@@ -31,7 +31,8 @@ ffsb_op_t ffsb_op_list[] =
  {4, "append", ffsb_appendfile, NULL, ffsb_append_print_exl, fop_bench, fop_age},
  {5, "delete", ffsb_deletefile, NULL, NULL, fop_bench, fop_age},
  {6, "metaop", ffsb_metaops, NULL, NULL, metaops_metadir, NULL},
- {7, "createdir", ffsb_createdir, NULL, NULL, fop_bench, NULL}
+ {7, "createdir", ffsb_createdir, NULL, NULL, fop_bench, NULL},
+ {8, "stat", ffsb_stat, NULL, NULL, fop_bench, NULL},
 };
 
 void init_ffsb_op_results(ffsb_op_results_t *results)

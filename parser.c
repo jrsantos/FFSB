@@ -527,6 +527,7 @@ static int verify_tg(ffsb_tg_t *tg)
 	uint32_t metaop_weight    = tg_get_op_weight(tg, "metaop");
 	uint32_t createdir_weight = tg_get_op_weight(tg, "createdir");
 	uint32_t delete_weight    = tg_get_op_weight(tg, "delete");
+	uint32_t stat_weight	= tg_get_op_weight(tg, "stat");
 
 	uint32_t sum_weight = read_weight +
 		readall_weight +
@@ -535,7 +536,8 @@ static int verify_tg(ffsb_tg_t *tg)
 		append_weight +
 		metaop_weight +
 		createdir_weight +
-		delete_weight;
+		delete_weight +
+		stat_weight;
 
 
 	uint32_t read_blocksize  = tg_get_read_blocksize(tg);
@@ -701,6 +703,7 @@ static void init_threadgroup(config_options_t *config,
 	tg_set_op_weight(tg, "delete", get_config_u32(config, "delete_weight"));
 	tg_set_op_weight(tg, "metaop", get_config_u32(config, "meta_weight"));
 	tg_set_op_weight(tg, "createdir", get_config_u32(config, "createdir_weight"));
+	tg_set_op_weight(tg, "stat", get_config_u32(config, "stat_weight"));
 	if (verify_tg(tg)) {
 		printf("threadgroup %d verification failed\n", tg_num);
 		exit(1);

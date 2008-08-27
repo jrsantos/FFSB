@@ -31,6 +31,7 @@ void ffsb_rewritefsync(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
 void ffsb_createfile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
 void ffsb_deletefile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
 void ffsb_appendfile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
+void ffsb_stat(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum);
 
 struct ffsb_op_results;
 

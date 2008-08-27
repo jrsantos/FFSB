@@ -12,6 +12,7 @@ char *syscall_names[] = {
 	"lseek",
 	"unlink",
 	"close",
+	"stat",
 };
 
 /* yuck, just for the parser anyway.. */
