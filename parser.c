@@ -684,16 +684,17 @@ static void init_threadgroup(config_options_t *config,
 
 	tg->read_random = get_config_bool(config, "read_random");
 	tg->read_size = get_config_u64(config, "read_size");
-	tg->read_blocksize = get_config_u32(config, "read_blocksize");
 	tg->read_skip = get_config_bool(config, "read_skip");
 	tg->read_skipsize = get_config_u32(config, "read_skipsize");
 
 	tg->write_random = get_config_bool(config, "write_random");
 	tg->write_size = get_config_u64(config, "write_size");
-	tg->write_blocksize = get_config_u32(config, "write_blocksize");
 	tg->fsync_file = get_config_bool(config, "fsync_file");
 
 	tg->wait_time = get_config_u32(config, "op_delay");
+
+	tg_set_read_blocksize(tg, get_config_u32(config, "read_blocksize"));
+	tg_set_write_blocksize(tg, get_config_u32(config, "write_blocksize"));
 
 	tg_set_op_weight(tg, "read", get_config_u32(config, "read_weight"));
 	tg_set_op_weight(tg, "readall", get_config_u32(config, "readall_weight"));
