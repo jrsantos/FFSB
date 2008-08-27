@@ -30,6 +30,12 @@
 
 #define BUFSIZE 1024
 
+config_options_t global_options[] = GLOBAL_OPTIONS;
+config_options_t tg_options[] = THREADGROUP_OPTIONS;
+config_options_t fs_options[] = FILESYSTEM_OPTIONS;
+config_options_t stats_options[] = STATS_OPTIONS;
+container_desc_t container_desc[] = CONTAINER_DESC;
+
 /* strips out whitespace and comments, returns NULL on eof */
 void parseerror(char *msg)
 {
@@ -212,69 +218,6 @@ static uint64_t *get_deprecated(char *buf, char string[])
 
 	return NULL;
 }
-
-config_options_t global_options[] = {
-	{"num_filesystems", NULL, TYPE_DEPRECATED, STORE_SINGLE},
-	{"num_threadgroups", NULL, TYPE_DEPRECATED, STORE_SINGLE},
-	{"verbose", NULL, TYPE_BOOLEAN, STORE_SINGLE},
-	{"time", NULL, TYPE_U32, STORE_SINGLE},
-	{"directio", NULL, TYPE_BOOLEAN, STORE_SINGLE},
-	{"bufferio", NULL, TYPE_BOOLEAN, STORE_SINGLE},
-	{"alignio", NULL, TYPE_BOOLEAN, STORE_SINGLE},
-	{"callout", NULL, TYPE_STRING, STORE_SINGLE},
-	{NULL, NULL, 0, 0} };
-
-config_options_t tg_options[] = {
-	{"bindfs", NULL, TYPE_U32, STORE_SINGLE},
-	{"num_threads", NULL, TYPE_U32, STORE_SINGLE},
-	{"read_weight", NULL, TYPE_U32, STORE_SINGLE},
-	{"readall_weight", NULL, TYPE_U32, STORE_SINGLE},
-	{"read_random", NULL, TYPE_U32, STORE_SINGLE},
-	{"read_skip", NULL, TYPE_U32, STORE_SINGLE},
-	{"read_size", NULL, TYPE_U64, STORE_SINGLE},
-	{"read_blocksize", NULL, TYPE_U32, STORE_SINGLE},
-	{"read_skipsize", NULL, TYPE_U32, STORE_SINGLE},
-	{"write_weight", NULL, TYPE_U32, STORE_SINGLE},
-	{"write_random", NULL, TYPE_U32, STORE_SINGLE},
-	{"fsync_file", NULL, TYPE_U32, STORE_SINGLE},
-	{"write_size", NULL, TYPE_U64, STORE_SINGLE},
-	{"write_blocksize", NULL, TYPE_U32, STORE_SINGLE},
-	{"create_weight", NULL, TYPE_U32, STORE_SINGLE},
-	{"delete_weight", NULL, TYPE_U32, STORE_SINGLE},
-	{"append_weight", NULL, TYPE_U32, STORE_SINGLE},
-	{"meta_weight", NULL, TYPE_U32, STORE_SINGLE},
-	{"createdir_weight", NULL, TYPE_U32, STORE_SINGLE},
-	{"op_delay", NULL, TYPE_U32, STORE_SINGLE},
-	{NULL, NULL, 0} };
-
-config_options_t fs_options[] = {
-	{"location", NULL, TYPE_STRING, STORE_SINGLE},
-	{"num_files", NULL, TYPE_U32, STORE_SINGLE},
-	{"num_dirs", NULL, TYPE_U32, STORE_SINGLE},
-	{"reuse", NULL, TYPE_BOOLEAN, STORE_SINGLE},
-	{"min_filesize", NULL, TYPE_U64, STORE_SINGLE},
-	{"max_filesize", NULL, TYPE_U64, STORE_SINGLE},
-	{"create_blocksize", NULL, TYPE_U32, STORE_SINGLE},
-	{"age_blocksize", NULL, TYPE_U32, STORE_SINGLE},
-	{"desired_util", NULL, TYPE_DOUBLE, STORE_SINGLE},
-	{"agefs", NULL, TYPE_BOOLEAN, STORE_SINGLE},
-	{"size_weight", NULL, TYPE_SIZEWEIGHT, STORE_LIST},
-	{"init_util", NULL, TYPE_DOUBLE, STORE_SINGLE},
-	{"init_size", NULL, TYPE_U64, STORE_SINGLE},
-	{NULL, NULL, 0} };
-
-config_options_t stats_options[] = {
-	{"enable_stats", NULL, TYPE_BOOLEAN, STORE_SINGLE},
-	{"ignore", NULL, TYPE_STRING, STORE_LIST},
-	{"bucket", NULL, TYPE_RANGE, STORE_LIST},
-	{NULL, NULL, 0} };
-
-container_desc_t container_desc[] = {
-	{"filesystem", FILESYSTEM, 10},
-	{"threadgroup", THREAD_GROUP, 11},
-	{"end", END, 3},
-	{"stats", STATS, 5},
-	{NULL, 0, 0} };
 
 static container_t *init_container(void)
 {
