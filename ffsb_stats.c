@@ -168,29 +168,32 @@ void ffsb_statsd_add(ffsb_statsd_t *dest, ffsb_statsd_t *src)
 static void print_buckets_helper(ffsb_statsc_t *fsc, uint32_t *buckets)
 {
 	int i;
-	if (fsc->num_buckets == 0)
+	if (fsc->num_buckets == 0) {
+		printf("   -\n");
 		return;
+	}
 	for (i = 0; i < fsc->num_buckets; i++) {
 		struct stat_bucket *sb = &fsc->buckets[i];
-		printf("\t\t bucket[%d] %f - %f - %u\n",
+		printf("\t\t msec_range[%d]\t%f - %f : %8u\n", 
 		       i, (double)sb->min/1000.0f, (double)sb->max/1000.0f,
 		       buckets[i]);
 	}
+	printf("\n");
 }
 
 void ffsb_statsd_print(ffsb_statsd_t *fsd)
 {
 	int i;
 	printf("\nSystem Call Latency statistics in millisecs\n" "=====\n");
+	printf("\t\tMin\t\tAvg\t\tMax\t\tTotal Calls\n");
+	printf("\t\t========\t========\t========\t============\n");
 	for (i = 0; i < FFSB_NUM_SYSCALLS; i++)
 		if (fsd->counts[i]) {
-			printf("\t[%s] count = %u \n\t min = %05f millisec \n"
-			       "\t avg = %05lf \n\t max = %05f\n",
-			       syscall_names[i], fsd->counts[i],
-			       (float)fsd->mins[i] / 1000.0f ,
+			printf("[%7s]\t%05f\t%05lf\t%05f\t%12u\n",
+			       syscall_names[i], (float)fsd->mins[i] / 1000.0f,
 			       (fsd->totals[i] / (1000.0f *
 						  (double)fsd->counts[i])),
-			       (float)fsd->maxs[i] / 1000.0f);
+			       (float)fsd->maxs[i] / 1000.0f, fsd->counts[i]);
 			print_buckets_helper(fsd->config, fsd->buckets[i]);
 		}
 }
