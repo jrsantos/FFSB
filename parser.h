@@ -94,8 +94,9 @@
 
 #define STATS_OPTIONS {							\
 	{"enable_stats", NULL, TYPE_BOOLEAN, STORE_SINGLE},		\
+	{"enable_range", NULL, TYPE_BOOLEAN, STORE_SINGLE},		\
 	{"ignore", NULL, TYPE_STRING, STORE_LIST},			\
-	{"bucket", NULL, TYPE_RANGE, STORE_LIST},			\
+	{"msec_range", NULL, TYPE_RANGE, STORE_LIST},			\
 	{NULL, NULL, 0} }
 
 #define CONTAINER_DESC {				\

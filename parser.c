@@ -816,8 +816,8 @@ static void init_tg_stats(ffsb_config_t *fc, int num)
 						ffsb_statsc_ignore_sys(&fsc, sys);
 					}
 
-				list_head = (value_list_t *) get_value(config, "bucket");
-				if (list_head)
+				list_head = (value_list_t *) get_value(config, "msec_range");
+				if (list_head && get_config_bool(config, "enable_range"))
 					list_for_each_entry(tmp_list,
 							    &list_head->list, list) {
 						bucket_range = (range_t *)tmp_list->value;
