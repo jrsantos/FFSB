@@ -27,7 +27,7 @@ void ffsb_readfile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
 void ffsb_readall(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
 void ffsb_writefile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
 void ffsb_writeall(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
-void ffsb_rewritefsync(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
+void ffsb_writeall_fsync(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
 void ffsb_createfile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
 void ffsb_deletefile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);
 void ffsb_appendfile(ffsb_thread_t *tconfig, ffsb_fs_t *, unsigned opnum);

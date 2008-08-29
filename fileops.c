@@ -261,13 +261,8 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	ft_add_writebytes(ft, write_size);
 }
 
-/* Shared core between ffsb_writeall and ffsb_writeall_fsync.
- *
- * Hum... Why are these not used?
- * TODO: Can it be removed?
- */
+/* Shared core between ffsb_writeall and ffsb_writeall_fsync.*/
 
-#if 0
 static unsigned ffsb_writeall_core(ffsb_thread_t *ft, ffsb_fs_t *fs,
 				   unsigned opnum, uint64_t *filesize_ret,
 				   int fsync_file)
@@ -289,13 +284,14 @@ static unsigned ffsb_writeall_core(ffsb_thread_t *ft, ffsb_fs_t *fs,
 	filesize = ffsb_get_filesize(curfile->name);
 	iterations = writefile_helper(fd, filesize, write_blocksize, buf,
 				      ft, fs);
-	if (fsync_file)
+/*	if (fsync_file)
+		
 		if (fsync(fd)) {
 			perror("fsync");
 			printf("aborting\n");
 			exit(1);
 		}
-
+*/
 	unlock_file_reader(curfile);
 	fhclose(fd, ft, fs);
 	*filesize_ret = filesize;
@@ -315,7 +311,7 @@ void ffsb_writeall(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	ft_add_writebytes(ft, filesize);
 }
 
-void ffsb_rewritefsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+void ffsb_writeall_fsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 {
 	unsigned iterations;
 	uint64_t filesize;
@@ -324,7 +320,7 @@ void ffsb_rewritefsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	ft_incr_op(ft, opnum, iterations);
 	ft_add_writebytes(ft, filesize);
 }
-#endif
+
 
 void ffsb_appendfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 {

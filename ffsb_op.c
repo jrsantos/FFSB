@@ -33,6 +33,8 @@ ffsb_op_t ffsb_op_list[] =
  {6, "metaop", ffsb_metaops, NULL, NULL, metaops_metadir, NULL},
  {7, "createdir", ffsb_createdir, NULL, NULL, fop_bench, NULL},
  {8, "stat", ffsb_stat, NULL, NULL, fop_bench, NULL},
+ {9, "writeall", ffsb_writeall, NULL, ffsb_write_print_exl, fop_bench, NULL},
+ {10, "writeall_fsync", ffsb_writeall_fsync, NULL, ffsb_write_print_exl, fop_bench, NULL},
 };
 
 void init_ffsb_op_results(ffsb_op_results_t *results)
