@@ -102,8 +102,9 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 	if (num)
 		condition = num;
 	else if (fs->init_size) {
-		if (fs->init_size >= getfsutil_size(fs->basedir) -
-		    initial_free)
+		if (getfsutil(fs->basedir) != initial_free || 
+		    fs->init_size >= (getfsutil_size(fs->basedir) -
+		    initial_free))
 			condition = 1;
 		else
 			condition = 0;
