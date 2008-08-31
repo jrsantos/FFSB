@@ -34,6 +34,7 @@
 #define TYPE_RANGE		0x0020
 #define TYPE_SIZEWEIGHT		0x0040
 #define TYPE_DEPRECATED		0x0080
+#define TYPE_WEIGHT		0x0100
 
 #define ROOT			0x0001
 #define THREAD_GROUP		0x0002
@@ -55,27 +56,27 @@
 #define THREADGROUP_OPTIONS {						\
 	{"bindfs", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"num_threads", NULL, TYPE_U32, STORE_SINGLE},			\
-	{"read_weight", NULL, TYPE_U32, STORE_SINGLE},			\
-	{"readall_weight", NULL, TYPE_U32, STORE_SINGLE},		\
+	{"read_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},			\
+	{"readall_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
 	{"read_random", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"read_skip", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"read_size", NULL, TYPE_U64, STORE_SINGLE},			\
 	{"read_blocksize", NULL, TYPE_U32, STORE_SINGLE},		\
 	{"read_skipsize", NULL, TYPE_U32, STORE_SINGLE},		\
-	{"write_weight", NULL, TYPE_U32, STORE_SINGLE},			\
+	{"write_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},			\
 	{"write_random", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"fsync_file", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"write_size", NULL, TYPE_U64, STORE_SINGLE},			\
 	{"write_blocksize", NULL, TYPE_U32, STORE_SINGLE},		\
-	{"create_weight", NULL, TYPE_U32, STORE_SINGLE},		\
-	{"delete_weight", NULL, TYPE_U32, STORE_SINGLE},		\
-	{"append_weight", NULL, TYPE_U32, STORE_SINGLE},		\
-	{"meta_weight", NULL, TYPE_U32, STORE_SINGLE},			\
-	{"createdir_weight", NULL, TYPE_U32, STORE_SINGLE},		\
+	{"create_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
+	{"delete_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
+	{"append_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
+	{"metaop_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},			\
+	{"createdir_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
 	{"op_delay", NULL, TYPE_U32, STORE_SINGLE},			\
-	{"stat_weight", NULL, TYPE_U32, STORE_SINGLE},			\
-	{"writeall_weight", NULL, TYPE_U32, STORE_SINGLE},		\
-	{"writeall_fsync_weight", NULL, TYPE_U32, STORE_SINGLE},	\
+	{"stat_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},			\
+	{"writeall_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
+	{"writeall_fsync_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},	\
 	{NULL, NULL, 0} }
 
 #define FILESYSTEM_OPTIONS {						\

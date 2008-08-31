@@ -235,6 +235,7 @@ static int set_option(char *buf, config_options_t *options)
 
 	while (options->name) {
 		switch (options->type) {
+		case TYPE_WEIGHT:
 		case TYPE_U32:
 			value = get_opt32(buf, options->name);
 			if (value)
@@ -510,6 +511,48 @@ static profile_config_t *parse(FILE *f)
 	return profile_conf;
 }
 
+void set_weight(ffsb_tg_t *tg, config_options_t *config)
+{
+	char *op;
+	int len;
+	config_options_t *tmp_config = config;
+
+	while (tmp_config->name) {
+		if (tmp_config->type == TYPE_WEIGHT) {
+			len = strlen(tmp_config->name);
+			op = malloc(sizeof(char) * len - 6);
+			memset(op, 0, sizeof(char) * len - 6);
+			strncpy (op, tmp_config->name, len - 7);
+			tg_set_op_weight(tg, op,
+					 get_config_u32(config,
+							tmp_config->name));
+			free(op);
+		}
+		tmp_config++;
+	}
+}
+
+int get_weight_total(ffsb_tg_t *tg)
+{
+	char *op;
+	int len;
+	int total = 0;
+	config_options_t *tmp_config = tg_options;
+
+	while (tmp_config->name) {
+		if (tmp_config->type == TYPE_WEIGHT) {
+			len = strlen(tmp_config->name);
+			op = malloc(sizeof(char) * len - 6);
+			memset(op, 0, sizeof(char) * len - 6);
+			strncpy (op, tmp_config->name, len - 7);
+			total += tg_get_op_weight(tg, op);
+			free(op);
+		}
+		tmp_config++;
+	}
+	return total;
+}
+
 /* !!! hackish verification function, we should somehow roll this into the */
 /* op descriptions/struct themselves at some point with a callback verify */
 /* op requirements: */
@@ -524,25 +567,13 @@ static int verify_tg(ffsb_tg_t *tg)
 	uint32_t write_weight   = tg_get_op_weight(tg, "write");
 	uint32_t create_weight  = tg_get_op_weight(tg, "create");
 	uint32_t append_weight  = tg_get_op_weight(tg, "append");
-	uint32_t metaop_weight    = tg_get_op_weight(tg, "metaop");
 	uint32_t createdir_weight = tg_get_op_weight(tg, "createdir");
 	uint32_t delete_weight    = tg_get_op_weight(tg, "delete");
-	uint32_t stat_weight	= tg_get_op_weight(tg, "stat");
 	uint32_t writeall_weight = tg_get_op_weight(tg, "writeall");
 	uint32_t writeall_fsync_weight = tg_get_op_weight(tg, "writeall_fsync");
-	uint32_t sum_weight = read_weight +
-		readall_weight +
-		write_weight +
-		create_weight +
-		append_weight +
-		metaop_weight +
-		createdir_weight +
-		delete_weight +
-		stat_weight +
-		writeall_weight +
-		writeall_fsync_weight;
 
-
+	uint32_t sum_weight = get_weight_total(tg);
+	
 	uint32_t read_blocksize  = tg_get_read_blocksize(tg);
 	uint32_t write_blocksize = tg_get_write_blocksize(tg);
 
@@ -562,9 +593,9 @@ static int verify_tg(ffsb_tg_t *tg)
 		return 1;
 	}
 
-	if ((write_weight || create_weight || append_weight) &&
-	     !(write_blocksize)) {
-		printf("Error: write, create, append"
+	if ((write_weight || create_weight || append_weight || writeall_weight 
+	     || writeall_fsync_weight) && !(write_blocksize)) {
+		printf("Error: write, writeall, create, append"
 		       "operations require a write_blocksize\n");
 		return 1;
 	}
@@ -699,18 +730,8 @@ static void init_threadgroup(config_options_t *config,
 	tg_set_read_blocksize(tg, get_config_u32(config, "read_blocksize"));
 	tg_set_write_blocksize(tg, get_config_u32(config, "write_blocksize"));
 
-	tg_set_op_weight(tg, "read", get_config_u32(config, "read_weight"));
-	tg_set_op_weight(tg, "readall", get_config_u32(config, "readall_weight"));
-	tg_set_op_weight(tg, "write", get_config_u32(config, "write_weight"));
-	tg_set_op_weight(tg, "append", get_config_u32(config, "append_weight"));
-	tg_set_op_weight(tg, "create", get_config_u32(config, "create_weight"));
-	tg_set_op_weight(tg, "delete", get_config_u32(config, "delete_weight"));
-	tg_set_op_weight(tg, "metaop", get_config_u32(config, "meta_weight"));
-	tg_set_op_weight(tg, "createdir", get_config_u32(config, "createdir_weight"));
-	tg_set_op_weight(tg, "stat", get_config_u32(config, "stat_weight"));
-	tg_set_op_weight(tg, "writeall", get_config_u32(config, "writeall_weight"));
-	tg_set_op_weight(tg, "writeall_fsync",
-			 get_config_u32(config, "writeall_fsync_weight"));
+	set_weight(tg, config);
+
 	if (verify_tg(tg)) {
 		printf("threadgroup %d verification failed\n", tg_num);
 		exit(1);
