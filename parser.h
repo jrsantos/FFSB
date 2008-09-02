@@ -77,6 +77,7 @@
 	{"stat_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},			\
 	{"writeall_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
 	{"writeall_fsync_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},	\
+	{"open_close_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
 	{NULL, NULL, 0} }
 
 #define FILESYSTEM_OPTIONS {						\

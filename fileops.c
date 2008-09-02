@@ -410,6 +410,20 @@ void ffsb_deletefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	ft_incr_op(ft, opnum, 1);
 }
 
+void ffsb_open_close(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
+	struct ffsb_file *curfile = NULL;
+	randdata_t *rd = ft_get_randdata(ft);
+	int fd;
+
+	curfile = choose_file_reader(bf, rd);
+	fd = fhopenread(curfile->name, ft, fs);
+	fhclose(fd, ft, fs);
+	unlock_file_reader(curfile);
+	ft_incr_op(ft, opnum, 1);
+}
+
 void ffsb_stat(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 {
 	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
