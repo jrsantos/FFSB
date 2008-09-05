@@ -450,7 +450,7 @@ uint8_t get_config_bool(config_options_t *config, char *name)
 	return 0;
 }
 
-uint32_t get_config_u64(config_options_t *config, char *name)
+uint64_t get_config_u64(config_options_t *config, char *name)
 {
 	void *value = get_value(config, name);
 	if (value)
