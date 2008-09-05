@@ -703,18 +703,34 @@ container_t *get_tg_container(ffsb_config_t *fc, int pos)
 	return get_container(fc->profile_conf->tg_container, pos);
 }
 
-static void init_threadgroup(config_options_t *config,
-			     ffsb_tg_t *tg, int tg_num)
+static void init_threadgroup(ffsb_config_t *fc, config_options_t *config,
+			    ffsb_tg_t *tg, int tg_num)
 {
 	int num_threads;
-
 	memset(tg, 0, sizeof(ffsb_tg_t));
 
 	num_threads = get_config_u32(config, "num_threads");
 
 	init_ffsb_tg(tg, num_threads, tg_num);
 
-	tg->bindfs = get_config_bool(config, "bindfs");
+	if (get_config_str(config, "bindfs")) {
+		int i;
+		config_options_t *tmp_config;
+		for (i = 0; i < fc->num_filesys; i++) {
+			tmp_config = get_fs_config(fc, i);
+			if (!strcmp(get_config_str(config, "bindfs"),
+				    get_config_str(tmp_config, "location")))
+				break;
+		}
+		if (strcmp(get_config_str(config, "bindfs"),
+			   get_config_str(tmp_config, "location"))) {
+			printf ("Bind fs failed:  Base fs \"%s\" not found\n",
+				get_config_str(config, "bindfs"));
+			exit(1);
+		}
+		printf("%d\n", i);
+		tg->bindfs = i;
+	}
 
 	tg->read_random = get_config_bool(config, "read_random");
 	tg->read_size = get_config_u64(config, "read_size");
@@ -797,7 +813,7 @@ static void init_filesys(ffsb_config_t *fc, int num)
 
 		age_cont = age_cont->child;
 		ffsb_tg_t *age_tg = ffsb_malloc(sizeof(ffsb_tg_t));
-		init_threadgroup(age_cont->config, age_tg, 0);
+		init_threadgroup(fc, age_cont->config, age_tg, 0);
 		fs->aging_tg = age_tg;
 		fs->age_fs = 1;
 	}
@@ -897,7 +913,7 @@ static void init_config(ffsb_config_t *fc, profile_config_t *profile_conf)
 	fc->groups = ffsb_malloc(sizeof(ffsb_tg_t) * fc->num_threadgroups);
 	for (i = 0; i < fc->num_threadgroups; i++) {
 		config = get_tg_config(fc, i);
-		init_threadgroup(config, &fc->groups[i], i);
+		init_threadgroup(fc, config, &fc->groups[i], i);
 		init_tg_stats(fc, i);
 	}
 }

@@ -54,7 +54,7 @@
 	{NULL, NULL, 0, 0} }
 
 #define THREADGROUP_OPTIONS {						\
-	{"bindfs", NULL, TYPE_U32, STORE_SINGLE},			\
+	{"bindfs", NULL, TYPE_STRING, STORE_SINGLE},			\
 	{"num_threads", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"read_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},			\
 	{"readall_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
