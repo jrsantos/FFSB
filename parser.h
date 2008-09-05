@@ -94,6 +94,7 @@
 	{"size_weight", NULL, TYPE_SIZEWEIGHT, STORE_LIST},		\
 	{"init_util", NULL, TYPE_DOUBLE, STORE_SINGLE},			\
 	{"init_size", NULL, TYPE_U64, STORE_SINGLE},			\
+	{"clone", NULL, TYPE_STRING, STORE_SINGLE},			\
 	{NULL, NULL, 0} }
 
 #define STATS_OPTIONS {							\

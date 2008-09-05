@@ -749,6 +749,24 @@ static void init_filesys(ffsb_config_t *fc, int num)
 	memset(fs, 0, sizeof(ffsb_fs_t));
 
 	fs->basedir = get_config_str(config, "location");
+
+	if (get_config_str(config, "clone")) {
+		config_options_t *tmp_config;
+		for (i = 0; i < fc->num_filesys; i++) {
+			tmp_config = get_fs_config(fc, i);
+			if (!strcmp(get_config_str(config, "clone"),
+				    get_config_str(tmp_config, "location")))
+				break;
+		}
+		if (strcmp(get_config_str(config, "clone"),
+			   get_config_str(tmp_config, "location"))) {
+			printf ("Clone fs failed:  Base fs \"%s\" not found\n",
+				get_config_str(config, "clone"));
+			exit(1);
+		}
+		config = tmp_config;
+	}
+
 	fs->num_dirs = get_config_u32(config, "num_dirs");
 	fs->num_start_files = get_config_u32(config, "num_files");
 	fs->minfilesize = get_config_u64(config, "min_filesize");
