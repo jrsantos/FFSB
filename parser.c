@@ -760,13 +760,13 @@ static void init_filesys(ffsb_config_t *fc, int num)
 	profile_config_t *profile_conf = fc->profile_conf;
 	ffsb_fs_t *fs = &fc->filesystems[num];
 	value_list_t *tmp_list, *list_head;
-	int *i, j;
 
 	memset(fs, 0, sizeof(ffsb_fs_t));
 
 	fs->basedir = get_config_str(config, "location");
 
 	if (get_config_str(config, "clone")) {
+		int i;
 		config_options_t *tmp_config;
 		for (i = 0; i < fc->num_filesys; i++) {
 			tmp_config = get_fs_config(fc, i);
