@@ -236,6 +236,28 @@ void fhclose(int fd, ffsb_thread_t *ft, ffsb_fs_t *fs)
 	}
 }
 
+void fhstat(char *name, ffsb_thread_t *ft, ffsb_fs_t *fs)
+{
+	struct timeval start, end;
+	struct stat tmp_stat;
+
+	int need_stats = ft_needs_stats(ft, SYS_STAT) ||
+		fs_needs_stats(fs, SYS_CLOSE);
+
+	if (need_stats)
+		gettimeofday(&start, NULL);
+
+	if (stat(name, &tmp_stat)) {
+		fprintf (stderr, "stat call failed for file %s\n", name);
+		exit(1);
+	}
+
+	if (need_stats) {
+		gettimeofday(&end, NULL);
+		do_stats(&start, &end, ft, fs, SYS_STAT);
+	}
+} 
+
 int writefile_helper(int fd, uint64_t size, uint32_t blocksize, char *buf,
 		     struct ffsb_thread *ft, struct ffsb_fs *fs)
 {

@@ -46,7 +46,8 @@ typedef enum { SYS_OPEN = 0,
 	       SYS_CREATE,
 	       SYS_LSEEK,
 	       SYS_UNLINK,
-	       SYS_CLOSE
+	       SYS_CLOSE,
+	       SYS_STAT
 } syscall_t;
 
 /* ASCII versions of the syscall names */
@@ -56,7 +57,7 @@ extern char *syscall_names[];
 int ffsb_stats_str2syscall(char *, syscall_t *);
 
 /* Keep it in sync with syscall_t */
-#define FFSB_NUM_SYSCALLS (7UL)
+#define FFSB_NUM_SYSCALLS (8UL)
 
 /* What stats to collect, shared among all threads  */
 typedef struct ffsb_stats_config {

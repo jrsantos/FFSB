@@ -190,9 +190,9 @@ double cpu_so_far_children(void)
 /* !!!! check portability */
 float getfsutil(char *dirname)
 {
-	struct statvfs fsdata;
+	struct statvfs64 fsdata;
 
-	statvfs(dirname, &fsdata);
+	statvfs64(dirname, &fsdata);
 
 /* 	return (float)(fsdata.f_blocks-fsdata.f_bfree)/ */
 /* 		(float)(fsdata.f_blocks-fsdata.f_bfree+fsdata.f_bavail); */
@@ -202,8 +202,8 @@ float getfsutil(char *dirname)
 
 uint64_t getfsutil_size(char *dirname)
 {
-	struct statvfs fsdata;
-	statvfs(dirname, &fsdata);
+	struct statvfs64 fsdata;
+	statvfs64(dirname, &fsdata);
 
 	return (fsdata.f_blocks - fsdata.f_bfree) * fsdata.f_bsize;
 }
