@@ -85,6 +85,53 @@ static char *strip_space(char *buf)
 	return tmp2;
 }
 
+static uint64_t size64_convert(char *buf)
+{
+	size_t buf_size = strlen(buf);
+	char unit[3] = {0};
+	char search_str[256];
+	uint64_t size;
+	uint64_t multiplier = 1;
+	int i;
+
+	if (buf_size == 1)
+		goto out;
+	
+	strcpy(unit, buf + (buf_size - 2));
+	for (i = 0; i < 2; i++) {
+		if (isdigit(unit[i]))
+			goto try_single;
+		unit[i] = toupper(unit[i]);
+	}
+	goto do_multiplier;
+
+try_single:
+	memcpy(unit, "\0", 3);
+	strcpy(unit, buf + (buf_size - 1));
+	if (isdigit(unit[0])) {
+		unit[0] = 0;
+		goto out;
+	}
+	unit[0] = toupper(unit[0]);
+
+do_multiplier:
+	if (!strcmp("KB", unit) || !strcmp("K", unit))
+		multiplier = 1024;
+	if (!strcmp("MB", unit) || !strcmp("M", unit))
+		multiplier = 1048576;
+	if (!strcmp("GB", unit) || !strcmp("G", unit))
+		multiplier = 1073741824;
+	if (multiplier == 1) {
+		unit[0] = 0;
+		multiplier = 0;
+	}
+out:
+	sprintf(search_str, "%%llu%s", unit);
+	if (1 == sscanf(buf, search_str, &size))
+		return size * multiplier;
+	return 0;
+}
+
 static uint64_t *get_opt64(char *buf, char string[])
 {
 	char search_str[256];
@@ -191,15 +238,46 @@ static range_t *get_optrange(char *buf, char string[])
 static size_weight_t *get_optsizeweight(char *buf, char string[])
 {
 	char search_str[256];
-	uint64_t size;
+	char size[256];
 	int weight;
 	size_weight_t *ret;
 
-	sprintf(search_str, "%s %%llu %%d\\n", string);
+	sprintf(search_str, "%s %%s %%d\\n", string);
 	if (2 == sscanf(buf, search_str, &size, &weight)) {
 		ret = malloc(sizeof(struct size_weight));
-		ret->size = size;
+		ret->size = size64_convert(size);
 		ret->weight = weight;
+		return ret;
+	}
+	return NULL;
+}
+
+static uint64_t * get_optsize64(char *buf, char string[])
+{
+	char search_str[256];
+	char *line = strip_space(buf);
+	char temp[256];
+	uint64_t size;
+	uint64_t *ret = NULL;
+
+	sprintf(search_str, "%s=%%s\\n", string);
+	if (1 == sscanf(line, search_str, &temp)) {
+		ret = malloc(sizeof(uint64_t));
+		*ret = size64_convert(temp);
+	}
+	free(line);
+	return ret;
+}
+
+static uint32_t * get_optsize32(char *buf, char string [])
+{
+	uint32_t *ret;
+	uint64_t *res;
+	res = get_optsize64(buf, string);
+	if (res) {
+		ret = malloc(sizeof(uint32_t));
+		*ret = *res;
+		free(res);
 		return ret;
 	}
 	return NULL;
@@ -273,6 +351,16 @@ static int set_option(char *buf, config_options_t *options)
 			break;
 		case TYPE_DEPRECATED:
 			value = get_deprecated(buf, options->name);
+			if (value)
+				goto out;
+			break;
+		case TYPE_SIZE32:
+			value = get_optsize32(buf, options->name);
+			if (value)
+				goto out;
+			break;
+		case TYPE_SIZE64:
+			value = get_optsize64(buf, options->name);
 			if (value)
 				goto out;
 			break;

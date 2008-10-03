@@ -35,6 +35,8 @@
 #define TYPE_SIZEWEIGHT		0x0040
 #define TYPE_DEPRECATED		0x0080
 #define TYPE_WEIGHT		0x0100
+#define TYPE_SIZE32		0x0200
+#define TYPE_SIZE64		0x0400
 
 #define ROOT			0x0001
 #define THREAD_GROUP		0x0002
@@ -60,14 +62,14 @@
 	{"readall_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
 	{"read_random", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"read_skip", NULL, TYPE_U32, STORE_SINGLE},			\
-	{"read_size", NULL, TYPE_U64, STORE_SINGLE},			\
-	{"read_blocksize", NULL, TYPE_U32, STORE_SINGLE},		\
-	{"read_skipsize", NULL, TYPE_U32, STORE_SINGLE},		\
+	{"read_size", NULL, TYPE_SIZE64, STORE_SINGLE},			\
+	{"read_blocksize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
+	{"read_skipsize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
 	{"write_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},			\
 	{"write_random", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"fsync_file", NULL, TYPE_U32, STORE_SINGLE},			\
-	{"write_size", NULL, TYPE_U64, STORE_SINGLE},			\
-	{"write_blocksize", NULL, TYPE_U32, STORE_SINGLE},		\
+	{"write_size", NULL, TYPE_SIZE64, STORE_SINGLE},		\
+	{"write_blocksize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
 	{"create_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
 	{"delete_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
 	{"append_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
@@ -85,15 +87,15 @@
 	{"num_files", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"num_dirs", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"reuse", NULL, TYPE_BOOLEAN, STORE_SINGLE},			\
-	{"min_filesize", NULL, TYPE_U64, STORE_SINGLE},			\
-	{"max_filesize", NULL, TYPE_U64, STORE_SINGLE},			\
-	{"create_blocksize", NULL, TYPE_U32, STORE_SINGLE},		\
-	{"age_blocksize", NULL, TYPE_U32, STORE_SINGLE},		\
+	{"min_filesize", NULL, TYPE_SIZE64, STORE_SINGLE},		\
+	{"max_filesize", NULL, TYPE_SIZE64, STORE_SINGLE},		\
+	{"create_blocksize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
+	{"age_blocksize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
 	{"desired_util", NULL, TYPE_DOUBLE, STORE_SINGLE},		\
 	{"agefs", NULL, TYPE_BOOLEAN, STORE_SINGLE},			\
 	{"size_weight", NULL, TYPE_SIZEWEIGHT, STORE_LIST},		\
 	{"init_util", NULL, TYPE_DOUBLE, STORE_SINGLE},			\
-	{"init_size", NULL, TYPE_U64, STORE_SINGLE},			\
+	{"init_size", NULL, TYPE_SIZE64, STORE_SINGLE},			\
 	{"clone", NULL, TYPE_STRING, STORE_SINGLE},			\
 	{NULL, NULL, 0} }
 
