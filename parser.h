@@ -60,14 +60,14 @@
 	{"num_threads", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"read_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},			\
 	{"readall_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
-	{"read_random", NULL, TYPE_U32, STORE_SINGLE},			\
+	{"read_random", NULL, TYPE_BOOLEAN, STORE_SINGLE},		\
 	{"read_skip", NULL, TYPE_U32, STORE_SINGLE},			\
 	{"read_size", NULL, TYPE_SIZE64, STORE_SINGLE},			\
 	{"read_blocksize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
 	{"read_skipsize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
 	{"write_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},			\
-	{"write_random", NULL, TYPE_U32, STORE_SINGLE},			\
-	{"fsync_file", NULL, TYPE_U32, STORE_SINGLE},			\
+	{"write_random", NULL, TYPE_BOOLEAN, STORE_SINGLE},		\
+	{"fsync_file", NULL, TYPE_BOOLEAN, STORE_SINGLE},		\
 	{"write_size", NULL, TYPE_SIZE64, STORE_SINGLE},		\
 	{"write_blocksize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
 	{"create_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
