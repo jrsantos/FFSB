@@ -58,9 +58,10 @@ static int exclusive_op(ffsb_op_results_t *results, unsigned int op_num)
 	return 1;
 }
 
-static void generic_op_print(char *name, unsigned num, double percentage)
+static void generic_op_print(char *name, unsigned num, double percentage, double runtime)
 {
-	printf("%20s : %u ops (%lf%%) \n", name, num, percentage);
+	printf("%20s : %10u ops\t%.2lf ops/sec\t\t(%.3lf%%)\n", name, num, 
+	       num/runtime, percentage);
 }
 
 static void print_op_results(unsigned int op_num, ffsb_op_results_t *results,
@@ -73,7 +74,7 @@ static void print_op_results(unsigned int op_num, ffsb_op_results_t *results,
 	    double percentage = 100 * (double)results->ops[op_num] /
 		    (double)total_ops;
 	    generic_op_print(ffsb_op_list[op_num].op_name, results->ops[op_num],
-			     percentage);
+			     percentage, runtime);
 	}
 }
 
