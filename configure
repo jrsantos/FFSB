@@ -2060,7 +2060,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=ffsb
- VERSION=5.2.1
+ VERSION=6.0-RC1
 
 
 cat >>confdefs.h <<_ACEOF
