@@ -587,10 +587,23 @@ void fs_print_config(ffsb_fs_t *fs)
 	printf("\t num_dirs         = %u\n", fs->num_dirs);
 	printf("\t starting files   = %u\n", fs->num_start_files);
 	printf("\t\n");
-	printf("\t min file size    = %llu\t(%s)\n", fs->minfilesize,
-	       ffsb_printsize(buf, fs->minfilesize, 256));
-	printf("\t max file size    = %llu\t(%s)\n", fs->maxfilesize,
-	       ffsb_printsize(buf, fs->maxfilesize, 256));
+	if (fs->num_weights) {
+		int i;
+		printf("\t Fileset weight:\n");
+		for (i = 0; i < fs->num_weights; i++)
+			printf("\t\t %12llu (%6s) -> %u (%.2f\%)\n",
+			       fs->size_weights[i].size,
+			       ffsb_printsize(buf, fs->size_weights[i].size, 256),
+			       fs->size_weights[i].weight,
+			       ((float)fs->size_weights[i].weight / 
+				(float)fs->sum_weights) * 100);
+	}
+	else {
+		printf("\t min file size    = %llu\t(%s)\n", fs->minfilesize,
+		       ffsb_printsize(buf, fs->minfilesize, 256));
+		printf("\t max file size    = %llu\t(%s)\n", fs->maxfilesize,
+		       ffsb_printsize(buf, fs->maxfilesize, 256));
+	}
 	printf("\t directio         = %s\n", (fs->flags & FFSB_FS_DIRECTIO) ?
 	       "on" : "off");
 	printf("\t alignedio        = %s\n", (fs->flags & FFSB_FS_ALIGNIO4K) ?
