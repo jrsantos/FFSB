@@ -122,6 +122,7 @@ randdata_t *ft_get_randdata(ffsb_thread_t *ft)
 void ft_incr_op(ffsb_thread_t *ft, unsigned opnum, unsigned increment)
 {
 	ft->results.ops[opnum] += increment;
+	ft->results.op_weight[opnum]++;
 }
 
 void ft_add_readbytes(ffsb_thread_t *ft, uint32_t bytes)
