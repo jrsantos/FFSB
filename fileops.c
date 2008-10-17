@@ -32,6 +32,24 @@
 #include "fileops.h"
 #include "ffsb_op.h"
 
+static void do_stats(struct timeval *start, struct timeval *end,
+		     ffsb_thread_t *ft, ffsb_fs_t *fs, syscall_t sys)
+{
+	struct timeval diff;
+	uint32_t value = 0;
+
+	if (!ft && !fs)
+		return;
+
+	timersub(end, start, &diff);
+
+	value = 1000000 * diff.tv_sec + diff.tv_usec;
+
+	if (ft && ft_needs_stats(ft, sys))
+		ft_add_stat(ft, sys, value);
+	if (fs && fs_needs_stats(fs, sys))
+		fs_add_stat(fs, sys, value);
+}
 
 void fop_bench(ffsb_fs_t *fs, unsigned opnum)
 {
@@ -396,15 +414,27 @@ void ffsb_deletefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
 	struct ffsb_file *curfile = NULL;
 	randdata_t *rd = ft_get_randdata(ft);
+	struct timeval start, end;
+	int need_stats = ft_needs_stats(ft, SYS_UNLINK) ||
+		fs_needs_stats(fs, SYS_UNLINK);
 
 	curfile = choose_file_writer(bf, rd);
 	remove_file(bf, curfile);
+
+	if (need_stats)
+		gettimeofday(&start, NULL);
 
 	if (unlink(curfile->name) == -1) {
 		printf("error deleting %s in deletefile\n", curfile->name);
 		perror("deletefile");
 		exit(0);
 	}
+
+	if (need_stats) {
+		gettimeofday(&end, NULL);
+		do_stats(&start, &end, ft, fs, SYS_UNLINK);
+	}
+
 	rw_unlock_write(&curfile->lock);
 
 	ft_incr_op(ft, opnum, 1);
