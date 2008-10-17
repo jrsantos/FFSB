@@ -84,16 +84,15 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 		      uint64_t minsize, uint64_t maxsize, unsigned blocksize)
 {
 	struct ffsb_file *cur;
-	int i, fd, condition = 0;
+	int i, fd, condition = 0, has_directio = 0;
 	randdata_t rd;
 	char *buf = ffsb_malloc(blocksize);
-	char *buf2;
 	uint64_t initial_free = getfsutil_size(fs->basedir);
 
-	if (fs_get_directio(fs))
-		buf2 = ffsb_align_4k(buf+ (4096 -1));
-	else
-		buf2 = buf;
+	if (fs_get_directio(fs)) {
+		has_directio = 1;
+		fs_set_directio(fs, 0);
+	}
 
 	assert(blocksize);
 
@@ -133,7 +132,7 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 
 		cur = add_file(bf, size, &rd);
 		fd = fhopencreate(cur->name, NULL, fs);
-		writefile_helper(fd, size, blocksize, buf2, NULL, fs);
+		writefile_helper(fd, size, blocksize, buf, NULL, fs);
 		fhclose(fd, NULL, fs);
 		unlock_file_writer(cur);
 
@@ -155,6 +154,8 @@ static void add_files(ffsb_fs_t *fs, struct benchfiles *bf, int num,
 		
 	}
 	free(buf);
+	if (has_directio)
+		fs_set_directio(fs, 1);
 }
 
 static void age_fs(ffsb_fs_t *fs, double utilization);
