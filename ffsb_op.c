@@ -58,23 +58,27 @@ static int exclusive_op(ffsb_op_results_t *results, unsigned int op_num)
 	return 1;
 }
 
-static void generic_op_print(char *name, unsigned num, double percentage, double runtime)
+static void generic_op_print(char *name, unsigned num, double op_pcnt,
+			     double weigth_pcnt, double runtime)
 {
-	printf("%20s : %10u ops\t%.2lf ops/sec\t\t(%.3lf%%)\n", name, num, 
-	       num/runtime, percentage);
+	printf("%20s : %12u\t%10.2lf\t%6.3lf%%\t\t%6.3lf%%\n",
+	       name, num, num/runtime, op_pcnt, weigth_pcnt);
 }
 
 static void print_op_results(unsigned int op_num, ffsb_op_results_t *results,
-			     double runtime, unsigned total_ops)
+			     double runtime, unsigned total_ops,
+			     unsigned total_weight)
 {
 	if (exclusive_op(results, op_num) &&
 	    ffsb_op_list[op_num].op_exl_print_fn != NULL) {
 		ffsb_op_list[op_num].op_exl_print_fn(results, runtime, op_num);
 	} else {
-	    double percentage = 100 * (double)results->ops[op_num] /
+	    double op_pcnt = 100 * (double)results->ops[op_num] /
 		    (double)total_ops;
+	    double weight_pcnt = 100 * (double)results->op_weight[op_num] /
+		    (double)total_weight;
 	    generic_op_print(ffsb_op_list[op_num].op_name, results->ops[op_num],
-			     percentage, runtime);
+			     op_pcnt, weight_pcnt, runtime);
 	}
 }
 
@@ -82,15 +86,21 @@ void print_results(struct ffsb_op_results *results, double runtime)
 {
 	int i;
 	uint64_t total_ops = 0;
+	uint64_t total_weight = 0;
 
-	for (i = 0; i < FFSB_NUMOPS ; i++)
+	for (i = 0; i < FFSB_NUMOPS ; i++) {
 		total_ops += results->ops[i];
+		total_weight += results->op_weight[i];
+	}
 
+	printf("             Op Name   Transactions\t Trans/sec\t% Trans\t    % Op Wegiht\n");
+	printf("             =======   ============\t =========\t=======\t    ===========\n");
 	for (i = 0; i < FFSB_NUMOPS ; i++)
 		if (results->ops[i] != 0)
-			print_op_results(i, results, runtime, total_ops);
+			print_op_results(i, results, runtime, total_ops,
+					 total_weight);
 
-	printf("%.2lf Transactions per Second\n", (double)total_ops / runtime);
+	printf("-\n%.2lf Transactions per Second\n", (double)total_ops / runtime);
 }
 
 
@@ -129,8 +139,10 @@ void add_results(struct ffsb_op_results *target, struct ffsb_op_results *src)
 	target->read_bytes += src->read_bytes;
 	target->write_bytes += src->write_bytes;
 
-	for (i = 0; i < FFSB_NUMOPS; i++)
+	for (i = 0; i < FFSB_NUMOPS; i++) {
 		target->ops[i] += src->ops[i];
+		target->op_weight[i] += src->op_weight[i];
+	}
 }
 
 void do_op(struct ffsb_thread *ft, struct ffsb_fs *fs, unsigned op_num)
