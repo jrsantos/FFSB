@@ -71,6 +71,7 @@ static char *strip_space(char *buf)
 
 	len = strnlen(buf, BUFSIZE);
 	tmp = malloc(sizeof(char) * len);
+	memset(tmp, 0, sizeof(char) * len);
 	tmp2 = tmp;
 	while (flag) {
 		if (!isspace(*buf)) {
