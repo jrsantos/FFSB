@@ -217,7 +217,11 @@ void ffsb_readall(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	ft_add_readbytes(ft, filesize);
 }
 
-void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+/* Shared core between ffsb_writefile and ffsb_writefile_fsync.*/
+
+static unsigned ffsb_writefile_core(ffsb_thread_t *ft, ffsb_fs_t *fs,
+				    unsigned opnum, uint64_t *filesize_ret,
+				    int fsync_file)
 {
 	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
 	struct ffsb_file *curfile = NULL;
@@ -227,7 +231,6 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 
 	char *buf = ft_getbuf(ft);
 	int write_random = ft_get_write_random(ft);
-	int fsync_file = ft_get_fsync_file(ft);
 	uint32_t write_size = ft_get_write_size(ft);
 	uint32_t write_blocksize = ft_get_write_blocksize(ft);
 	struct randdata *rd = ft_get_randdata(ft);
@@ -274,10 +277,30 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	}
 	unlock_file_reader(curfile);
 	fhclose(fd, ft, fs);
-
-	ft_incr_op(ft, opnum, iterations);
-	ft_add_writebytes(ft, write_size);
+	*filesize_ret = filesize;
+	return iterations;
 }
+
+void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	unsigned iterations;
+	uint64_t filesize;
+
+	iterations = ffsb_writefile_core(ft, fs, opnum, &filesize, 0);
+	ft_incr_op(ft, opnum, iterations);
+	ft_add_writebytes(ft, filesize);
+}	
+
+void ffsb_writefile_fsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	unsigned iterations;
+	uint64_t filesize;
+
+	iterations = ffsb_writefile_core(ft, fs, opnum, &filesize, 1);
+	ft_incr_op(ft, opnum, iterations);
+	ft_add_writebytes(ft, filesize);
+}	
+
 
 /* Shared core between ffsb_writeall and ffsb_writeall_fsync.*/
 
@@ -302,14 +325,13 @@ static unsigned ffsb_writeall_core(ffsb_thread_t *ft, ffsb_fs_t *fs,
 	filesize = ffsb_get_filesize(curfile->name);
 	iterations = writefile_helper(fd, filesize, write_blocksize, buf,
 				      ft, fs);
-/*	if (fsync_file)
-		
+	if (fsync_file)
 		if (fsync(fd)) {
 			perror("fsync");
 			printf("aborting\n");
 			exit(1);
 		}
-*/
+
 	unlock_file_reader(curfile);
 	fhclose(fd, ft, fs);
 	*filesize_ret = filesize;
@@ -340,7 +362,9 @@ void ffsb_writeall_fsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 }
 
 
-void ffsb_appendfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+static unsigned ffsb_appendfile_core(ffsb_thread_t *ft, ffsb_fs_t *fs, 
+				unsigned opnum, uint64_t *filesize_ret,
+				int fsync_file)
 {
 	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
 	struct ffsb_file *curfile;
@@ -362,13 +386,41 @@ void ffsb_appendfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 
 	iterations = writefile_helper(fd, write_size, write_blocksize, buf,
 				      ft, fs);
+	if (fsync_file)
+ 		if (fsync(fd)) {
+ 			perror("fsync");
+ 			printf("aborting\n");
+ 			exit(1);
+ 		}
+	
 	fhclose(fd, ft, fs);
-
-	ft_incr_op(ft, opnum, iterations);
-	ft_add_writebytes(ft, write_size);
+ 	*filesize_ret = write_size;
+	return iterations;
 }
 
-void ffsb_createfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+void ffsb_appendfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	unsigned iterations;
+	uint64_t filesize;
+
+	iterations = ffsb_appendfile_core(ft, fs, opnum, &filesize, 0);
+	ft_incr_op(ft, opnum, iterations);
+	ft_add_writebytes(ft, filesize);
+}
+
+void ffsb_appendfile_fsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	unsigned iterations;
+	uint64_t filesize;
+
+	iterations = ffsb_appendfile_core(ft, fs, opnum, &filesize, 1);
+	ft_incr_op(ft, opnum, iterations);
+	ft_add_writebytes(ft, filesize);
+}
+
+static unsigned ffsb_createfile_core(ffsb_thread_t *ft, ffsb_fs_t *fs,
+				     unsigned opnum, uint64_t *filesize_ret,
+				     int fsync_file)
 {
 	struct benchfiles *bf = (struct benchfiles *)fs_get_opdata(fs, opnum);
 	struct ffsb_file *newfile = NULL;
@@ -401,12 +453,38 @@ void ffsb_createfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	newfile = add_file(bf, size, rd);
 	fd = fhopencreate(newfile->name, ft, fs);
 	iterations = writefile_helper(fd, size, write_blocksize, buf, ft, fs);
+
+	if (fsync_file)
+ 		if (fsync(fd)) {
+ 			perror("fsync");
+ 			printf("aborting\n");
+ 			exit(1);
+ 		}
+
 	fhclose(fd, ft, fs);
-
 	unlock_file_writer(newfile);
+ 	*filesize_ret = size;
+	return iterations;
+}
 
+void ffsb_createfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	unsigned iterations;
+	uint64_t filesize;
+
+	iterations = ffsb_createfile_core(ft, fs, opnum, &filesize, 0);
 	ft_incr_op(ft, opnum, iterations);
-	ft_add_writebytes(ft, size);
+	ft_add_writebytes(ft, filesize);
+}
+
+void ffsb_createfile_fsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
+{
+	unsigned iterations;
+	uint64_t filesize;
+
+	iterations = ffsb_createfile_core(ft, fs, opnum, &filesize, 1);
+	ft_incr_op(ft, opnum, iterations);
+	ft_add_writebytes(ft, filesize);
 }
 
 void ffsb_deletefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)

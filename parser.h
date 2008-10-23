@@ -66,13 +66,16 @@
 	{"read_blocksize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
 	{"read_skipsize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
 	{"write_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
+	{"write_fsync_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},	\
 	{"write_random", NULL, TYPE_BOOLEAN, STORE_SINGLE},		\
-	{"fsync_file", NULL, TYPE_BOOLEAN, STORE_SINGLE},		\
+	{"fsync_file", NULL, TYPE_DEPRECATED, STORE_SINGLE},		\
 	{"write_size", NULL, TYPE_SIZE64, STORE_SINGLE},		\
 	{"write_blocksize", NULL, TYPE_SIZE32, STORE_SINGLE},		\
 	{"create_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
+	{"create_fsync_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},	\
 	{"delete_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
 	{"append_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
+	{"append_fsync_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},	\
 	{"metaop_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
 	{"createdir_weight", NULL, TYPE_WEIGHT, STORE_SINGLE},		\
 	{"op_delay", NULL, TYPE_U32, STORE_SINGLE},			\
