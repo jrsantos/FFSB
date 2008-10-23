@@ -184,7 +184,7 @@ void ffsb_readfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	unlock_file_reader(curfile);
 	fhclose(fd, ft, fs);
 
-	ft_incr_op(ft, opnum, iterations);
+	ft_incr_op(ft, opnum, iterations, read_size);
 	ft_add_readbytes(ft, read_size);
 }
 
@@ -213,7 +213,7 @@ void ffsb_readall(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	unlock_file_reader(curfile);
 	fhclose(fd, ft, fs);
 
-	ft_incr_op(ft, opnum, iterations);
+	ft_incr_op(ft, opnum, iterations, filesize);
 	ft_add_readbytes(ft, filesize);
 }
 
@@ -287,7 +287,7 @@ void ffsb_writefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	uint64_t filesize;
 
 	iterations = ffsb_writefile_core(ft, fs, opnum, &filesize, 0);
-	ft_incr_op(ft, opnum, iterations);
+	ft_incr_op(ft, opnum, iterations, filesize);
 	ft_add_writebytes(ft, filesize);
 }	
 
@@ -297,7 +297,7 @@ void ffsb_writefile_fsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	uint64_t filesize;
 
 	iterations = ffsb_writefile_core(ft, fs, opnum, &filesize, 1);
-	ft_incr_op(ft, opnum, iterations);
+	ft_incr_op(ft, opnum, iterations, filesize);
 	ft_add_writebytes(ft, filesize);
 }	
 
@@ -347,7 +347,7 @@ void ffsb_writeall(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	uint64_t filesize;
 
 	iterations = ffsb_writeall_core(ft, fs, opnum, &filesize, 0);
-	ft_incr_op(ft, opnum, iterations);
+	ft_incr_op(ft, opnum, iterations, filesize);
 	ft_add_writebytes(ft, filesize);
 }
 
@@ -357,7 +357,7 @@ void ffsb_writeall_fsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	uint64_t filesize;
 
 	iterations = ffsb_writeall_core(ft, fs, opnum, &filesize, 1);
-	ft_incr_op(ft, opnum, iterations);
+	ft_incr_op(ft, opnum, iterations, filesize);
 	ft_add_writebytes(ft, filesize);
 }
 
@@ -404,7 +404,7 @@ void ffsb_appendfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	uint64_t filesize;
 
 	iterations = ffsb_appendfile_core(ft, fs, opnum, &filesize, 0);
-	ft_incr_op(ft, opnum, iterations);
+	ft_incr_op(ft, opnum, iterations, filesize);
 	ft_add_writebytes(ft, filesize);
 }
 
@@ -414,7 +414,7 @@ void ffsb_appendfile_fsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	uint64_t filesize;
 
 	iterations = ffsb_appendfile_core(ft, fs, opnum, &filesize, 1);
-	ft_incr_op(ft, opnum, iterations);
+	ft_incr_op(ft, opnum, iterations, filesize);
 	ft_add_writebytes(ft, filesize);
 }
 
@@ -473,7 +473,7 @@ void ffsb_createfile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	uint64_t filesize;
 
 	iterations = ffsb_createfile_core(ft, fs, opnum, &filesize, 0);
-	ft_incr_op(ft, opnum, iterations);
+	ft_incr_op(ft, opnum, iterations, filesize);
 	ft_add_writebytes(ft, filesize);
 }
 
@@ -483,7 +483,7 @@ void ffsb_createfile_fsync(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	uint64_t filesize;
 
 	iterations = ffsb_createfile_core(ft, fs, opnum, &filesize, 1);
-	ft_incr_op(ft, opnum, iterations);
+	ft_incr_op(ft, opnum, iterations, filesize);
 	ft_add_writebytes(ft, filesize);
 }
 
@@ -515,7 +515,7 @@ void ffsb_deletefile(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 
 	rw_unlock_write(&curfile->lock);
 
-	ft_incr_op(ft, opnum, 1);
+	ft_incr_op(ft, opnum, 1, 0);
 }
 
 void ffsb_open_close(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
@@ -529,7 +529,7 @@ void ffsb_open_close(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	fd = fhopenread(curfile->name, ft, fs);
 	fhclose(fd, ft, fs);
 	unlock_file_reader(curfile);
-	ft_incr_op(ft, opnum, 1);
+	ft_incr_op(ft, opnum, 1, 0);
 }
 
 void ffsb_stat(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
@@ -542,46 +542,6 @@ void ffsb_stat(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	fhstat(curfile->name, ft, fs); 
 	unlock_file_reader(curfile);
 
-	ft_incr_op(ft, opnum, 1);
+	ft_incr_op(ft, opnum, 1, 0);
 }
 
-void ffsb_read_print_exl(struct ffsb_op_results *results, double secs,
-			 unsigned int op_num)
-{
-	char buf[256];
-
-	ffsb_printsize(buf, results->read_bytes / secs, 256);
-	printf("Throughput: %.2f reads/sec -> %s/sec\n",
-	       results->ops[op_num] / secs, buf);
-}
-
-void ffsb_write_print_exl(struct ffsb_op_results *results, double secs,
-			  unsigned int op_num)
-{
-	char buf[256];
-
-	ffsb_printsize(buf, results->write_bytes / secs, 256);
-	printf("Throughput: %.2f writes/sec -> %s/sec\n",
-	       results->ops[op_num] / secs, buf);
-}
-
-void ffsb_create_print_exl(struct ffsb_op_results *results, double secs,
-			   unsigned int op_num)
-{
-	char buf[256];
-	ffsb_printsize(buf, results->write_bytes / secs, 256);
-	printf("Throughput: %.2f creates/sec -> %s/sec\n",
-	       results->ops[op_num] / secs, buf);
-
-}
-
-void ffsb_append_print_exl(struct ffsb_op_results *results, double secs,
-			   unsigned int op_num)
-{
-	char buf[256];
-
-	ffsb_printsize(buf, results->write_bytes / secs, 256);
-	printf("Throughput: %.2f append writes/sec -> %s/sec\n",
-	       results->ops[op_num] / secs, buf);
-
-}

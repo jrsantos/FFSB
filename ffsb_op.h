@@ -26,6 +26,10 @@ struct ffsb_op_results;
 struct ffsb_thread;
 struct ffsb_fs;
 
+#define NA 0x00
+#define READ 0x01
+#define WRITE 0x02
+
 /* This file handles all of the operations FFSB supports.  It has
  * tight interactions with the filesystem objects, but is otherwise
  * pretty abstract.
@@ -46,11 +50,8 @@ typedef struct ffsb_op {
 	unsigned int op_id;
 	char *op_name;
 	ffsb_op_fn op_fn;
-	ffsb_op_print_fn op_print_fn;     /* optional print funcion */
-	ffsb_op_print_fn op_exl_print_fn; /* function if op is
-					   * "exclusive", also
-					   * optional */
 
+	unsigned int throughput;
 	/* The point of these two fields is to determine which set of
 	 * files are being worked on.  Currently either data, meta, or
 	 * aging.  Data and meta are mutually exclusive, so we only
@@ -77,6 +78,7 @@ typedef struct ffsb_op_results {
 	/* Count of how many times each op was run */
 	unsigned int ops[FFSB_NUMOPS];
 	unsigned int op_weight[FFSB_NUMOPS];
+	uint64_t bytes[FFSB_NUMOPS];
 
 	uint64_t read_bytes;
 	uint64_t write_bytes;
