@@ -46,7 +46,7 @@ void parseerror(char *msg)
 static char *get_next_line(FILE *f)
 {
 	static char buf[BUFSIZE];
-	char *ret;
+	char *ret, *tmp;
 	int flag = 1;
 	while (flag) {
 		ret = fgets(buf, BUFSIZE, f);
@@ -58,6 +58,15 @@ static char *get_next_line(FILE *f)
 
 		if ((*ret == COMMENT_CHAR) || (*ret == '\0'))
 			continue;
+
+		tmp = ret;
+		while (*tmp != '\0') {
+			if (*tmp == COMMENT_CHAR) {
+				*tmp = '\0';
+				break;
+			}
+			tmp++;
+		}
 		flag = 0;
 	}
 	return ret;
