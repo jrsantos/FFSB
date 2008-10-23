@@ -96,7 +96,7 @@ void print_results(struct ffsb_op_results *results, double runtime)
 		total_weight += results->op_weight[i];
 	}
 
-	printf("             Op Name   Transactions\t Trans/sec\t% Trans\t    % Op Wegiht\n");
+	printf("             Op Name   Transactions\t Trans/sec\t% Trans\t    % Op Weight\n");
 	printf("             =======   ============\t =========\t=======\t    ===========\n");
 	for (i = 0; i < FFSB_NUMOPS ; i++)
 		if (results->ops[i] != 0)
