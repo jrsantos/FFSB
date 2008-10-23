@@ -24,21 +24,21 @@
 #include "metaops.h"
 
 ffsb_op_t ffsb_op_list[] =
-{{0, "read", ffsb_readfile, fop_bench, NULL},
- {1, "readall",	ffsb_readall, fop_bench, NULL},
- {2, "write", ffsb_writefile, fop_bench, NULL},
- {3, "create", ffsb_createfile, fop_bench, fop_age},
- {4, "append", ffsb_appendfile, fop_bench, fop_age},
- {5, "delete", ffsb_deletefile, fop_bench, fop_age},
- {6, "metaop", ffsb_metaops, metaops_metadir, NULL},
- {7, "createdir", ffsb_createdir, fop_bench, NULL},
- {8, "stat", ffsb_stat, fop_bench, NULL},
- {9, "writeall", ffsb_writeall, fop_bench, NULL},
- {10, "writeall_fsync", ffsb_writeall_fsync, fop_bench, NULL},
- {11, "open_close", ffsb_open_close, fop_bench, NULL},
- {12, "write_fsync", ffsb_writefile_fsync, fop_bench, NULL},
- {13, "create_fsync", ffsb_createfile_fsync, fop_bench, fop_age},
- {14, "append_fsync", ffsb_appendfile_fsync, fop_bench, fop_age},
+{{0, "read", ffsb_readfile, READ, fop_bench, NULL},
+ {1, "readall",	ffsb_readall, READ, fop_bench, NULL},
+ {2, "write", ffsb_writefile, WRITE, fop_bench, NULL},
+ {3, "create", ffsb_createfile, WRITE, fop_bench, fop_age},
+ {4, "append", ffsb_appendfile, WRITE, fop_bench, fop_age},
+ {5, "delete", ffsb_deletefile, NA, fop_bench, fop_age},
+ {6, "metaop", ffsb_metaops, NA, metaops_metadir, NULL},
+ {7, "createdir", ffsb_createdir, NA, fop_bench, NULL},
+ {8, "stat", ffsb_stat, NA, fop_bench, NULL},
+ {9, "writeall", ffsb_writeall, WRITE, fop_bench, NULL},
+ {10, "writeall_fsync", ffsb_writeall_fsync, WRITE, fop_bench, NULL},
+ {11, "open_close", ffsb_open_close, NA, fop_bench, NULL},
+ {12, "write_fsync", ffsb_writefile_fsync, WRITE, fop_bench, NULL},
+ {13, "create_fsync", ffsb_createfile_fsync, WRITE, fop_bench, fop_age},
+ {14, "append_fsync", ffsb_appendfile_fsync, WRITE, fop_bench, fop_age},
 };
 
 void init_ffsb_op_results(ffsb_op_results_t *results)
