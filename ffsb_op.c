@@ -72,17 +72,20 @@ static void print_op_results(unsigned int op_num, ffsb_op_results_t *results,
 			     double runtime, unsigned total_ops,
 			     unsigned total_weight)
 {
-	if (exclusive_op(results, op_num) &&
-	    ffsb_op_list[op_num].op_exl_print_fn != NULL) {
+	double op_pcnt = 100 * (double)results->ops[op_num] /
+		(double)total_ops;
+	double weight_pcnt = 100 * (double)results->op_weight[op_num] /
+		(double)total_weight;
+	generic_op_print(ffsb_op_list[op_num].op_name, results->ops[op_num],
+			 op_pcnt, weight_pcnt, runtime);
+}
+
+
+static void print_op_throughput(unsigned int op_num, ffsb_op_results_t *results,
+				double runtime)
+{
+	if (ffsb_op_list[op_num].op_exl_print_fn != NULL)
 		ffsb_op_list[op_num].op_exl_print_fn(results, runtime, op_num);
-	} else {
-	    double op_pcnt = 100 * (double)results->ops[op_num] /
-		    (double)total_ops;
-	    double weight_pcnt = 100 * (double)results->op_weight[op_num] /
-		    (double)total_weight;
-	    generic_op_print(ffsb_op_list[op_num].op_name, results->ops[op_num],
-			     op_pcnt, weight_pcnt, runtime);
-	}
 }
 
 void print_results(struct ffsb_op_results *results, double runtime)
@@ -90,6 +93,7 @@ void print_results(struct ffsb_op_results *results, double runtime)
 	int i;
 	uint64_t total_ops = 0;
 	uint64_t total_weight = 0;
+	char buf[256];
 
 	for (i = 0; i < FFSB_NUMOPS ; i++) {
 		total_ops += results->ops[i];
@@ -102,8 +106,18 @@ void print_results(struct ffsb_op_results *results, double runtime)
 		if (results->ops[i] != 0)
 			print_op_results(i, results, runtime, total_ops,
 					 total_weight);
+	printf("-\n%.2lf Transactions per Second\n\n", (double)total_ops / runtime);
 
-	printf("-\n%.2lf Transactions per Second\n", (double)total_ops / runtime);
+	if (results->write_bytes || results->read_bytes)
+		printf("Throughput Results\n===================\n");
+	if (results->read_bytes) {
+		ffsb_printsize(buf, results->read_bytes / runtime, 256);
+		printf("Read Throughput: %s/sec\n", buf);
+	}
+	if (results->write_bytes) {
+		ffsb_printsize(buf, results->write_bytes / runtime, 256);
+		printf("Write Throughput: %s/sec\n", buf);
+	}
 }
 
 
