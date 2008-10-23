@@ -62,22 +62,30 @@ static int exclusive_op(ffsb_op_results_t *results, unsigned int op_num)
 }
 
 static void generic_op_print(char *name, unsigned num, double op_pcnt,
-			     double weigth_pcnt, double runtime)
+			     double weigth_pcnt, double runtime, char *tput)
 {
-	printf("%20s : %12u\t%10.2lf\t%6.3lf%%\t\t%6.3lf%%\n",
-	       name, num, num/runtime, op_pcnt, weigth_pcnt);
+	printf("%20s : %12u\t%10.2lf\t%6.3lf%%\t\t%6.3lf%%\t  %11s\n",
+	       name, num, num/runtime, op_pcnt, weigth_pcnt, tput);
 }
 
 static void print_op_results(unsigned int op_num, ffsb_op_results_t *results,
 			     double runtime, unsigned total_ops,
 			     unsigned total_weight)
 {
+	char buf[256];
+
 	double op_pcnt = 100 * (double)results->ops[op_num] /
 		(double)total_ops;
 	double weight_pcnt = 100 * (double)results->op_weight[op_num] /
 		(double)total_weight;
+	if (ffsb_op_list[op_num].throughput) {
+		ffsb_printsize (buf, results->bytes[op_num] / runtime, 256);
+		sprintf(buf, "%s/sec\0", buf);
+	}
+	else
+		sprintf(buf, "NA\0");
 	generic_op_print(ffsb_op_list[op_num].op_name, results->ops[op_num],
-			 op_pcnt, weight_pcnt, runtime);
+			 op_pcnt, weight_pcnt, runtime, buf);
 }
 
 #if 0
@@ -101,8 +109,8 @@ void print_results(struct ffsb_op_results *results, double runtime)
 		total_weight += results->op_weight[i];
 	}
 
-	printf("             Op Name   Transactions\t Trans/sec\t% Trans\t    % Op Weight\n");
-	printf("             =======   ============\t =========\t=======\t    ===========\n");
+	printf("             Op Name   Transactions\t Trans/sec\t% Trans\t    % Op Weight\t   Throughput\n");
+	printf("             =======   ============\t =========\t=======\t    ===========\t   ==========\n");
 	for (i = 0; i < FFSB_NUMOPS ; i++)
 		if (results->ops[i] != 0)
 			print_op_results(i, results, runtime, total_ops,
@@ -160,6 +168,7 @@ void add_results(struct ffsb_op_results *target, struct ffsb_op_results *src)
 	for (i = 0; i < FFSB_NUMOPS; i++) {
 		target->ops[i] += src->ops[i];
 		target->op_weight[i] += src->op_weight[i];
+		target->bytes[i] += src->bytes[i];
 	}
 }
 

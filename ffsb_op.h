@@ -78,6 +78,7 @@ typedef struct ffsb_op_results {
 	/* Count of how many times each op was run */
 	unsigned int ops[FFSB_NUMOPS];
 	unsigned int op_weight[FFSB_NUMOPS];
+	uint64_t bytes[FFSB_NUMOPS];
 
 	uint64_t read_bytes;
 	uint64_t write_bytes;

@@ -87,7 +87,7 @@ int ft_get_fsync_file(ffsb_thread_t *);
 
 randdata_t *ft_get_randdata(ffsb_thread_t *);
 
-void ft_incr_op(ffsb_thread_t *ft, unsigned opnum, unsigned increment);
+void ft_incr_op(ffsb_thread_t *ft, unsigned opnum, unsigned increment, uint64_t bytes);
 
 void ft_add_readbytes(ffsb_thread_t *, uint32_t);
 void ft_add_writebytes(ffsb_thread_t *, uint32_t);

@@ -92,7 +92,7 @@ void ffsb_metaops(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	removedir(bf, rd);
 	renamedir(bf, rd);
 
-	ft_incr_op(ft, opnum, 1);
+	ft_incr_op(ft, opnum, 1, 0);
 }
 
 void ffsb_createdir(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
@@ -108,5 +108,5 @@ void ffsb_createdir(ffsb_thread_t *ft, ffsb_fs_t *fs, unsigned opnum)
 	}
 	unlock_file_writer(newdir);
 
-	ft_incr_op(ft, opnum, 1);
+	ft_incr_op(ft, opnum, 1, 0);
 }
