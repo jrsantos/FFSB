@@ -788,7 +788,7 @@ config_options_t *get_tg_config(ffsb_config_t *fc, int pos)
 {
 	container_t *tmp_cont;
 
-	assert(pos < fc->num_filesys);
+	assert(pos < fc->num_threadgroups);
 	tmp_cont = get_container(fc->profile_conf->tg_container, pos);
 	if (tmp_cont)
 		return tmp_cont->config;
@@ -797,7 +797,7 @@ config_options_t *get_tg_config(ffsb_config_t *fc, int pos)
 
 container_t *get_tg_container(ffsb_config_t *fc, int pos)
 {
-	assert(pos < fc->num_filesys);
+	assert(pos < fc->num_threadgroups);
 	return get_container(fc->profile_conf->tg_container, pos);
 }
 
