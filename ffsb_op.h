@@ -46,10 +46,6 @@ typedef struct ffsb_op {
 	unsigned int op_id;
 	char *op_name;
 	ffsb_op_fn op_fn;
-	ffsb_op_print_fn op_print_fn;     /* optional print funcion */
-	ffsb_op_print_fn op_exl_print_fn; /* function if op is
-					   * "exclusive", also
-					   * optional */
 
 	/* The point of these two fields is to determine which set of
 	 * files are being worked on.  Currently either data, meta, or
