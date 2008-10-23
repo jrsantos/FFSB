@@ -51,15 +51,18 @@ time		= 10
 
 #	bindfs		= /mnt/test1
 
-	append_weight	= 1
-	stat_weight	= 0
-	write_weight	= 0
-	read_weight	= 0
-	create_weight	= 3
-	delete_weight	= 1
-	readall_weight	= 1
-	writeall_weight	= 1
-	writeall_fsync_weight	= 0
+	append_weight		= 1
+	append_fsync_weight	= 1
+	stat_weight		= 1
+#	write_weight		= 1
+#	write_fsync_weight	= 1
+#	read_weight		= 1
+	create_weight		= 1
+	create_fsync_weight	= 1
+	delete_weight		= 1
+	readall_weight		= 1
+	writeall_weight		= 1
+	writeall_fsync_weight	= 1
 	open_close_weight	= 1
 
 	read_random	= 0
@@ -74,7 +77,7 @@ time		= 10
 
 	[stats]
 		enable_stats	= 1
-		enable_range	= 1
+		enable_range	= 0
 
 #		ignore		= close
 #		ignore		= open
